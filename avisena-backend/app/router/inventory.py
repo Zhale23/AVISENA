@@ -10,7 +10,7 @@ from app.schemas.inventory import InventoryCreate, InventoryOut, InventoryUpdate
 from app.crud import inventory as crud_inventory
 
 router = APIRouter()
-modulo = 6  
+modulo = 14  
 
 @router.post("/crear", status_code=status.HTTP_201_CREATED)
 def create_inventory(

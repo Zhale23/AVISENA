@@ -12,7 +12,7 @@ from app.schemas.incidentes_generales import (
 from core.database import get_db
 
 router = APIRouter()
-modulo = 8
+modulo = 13
 
 # Crear incidente general
 @router.post("/crear", status_code=status.HTTP_201_CREATED)

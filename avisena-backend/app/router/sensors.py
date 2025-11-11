@@ -10,7 +10,7 @@ from app.schemas.users import UserOut
 from app.crud import sensors as crud_sensors
 
 router = APIRouter()
-modulo = 9
+modulo = 16
 
 @router.post("/sensor/crear", status_code=status.HTTP_201_CREATED)
 def create_sensor(

@@ -9,7 +9,7 @@ from app.schemas.users import PaginatedUsers, UserCreate, UserOut, UserUpdate
 from app.crud import users as crud_users
 
 router = APIRouter()
-modulo=1
+modulo=4
 
 @router.post("/crear", status_code=status.HTTP_201_CREATED)
 def create_user(

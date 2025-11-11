@@ -11,7 +11,7 @@ from app.crud.permisos import verify_permissions
 from typing import List
 
 router = APIRouter()
-modulo = 4
+modulo = 12
 
 @router.post("/crear-galpon", status_code=status.HTTP_201_CREATED)
 def create_shed(

@@ -10,7 +10,7 @@ from app.schemas.registro_sensores import RegistroSensorCreate, RegistroSensorOu
 from core.database import get_db
 
 router = APIRouter()
-modulo = 1
+modulo = 18
 
 # Crear registro de sensor
 @router.post("/crear", status_code=status.HTTP_201_CREATED)

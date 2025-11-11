@@ -10,7 +10,7 @@ from app.schemas.lands import LandCreate, LandUpdate, LandOut
 from app.schemas.users import UserOut
 
 router = APIRouter()
-modulo = 3  
+modulo = 11  
 
 # Crear finca
 @router.post("/crear", status_code=status.HTTP_201_CREATED)

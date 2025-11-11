@@ -10,7 +10,7 @@ from app.schemas.categories import CategoryCreate, CategoryOut, CategoryUpdate
 from app.crud import categories as crud_categories
 
 router = APIRouter()
-modulo = 5  
+modulo = 15  
 
 @router.post("/crear", status_code=status.HTTP_201_CREATED)
 def create_category(
