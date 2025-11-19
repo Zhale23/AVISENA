@@ -28,7 +28,7 @@ function createSensorRow(sensor) {
         </div>
       </td>
       <td class="cell">
-        <button class="btn btn-sm btn-info btn-edit-sensor" data-sensor-id="${sensorId}">
+        <button class="btn btn-sm btn-success btn-edit-sensor" data-sensor-id="${sensorId}">
           <i class="fa-regular fa-pen-to-square"></i>
         </button>
       </td>

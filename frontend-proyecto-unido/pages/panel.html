@@ -1,6 +1,84 @@
-<div class="card">
-    <div class="card-body">
-        <h5 class="card-title fw-semibold mb-4">Panel de control</h5>
-        <p class="mb-0">Aqui va todo el modulo de Panel de control</p>
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <h2 class="h4 fw-bold mb-1">Panel de control</h2>
+                        <p class="text-muted mb-0">Visión general rápida de métricas clave</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success btn-sm">Acción rápida</button>
+                        <button class="btn btn-outline-secondary btn-sm">Ver opciones</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <div class="card text-white bg-success h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-0">Fincas</h6>
+                                <p class="h3 fw-bold mb-0"> <span id="metric-fincas">—</span></p>
+                            </div>
+                            <div class="fs-3">
+                                <i class="fa fa-warehouse"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <div class="card text-white bg-secondary h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-0">Usuarios</h6>
+                                <p class="h3 fw-bold mb-0"> <span id="metric-usuarios">—</span></p>
+                            </div>
+                            <div class="fs-3">
+                                <i class="fa fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <div class="card text-white bg-success h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-0">Sensores</h6>
+                                <p class="h3 fw-bold mb-0"> <span id="metric-sensores">—</span></p>
+                            </div>
+                            <div class="fs-3">
+                                <i class="fa fa-microchip"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <div class="card text-white bg-secondary h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-0">Incidentes</h6>
+                                <p class="h3 fw-bold mb-0"> <span id="metric-incidentes">—</span></p>
+                            </div>
+                            <div class="fs-3">
+                                <i class="fa fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

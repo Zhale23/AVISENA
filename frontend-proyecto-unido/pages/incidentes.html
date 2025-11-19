@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-12">
-        <div class="card unified-table-container">
+        <div class="card">
             <div class="card-body">
                 <div class="d-md-flex align-items-center">
                     <div>
@@ -8,10 +8,12 @@
                         <p>Módulo para crear y gestionar incidentes</p>
                     </div>
                     <div class="d-flex align-items-center ms-auto gap-2 mt-3 mt-md-0">
-                        <select id="filtro-finca" class="form-select w-auto">
+                        <select id="filtro-finca"
+                            class="form-select form-select-sm rounded border-secondary shadow-sm bg-white w-auto">
                             <option value="all">Todas las fincas</option>
                         </select>
-                        <select id="filtro-estado" class="form-select w-auto">
+                        <select id="filtro-estado"
+                            class="form-select form-select-sm rounded border-secondary shadow-sm bg-white w-auto">
                             <option value="all">Todos los estados</option>
                             <option value="false">Pendientes</option>
                             <option value="true">Resueltos</option>
@@ -21,8 +23,7 @@
                     </div>
                 </div>
                 <div class="table-responsive mt-4">
-                    <table
-                        class="table mb-0 text-nowrap unified-table align-middle fs-10 table-striped table-hover table-sm">
+                    <table class="table table-striped table-hover table-sm mb-0 text-nowrap align-middle">
                         <thead>
                             <tr>
                                 <th scope="col" class="px-0 fw-semibold ">Descripción</th>
@@ -64,7 +65,8 @@
                     </div>
                     <div class="mb-3">
                         <label for="edit-id_finca" class="form-label">Finca</label>
-                        <select id="edit-id_finca" class="form-control" required>
+                        <select id="edit-id_finca"
+                            class="form-select form-select-sm rounded border-secondary shadow-sm bg-white" required>
                             <option value="">Selecciona una finca</option>
                         </select>
                     </div>
@@ -101,7 +103,8 @@
                     </div>
                     <div class="mb-3">
                         <label for="create-id_finca" class="form-label">Finca</label>
-                        <select id="create-id_finca" class="form-control" required>
+                        <select id="create-id_finca"
+                            class="form-select form-select-sm rounded border-secondary shadow-sm bg-white" required>
                             <option value="">Seleccione una finca</option>
                         </select>
                     </div>
