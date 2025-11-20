@@ -5,7 +5,7 @@ let originalId = null;
 let createModalInstance = null; // Guardará la instancia del modal de creación
 
 function createShedRow(shed) {
-  const statusBadge = shed.estado
+  const statusBadge = shed.estado 
     ? `<span class="badge bg-success">Activo</span>`
     : `<span class="badge bg-danger">Inactivo</span>`;
 
@@ -24,7 +24,7 @@ function createShedRow(shed) {
       <td class="px-0">${shed.capacidad}</td>
       <td class="px-0">${shed.cant_actual}</td>
       <td class="px-0">
-        <div class="form-check form-switch ms-2 d-inline-block">
+        <div class="form-check form-switch">
             <input class="form-check-input shed-status-switch" type="checkbox" role="switch" 
                    id="switch-${shedId}" data-shed-id="${shedId}" 
                    ${shed.estado ? 'checked' : ''}>
@@ -33,7 +33,7 @@ function createShedRow(shed) {
             </label>
         </div>
       </td>
-      <td class="px-0 text-end">
+      <td class="text-end">
           <button class="btn btn-sm btn-success btn-edit-shed" data-shed-id="${shed.id_galpon}"><i class="fa-regular fa-pen-to-square"></i></button>
       </td>
     </tr>
@@ -53,7 +53,7 @@ async function openEditModal(id_galpon) {
     originalId = shed.id_galpon;
     document.getElementById('edit-shed-id').value = shed.id_galpon;
     // Cargar opciones de fincas primero
-    await loadLandsSelect('edit-nombre_finca');
+    await loadLandsSelect('edit-nombre_finca'); 
     document.getElementById('edit-nombre_finca').value = shed.id_finca;
     document.getElementById('edit-nombre-galpon').value = shed.nombre;
     document.getElementById('edit-capacidad').value = shed.capacidad;
@@ -80,6 +80,13 @@ async function handleUpdateSubmit(event) {
   try {
     await shedService.updateShed(shedId, updatedData);
     modalInstance.hide();
+    Swal.fire({
+        position: "top-center",
+        icon: "success",
+        title: `Galpón actualizado con éxito.`,
+        showConfirmButton: false,
+        timer: 1500
+    });
     init(); // Recargamos la tabla para ver los cambios
   } catch (error) {
     console.error('Error al actualizar el galpón ${shedId}:', error);
@@ -108,7 +115,11 @@ async function handleStatusSwitch(event) {
     icon: 'warning',
     showCancelButton: true,
     confirmButtonText: 'Sí',
-    cancelButtonText: 'No'
+    cancelButtonText: 'No',
+    customClass: {
+      confirmButton: 'btn btn-success',
+      cancelButton: 'btn btn-secondary'
+    }
   });
 
   const shedId = switchElement.dataset.shedId;
@@ -145,7 +156,7 @@ async function handleStatusSwitch(event) {
 // manejador de formulario crear usuarios
 async function handleCreateSubmit(event) {
   event.preventDefault();
-
+  
   // // Obtenemos los datos del usuario logueado para el galpon
   // const currentUser = JSON.parse(localStorage.getItem('user'));
   const newShedData = {
@@ -162,15 +173,23 @@ async function handleCreateSubmit(event) {
     if (modal) modal.hide();
     document.getElementById('create-shed-form').reset();
     Swal.fire({
-      title: "Galpón creado con éxito",
-      icon: "success",
-      draggable: true
-    });
+        position: "top-center",
+        icon: "success",
+        title: `Galpón creado con éxito.`,
+        showConfirmButton: false,
+        timer: 1500
+      });
     init(); // Recargamos la tabla para ver el nuevo usuario
   } catch (error) {
 
     console.error('Error al crear el galpón:', error);
-    alert('No se pudo crear el galpón.');
+    Swal.fire({
+        position: "top-center",
+        icon: "danger",
+        title: `No se pudo crear el galpón.`,
+        showConfirmButton: false,
+        timer: 1500
+      });
   }
 }
 
@@ -294,9 +313,9 @@ async function init() {
   try {
     const sheds = (await shedService.getSheds());
     if (sheds && sheds.length > 0) {
-      tableBody.innerHTML = sheds.map(createShedRow).join('');
+        tableBody.innerHTML = sheds.map(createShedRow).join('');
     } else {
-      tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron galpones.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron galpones.</td></tr>';
     }
   } catch (error) {
     console.error('Error al obtener los galpones:', error);
@@ -309,8 +328,6 @@ async function init() {
       loadLandsSelect('create-nombre_finca');
     });
   }
-
-
 
   // Aplicamos el patrón remove/add para evitar listeners duplicados
   const editForm = document.getElementById('edit-shed-form');
