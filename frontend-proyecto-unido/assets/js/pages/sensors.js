@@ -20,9 +20,9 @@ function createSensorRow(sensor) {
       <td class="cell">
         <div class="form-check form-switch d-inline-block">
           <input class="form-check-input sensor-status-switch" type="checkbox" role="switch" 
-                 id="switch-${sensorId}" data-sensor-id="${sensorId}" 
+                 id="switch-sensor-${sensorId}" data-sensor-id="${sensorId}" 
                  ${sensor.estado ? 'checked' : ''}>
-          <label class="form-check-label" for="switch-${sensorId}">
+          <label class="form-check-label" for="switch-sensor-${sensorId}">
             ${sensor.estado ? 'Activo' : 'Inactivo'}
           </label>
         </div>
@@ -37,7 +37,7 @@ function createSensorRow(sensor) {
 }
 
 function filterSensors() {
-  const estadoFilter = document.getElementById("filter-estado").value;
+  const estadoFilter = document.getElementById("filter-sensor-estado").value;
   const tipoFilter = document.getElementById("filter-tipo").value;
   const galponFilter = document.getElementById("filter-galpon").value;
 
@@ -59,8 +59,6 @@ function filterSensors() {
 
   const tableBody = document.getElementById("sensors-table-body");
   if (!tableBody) return;
-
-
 
   if (filteredSensors.length > 0) {
     tableBody.innerHTML = filteredSensors.map(createSensorRow).join("");
@@ -101,7 +99,7 @@ async function cargarTiposSensores() {
   try {
     const tipos = await tipoSensorService.getTipoSensoresActivos();
 
-    const selectCrear = document.getElementById("create-id_tipo_sensor");
+    const selectCrear = document.getElementById("create-sensor-id_tipo_sensor");
     if (selectCrear) {
       selectCrear.innerHTML =
         '<option value="" disabled selected>Seleccione un tipo</option>';
@@ -112,7 +110,7 @@ async function cargarTiposSensores() {
       });
     }
 
-    const selectEditar = document.getElementById("edit-id_tipo_sensor");
+    const selectEditar = document.getElementById("edit-sensor-id_tipo_sensor");
     if (selectEditar) {
       selectEditar.innerHTML =
         '<option value="" disabled selected>Seleccione un tipo</option>';
@@ -131,19 +129,23 @@ async function cargarGalpones() {
   try {
     const galpones = await shedService.getGalponesActivos();
 
-    const selectCrear = document.getElementById("create-id_galpon");
-    selectCrear.innerHTML =
-      '<option value="" disabled selected>Seleccione un galpón</option>';
-    galpones.forEach((g) => {
-      selectCrear.innerHTML += `<option value="${g.id_galpon}">${g.nombre}</option>`;
-    });
+    const selectCrear = document.getElementById("create-sensor-id_galpon");
+    if (selectCrear) {
+      selectCrear.innerHTML =
+        '<option value="" disabled selected>Seleccione un galpón</option>';
+      galpones.forEach((g) => {
+        selectCrear.innerHTML += `<option value="${g.id_galpon}">${g.nombre}</option>`;
+      });
+    }
 
-    const selectEditar = document.getElementById("edit-id_galpon");
-    selectEditar.innerHTML =
-      '<option value="" disabled selected>Seleccione un galpón</option>';
-    galpones.forEach((g) => {
-      selectEditar.innerHTML += `<option value="${g.id_galpon}">${g.nombre}</option>`;
-    });
+    const selectEditar = document.getElementById("edit-sensor-id_galpon");
+    if (selectEditar) {
+      selectEditar.innerHTML =
+        '<option value="" disabled selected>Seleccione un galpón</option>';
+      galpones.forEach((g) => {
+        selectEditar.innerHTML += `<option value="${g.id_galpon}">${g.nombre}</option>`;
+      });
+    }
   } catch (error) {
     console.error("Error al cargar galpones:", error);
   }
@@ -157,10 +159,10 @@ async function openEditModal(sensorId) {
   try {
     const sensor = await sensorService.getSensorById(sensorId);
     document.getElementById("edit-sensor-id").value = sensor.id_sensor;
-    document.getElementById("edit-nombre").value = sensor.nombre;
-    document.getElementById("edit-id_tipo_sensor").value = sensor.id_tipo_sensor;
-    document.getElementById("edit-id_galpon").value = sensor.id_galpon;
-    document.getElementById("edit-descripcion").value = sensor.descripcion;
+    document.getElementById("edit-sensor-nombre").value = sensor.nombre;
+    document.getElementById("edit-sensor-id_tipo_sensor").value = sensor.id_tipo_sensor;
+    document.getElementById("edit-sensor-id_galpon").value = sensor.id_galpon;
+    document.getElementById("edit-sensor-descripcion").value = sensor.descripcion;
     modalInstance.show();
   } catch (error) {
     console.error("Error al obtener sensor:", error);
@@ -176,7 +178,7 @@ async function handleUpdateSubmit(event) {
   event.preventDefault();
 
   const sensorId = document.getElementById("edit-sensor-id").value;
-  const descripcion = document.getElementById("edit-descripcion").value;
+  const descripcion = document.getElementById("edit-sensor-descripcion").value;
 
   if (descripcion.length < 10) {
     Swal.fire({
@@ -188,10 +190,10 @@ async function handleUpdateSubmit(event) {
   }
 
   const updatedData = {
-    nombre: document.getElementById("edit-nombre").value,
-    id_tipo_sensor: Number(document.getElementById("edit-id_tipo_sensor").value),
-    id_galpon: Number(document.getElementById("edit-id_galpon").value),
-    descripcion: document.getElementById("edit-descripcion").value,
+    nombre: document.getElementById("edit-sensor-nombre").value,
+    id_tipo_sensor: Number(document.getElementById("edit-sensor-id_tipo_sensor").value),
+    id_galpon: Number(document.getElementById("edit-sensor-id_galpon").value),
+    descripcion: document.getElementById("edit-sensor-descripcion").value,
   };
 
   try {
@@ -219,10 +221,10 @@ async function handleUpdateSubmit(event) {
 async function handleCreateSubmit(event) {
   event.preventDefault();
 
-  const nombre = document.getElementById("create-nombre").value.trim();
-  const id_tipo_sensor = Number(document.getElementById("create-id_tipo_sensor").value);
-  const id_galpon = Number(document.getElementById("create-id_galpon").value);
-  const descripcion = document.getElementById("create-descripcion").value.trim();
+  const nombre = document.getElementById("create-sensor-nombre").value.trim();
+  const id_tipo_sensor = Number(document.getElementById("create-sensor-id_tipo_sensor").value);
+  const id_galpon = Number(document.getElementById("create-sensor-id_galpon").value);
+  const descripcion = document.getElementById("create-sensor-descripcion").value.trim();
 
   if (descripcion.length < 10) {
     Swal.fire({
@@ -327,6 +329,11 @@ async function init() {
   tableBody.innerHTML =
     `<tr><td colspan="${colspan}" class="text-center">Cargando sensores</td></tr>`;
 
+  const createModalElement = document.getElementById("create-sensor-modal");
+  if (createModalElement && !createModalInstance) {
+    createModalInstance = new bootstrap.Modal(createModalElement);
+  }
+
   await cargarFiltros();
   await cargarTiposSensores();
   await cargarGalpones();
@@ -349,7 +356,7 @@ async function init() {
 
   const editForm = document.getElementById("edit-sensor-form");
   const createForm = document.getElementById("create-sensor-form");
-  const filterEstado = document.getElementById("filter-estado");
+  const filterEstado = document.getElementById("filter-sensor-estado");
   const filterTipo = document.getElementById("filter-tipo");
   const filterGalpon = document.getElementById("filter-galpon");
 
@@ -380,5 +387,17 @@ async function init() {
     filterGalpon.addEventListener("change", handleFilterChange);
   }
 }
+
+document.addEventListener("sensorTypesUpdated", async (e) => {
+  try {
+    await cargarFiltros();
+    await cargarTiposSensores();
+    const sensors = await sensorService.getSensors();
+    allSensors = sensors || [];
+    filterSensors();
+  } catch (err) {
+    console.error("Error al procesar sensorTypesUpdated:", err);
+  }
+});
 
 export { init };
