@@ -1,6 +1,4 @@
-// Servicio para el Dashboard de AVISENA
-const API_BASE_URL =
-  "http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000";
+const API_BASE_URL = "https://avisena-back.onrender.com";
 
 class DashboardService {
   constructor() {
@@ -157,16 +155,32 @@ class DashboardService {
 
   async getDashboardCompleto() {
     try {
+      console.log("Solicitando datos completos del dashboard...");
+      console.log("URL:", `${API_BASE_URL}/dashboard/completo`);
+      console.log("Token:", this.token ? "Token presente" : "Sin token");
+
       const response = await fetch(`${API_BASE_URL}/dashboard/completo`, {
         method: "GET",
         headers: this.getHeaders(),
       });
 
+      console.log(
+        "Respuesta del servidor:",
+        response.status,
+        response.statusText
+      );
+
       if (!response.ok) {
-        throw new Error("Error al obtener datos completos del dashboard");
+        const errorText = await response.text();
+        console.error("Error del servidor:", errorText);
+        throw new Error(
+          `Error al obtener datos completos del dashboard: ${response.status} - ${errorText}`
+        );
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log("Datos recibidos exitosamente:", data);
+      return data;
     } catch (error) {
       console.error("Error en getDashboardCompleto:", error);
       throw error;
@@ -174,5 +188,6 @@ class DashboardService {
   }
 }
 
-// Exportar instancia del servicio
+// Exportar instancia del servicio como variable global
 const dashboardService = new DashboardService();
+window.dashboardService = dashboardService;

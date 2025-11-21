@@ -54,8 +54,8 @@ def get_alertas_activas(db: Session) -> int:
     try:
         query = text("""
             SELECT COUNT(*) as total
-            FROM incidentes_gallinas
-            WHERE estado = 'pendiente'
+            FROM incidentes_gallina
+            WHERE esta_resuelto = 0
         """)
         result = db.execute(query).mappings().first()
         return result['total'] if result else 0
@@ -164,7 +164,7 @@ def get_ocupacion_galpones(db: Session) -> List[Dict]:
                 capacidad,
                 cant_actual as cantidad_actual,
                 CASE 
-                    WHEN capacidad > 0 THEN ROUND((cant_actual::float / capacidad) * 100)
+                    WHEN capacidad > 0 THEN ROUND((CAST(cant_actual AS DECIMAL) / capacidad) * 100)
                     ELSE 0 
                 END as ocupacion_porcentaje
             FROM galpones
@@ -191,22 +191,22 @@ def get_incidentes_recientes(db: Session, limit: int = 5) -> List[Dict]:
     try:
         query = text("""
             SELECT 
-                id_incidente as id,
+                id_inc_gallina as id,
                 tipo_incidente as tipo,
                 CASE 
-                    WHEN estado = 'pendiente' THEN 'warning'
-                    WHEN estado = 'resuelto' THEN 'success'
+                    WHEN esta_resuelto = 0 THEN 'warning'
+                    WHEN esta_resuelto = 1 THEN 'success'
                     ELSE 'danger'
                 END as severidad,
                 descripcion,
-                fecha,
+                DATE(fecha_hora) as fecha,
                 CASE 
-                    WHEN fecha = CURRENT_DATE THEN 'Hoy'
-                    WHEN fecha = CURRENT_DATE - 1 THEN 'Ayer'
-                    ELSE CAST(EXTRACT(DAY FROM CURRENT_DATE - fecha) AS TEXT) || ' días'
+                    WHEN DATE(fecha_hora) = CURRENT_DATE THEN 'Hoy'
+                    WHEN DATE(fecha_hora) = CURRENT_DATE - INTERVAL 1 DAY THEN 'Ayer'
+                    ELSE CONCAT(DATEDIFF(CURRENT_DATE, DATE(fecha_hora)), ' días')
                 END as tiempo
-            FROM incidentes_gallinas
-            ORDER BY fecha DESC, id_incidente DESC
+            FROM incidentes_gallina
+            ORDER BY fecha_hora DESC
             LIMIT :limit
         """)
         resultados = db.execute(query, {"limit": limit}).mappings().all()
@@ -222,12 +222,12 @@ def get_ultimos_registros_sensores(db: Session) -> Dict:
         query = text("""
             SELECT 
                 st.nombre as tipo_sensor,
-                rs.valor,
+                rs.dato_sensor as valor,
                 rs.fecha_hora
             FROM registro_sensores rs
             JOIN sensores s ON rs.id_sensor = s.id_sensor
             JOIN tipo_sensores st ON s.id_tipo_sensor = st.id_tipo_sensor
-            WHERE rs.fecha_hora >= NOW() - INTERVAL '1 hour'
+            WHERE rs.fecha_hora >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
             ORDER BY rs.fecha_hora DESC
             LIMIT 20
         """)
@@ -269,7 +269,7 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
         query_produccion = text("""
             SELECT 
                 'produccion' as tipo,
-                'Producción registrada: ' || cantidad || ' huevos' as descripcion,
+                CONCAT('Producción registrada: ', cantidad, ' huevos') as descripcion,
                 fecha as fecha_registro,
                 'success' as color
             FROM produccion_huevos
@@ -281,7 +281,7 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
         query_gallinas = text("""
             SELECT 
                 'gallinas' as tipo,
-                'Nuevo registro de gallinas en ' || g.nombre as descripcion,
+                CONCAT('Nuevo registro de gallinas en ', g.nombre) as descripcion,
                 ig.fecha as fecha_registro,
                 'primary' as color
             FROM ingreso_gallinas ig
@@ -294,11 +294,11 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
         query_incidentes = text("""
             SELECT 
                 'incidente' as tipo,
-                'Alerta: ' || tipo_incidente as descripcion,
-                fecha as fecha_registro,
+                CONCAT('Alerta: ', tipo_incidente) as descripcion,
+                fecha_hora as fecha_registro,
                 'warning' as color
-            FROM incidentes_gallinas
-            ORDER BY fecha DESC
+            FROM incidentes_gallina
+            ORDER BY fecha_hora DESC
             LIMIT 3
         """)
         
@@ -345,8 +345,8 @@ def calcular_tendencias(db: Session) -> Dict:
         # Tendencia de gallinas (comparar con mes anterior)
         query_gallinas = text("""
             SELECT 
-                SUM(CASE WHEN fecha >= CURRENT_DATE - INTERVAL '30 days' THEN cantidad_gallinas ELSE 0 END) as mes_actual,
-                SUM(CASE WHEN fecha BETWEEN CURRENT_DATE - INTERVAL '60 days' AND CURRENT_DATE - INTERVAL '31 days' THEN cantidad_gallinas ELSE 0 END) as mes_anterior
+                SUM(CASE WHEN fecha >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) THEN cantidad_gallinas ELSE 0 END) as mes_actual,
+                SUM(CASE WHEN fecha BETWEEN DATE_SUB(CURRENT_DATE, INTERVAL 60 DAY) AND DATE_SUB(CURRENT_DATE, INTERVAL 31 DAY) THEN cantidad_gallinas ELSE 0 END) as mes_anterior
             FROM ingreso_gallinas
         """)
         result_gallinas = db.execute(query_gallinas).mappings().first()
@@ -363,7 +363,7 @@ def calcular_tendencias(db: Session) -> Dict:
         query_produccion = text("""
             SELECT 
                 COALESCE(SUM(CASE WHEN fecha = CURRENT_DATE THEN cantidad ELSE 0 END), 0) as hoy,
-                COALESCE(SUM(CASE WHEN fecha = CURRENT_DATE - 1 THEN cantidad ELSE 0 END), 1) as ayer
+                COALESCE(SUM(CASE WHEN fecha = DATE_SUB(CURRENT_DATE, INTERVAL 1 DAY) THEN cantidad ELSE 0 END), 1) as ayer
             FROM produccion_huevos
         """)
         result_produccion = db.execute(query_produccion).mappings().first()
