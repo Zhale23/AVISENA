@@ -8,7 +8,7 @@
             <h4 class="card-title">Sensores</h4>
           </div>
           <div class="ms-auto mt-3 mt-md-0">
-            <select id="filter-estado"
+            <select id="filter-sensor-estado"
               class="form-select form-select-sm rounded border-secondary shadow-sm bg-white me-2"
               style="width: auto; display: inline-block;">
               <option value="all">Todos</option>
@@ -28,7 +28,7 @@
             </select>
 
             <button type="button" class="btn btn-success" data-bs-toggle="modal"
-              data-bs-target="#create-sensor-modal">Agregar nuevo sensor</button>
+              data-bs-target="#create-sensor-modal"><i class="fa fa-plus me-1"></i>Agregar sensor</button>
           </div>
         </div>
         <div class="table-responsive mt-4">
@@ -50,9 +50,9 @@
       </div>
     </div>
   </div>
-</div> <!-- end row -->
+</div>
 
-
+<!-- Modal Editar Sensor -->
 <div class="modal fade" id="edit-sensor-modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -63,30 +63,28 @@
       <div class="modal-body">
         <form id="edit-sensor-form">
           <input type="hidden" id="edit-sensor-id">
-
           <div class="mb-3">
-            <label for="edit-nombre" class="form-label">Nombre</label>
-            <input type="text" class="form-control" id="edit-nombre" required>
+            <label for="edit-sensor-nombre" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="edit-sensor-nombre" required>
           </div>
           <div class="mb-3">
-            <label for="edit-id_tipo_sensor" class="form-label">Tipo de Sensor</label>
-            <select id="edit-id_tipo_sensor"
+            <label for="edit-sensor-id_tipo_sensor" class="form-label">Tipo de Sensor</label>
+            <select id="edit-sensor-id_tipo_sensor"
               class="form-select form-select-sm rounded border-secondary shadow-sm bg-white" required>
               <option value="">Seleccione un tipo</option>
             </select>
           </div>
           <div class="mb-3">
-            <label for="edit-id_galpon" class="form-label">Galpón</label>
-            <select id="edit-id_galpon" class="form-select form-select-sm rounded border-secondary shadow-sm bg-white"
+            <label for="edit-sensor-id_galpon" class="form-label">Galpón</label>
+            <select id="edit-sensor-id_galpon" class="form-select form-select-sm rounded border-secondary shadow-sm bg-white"
               required>
               <option value="">Seleccione un galpón</option>
             </select>
           </div>
           <div class="mb-3">
-            <label for="edit-descripcion" class="form-label">Descripción</label>
-            <textarea class="form-control" id="edit-descripcion" rows="3" required></textarea>
+            <label for="edit-sensor-descripcion" class="form-label">Descripción</label>
+            <textarea class="form-control" id="edit-sensor-descripcion" rows="3" required></textarea>
           </div>
-
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-success">Guardar Cambios</button>
@@ -97,36 +95,37 @@
   </div>
 </div>
 
-<div class="modal fade" id="create-sensor-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<!-- Modal Crear Sensor -->
+<div class="modal fade" id="create-sensor-modal" tabindex="-1" aria-labelledby="createSensorModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Crear sensor</h1>
+        <h1 class="modal-title fs-5" id="createSensorModalLabel">Crear sensor</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <form id="create-sensor-form">
           <div class="mb-3">
-            <label for="create-nombre" class="form-label">Nombre</label>
-            <input type="text" class="form-control" id="create-nombre" required>
+            <label for="create-sensor-nombre" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="create-sensor-nombre" required>
           </div>
           <div class="mb-3">
-            <label for="create-id_tipo_sensor" class="form-label">Tipo de Sensor</label>
-            <select id="create-id_tipo_sensor"
+            <label for="create-sensor-id_tipo_sensor" class="form-label">Tipo de Sensor</label>
+            <select id="create-sensor-id_tipo_sensor"
               class="form-select form-select-sm rounded border-secondary shadow-sm bg-white" required>
               <option value="">Seleccione un tipo</option>
             </select>
           </div>
           <div class="mb-3">
-            <label for="create-id_galpon" class="form-label">Galpón</label>
-            <select id="create-id_galpon" class="form-select form-select-sm rounded border-secondary shadow-sm bg-white"
+            <label for="create-sensor-id_galpon" class="form-label">Galpón</label>
+            <select id="create-sensor-id_galpon" class="form-select form-select-sm rounded border-secondary shadow-sm bg-white"
               required>
               <option value="">Seleccione un galpón</option>
             </select>
           </div>
           <div class="mb-3">
-            <label for="create-descripcion" class="form-label">Descripción</label>
-            <textarea class="form-control" id="create-descripcion" rows="3" required></textarea>
+            <label for="create-sensor-descripcion" class="form-label">Descripción</label>
+            <textarea class="form-control" id="create-sensor-descripcion" rows="3" required></textarea>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -149,7 +148,6 @@
             <p>Módulo para consultar registros de sensores</p>
           </div>
           <div class="d-flex align-items-center ms-auto gap-2 mt-3 mt-md-0">
-            <!-- Botón de actualizar -->
             <button type="button" class="btn btn-outline-secondary" onclick="loadRegistrosPage()">
               <i class="fa-solid fa-refresh"></i> Actualizar
             </button>
@@ -170,13 +168,9 @@
             </tbody>
           </table>
         </div>
-
-        <!-- Paginación -->
         <div class="row mt-3">
           <div class="col-12">
-            <div id="pagination-container" class="d-flex justify-content-center">
-              <!-- La paginación se generará dinámicamente aquí -->
-            </div>
+            <div id="pagination-container" class="d-flex justify-content-center"></div>
           </div>
         </div>
       </div>
@@ -190,7 +184,7 @@
             <h4 class="card-title">Tipos de Sensores</h4>
           </div>
           <div class="ms-auto mt-3 mt-md-0">
-            <select id="filter-estado"
+            <select id="filter-sensor-type-estado"
               class="form-select form-select-sm rounded border-secondary shadow-sm bg-white me-2"
               style="width: auto; display: inline-block;">
               <option value="all">Todos</option>
@@ -198,7 +192,7 @@
               <option value="inactive">Inactivos</option>
             </select>
             <button type="button" class="btn btn-success" data-bs-toggle="modal"
-              data-bs-target="#create-sensor-type-modal">Agregar nuevo tipo</button>
+              data-bs-target="#create-sensor-type-modal"><i class="fa fa-plus me-1"></i>Agregar tipo de sensor</button>
           </div>
         </div>
         <div class="table-responsive mt-4">
@@ -221,7 +215,7 @@
   </div>
 </div>
 
-
+<!-- Modal Editar Tipo de Sensor -->
 <div class="modal fade" id="edit-sensor-type-modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -231,21 +225,19 @@
       </div>
       <div class="modal-body">
         <form id="edit-sensor-type-form">
-          <input type="hidden" id="edit-sensor-type-id">
-
+          <input type="hidden" id="edit-type-id">
           <div class="mb-3">
-            <label for="edit-nombre" class="form-label">Nombre</label>
-            <input type="text" class="form-control" id="edit-nombre" required>
+            <label for="edit-type-nombre" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="edit-type-nombre" required>
           </div>
           <div class="mb-3">
-            <label for="edit-modelo" class="form-label">Modelo</label>
-            <input type="text" class="form-control" id="edit-modelo" required>
+            <label for="edit-type-modelo" class="form-label">Modelo</label>
+            <input type="text" class="form-control" id="edit-type-modelo" required>
           </div>
           <div class="mb-3">
-            <label for="edit-descripcion" class="form-label">Descripción</label>
-            <textarea class="form-control" id="edit-descripcion" rows="3" required></textarea>
+            <label for="edit-type-descripcion" class="form-label">Descripción</label>
+            <textarea class="form-control" id="edit-type-descripcion" rows="3" required></textarea>
           </div>
-
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-success">Guardar Cambios</button>
@@ -256,27 +248,27 @@
   </div>
 </div>
 
-<div class="modal fade" id="create-sensor-type-modal" tabindex="-1" aria-labelledby="exampleModalLabel"
-  aria-hidden="true">
+<!-- Modal Crear Tipo de Sensor -->
+<div class="modal fade" id="create-sensor-type-modal" tabindex="-1" aria-labelledby="createSensorTypeModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Crear tipo de sensor</h1>
+        <h1 class="modal-title fs-5" id="createSensorTypeModalLabel">Crear tipo de sensor</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <form id="create-sensor-type-form">
           <div class="mb-3">
-            <label for="create-nombre" class="form-label">Nombre</label>
-            <input type="text" class="form-control" id="create-nombre" required>
+            <label for="create-type-nombre" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="create-type-nombre" required>
           </div>
           <div class="mb-3">
-            <label for="create-modelo" class="form-label">Modelo</label>
-            <input type="text" class="form-control" id="create-modelo" required>
+            <label for="create-type-modelo" class="form-label">Modelo</label>
+            <input type="text" class="form-control" id="create-type-modelo" required>
           </div>
           <div class="mb-3">
-            <label for="create-descripcion" class="form-label">Descripción</label>
-            <textarea class="form-control" id="create-descripcion" rows="3" required></textarea>
+            <label for="create-type-descripcion" class="form-label">Descripción</label>
+            <textarea class="form-control" id="create-type-descripcion" rows="3" required></textarea>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -286,4 +278,4 @@
       </div>
     </div>
   </div>
-</div> <!-- end row -->
+</div>
