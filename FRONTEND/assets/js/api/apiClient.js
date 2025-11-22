@@ -1,0 +1,70 @@
+// Este archivo tendrá una única función request que se encargará de todo el trabajo estandar: 
+// añadir la URL base, poner el token, y manejar los errores 401. Esto evita repetir código en cada servicio.
+
+// La única función que necesitamos importar es la de logout.
+// La importamos para usarla en caso de un error 401.
+import { authService } from './auth.service.js';
+
+// const API_BASE_URL = 'https://avisena-backend.onrender.com';
+const API_BASE_URL = 'http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000';
+
+/**
+ * Cliente central para realizar todas las peticiones a la API.
+ * @param {string} endpoint - El endpoint al que se llamará (ej. '/users/get-by-centro').
+ * @param {object} [options={}] - Opciones para la petición fetch (method, headers, body).
+ * @returns {Promise<any>} - La respuesta de la API en formato JSON.
+ */
+export async function request(endpoint, options = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const token = localStorage.getItem('access_token');
+
+    // Configuramos las cabeceras por defecto
+    const headers = {
+        'Content-Type': 'application/json',
+        'accept': 'application/json',
+        ...options.headers, // Permite sobrescribir o añadir cabeceras
+    };
+
+    // Si hay un token, lo añadimos a la cabecera de Authorization
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(url, { ...options, headers });
+
+        // Manejo centralizado del error 401 (Token inválido/expirado)
+        if (response.status === 401) {
+             Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No tiene permisos',
+                confirmButtonColor: '#d33'
+            }); // Cerramos la sesión
+            //return Promise.reject(new Error('Sesión expirada.'));
+        }
+
+        if (response.status === 403) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Token inválido o expirado',
+                confirmButtonColor: '#d33'
+                });
+            authService.logout(); // Cerramos la sesión
+            //return Promise.reject(new Error('Sesión expirada.'));
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Ocurrió un error en la petición.' }));
+            throw new Error(errorData.detail);
+        }
+        
+        // Si la respuesta no tiene contenido (ej. status 204), devolvemos un objeto vacío.
+        return response.status === 204 ? {} : await response.json();
+
+    } catch (error) {
+        console.error(`Error en la petición a ${endpoint}:`, error);
+        throw error;
+    }
+}
