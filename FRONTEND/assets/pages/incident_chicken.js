@@ -58,9 +58,9 @@ async function fetchIncidents(page = 1, page_size = 10, fechaInicio = "", fechaF
   let url;
 
   if (fechaInicio && fechaFin) {
-    url = `https://proyecto-sena-oatr.onrender.com/incident/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
+    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/incident/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
   } else {
-    url = `https://proyecto-sena-oatr.onrender.com/incident/all_incidentes-gallinas-pag?page=${page}&limit=${page_size}`;
+    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/incident/all_incidentes-gallinas-pag?page=${page}&limit=${page_size}`;
   }
 
   try {
@@ -277,7 +277,7 @@ async function loadGalponesSelectEdit(selectedId) {
 
   try {
     const token = localStorage.getItem('access_token');
-    const res = await fetch('https://proyecto-sena-oatr.onrender.com/sheds/all', {
+    const res = await fetch('http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/sheds/all', {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
     });
     if (!res.ok) throw new Error('Error al cargar galpones');
