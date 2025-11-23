@@ -45,7 +45,21 @@ def get_shed_by_id(
         return shed
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+        
+@router.get("/activos")
+def get_active_sheds(
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    try:
+        id_rol = user_token.id_rol
+        if not verify_permissions(db, id_rol, modulo, "seleccionar"):
+            raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        sheds_activos = crud_sheds.get_active_sheds(db)
+        return sheds_activos
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
 @router.get("/all", response_model=List[ShedOut])
 def get_all_sheds(
     db: Session = Depends(get_db),
