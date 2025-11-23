@@ -73,8 +73,8 @@ export const shedService = {
         });
     },
     // Aquí podrías añadir más servicios
-    getGalponesActivos: () => {
-        const endpoint = `/sensors/galpon/activos`;
+    getActiveSheds: () => {
+        const endpoint = `/sheds/activos`;
         return request(endpoint);
     },
 };
