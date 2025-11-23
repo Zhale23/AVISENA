@@ -37,7 +37,20 @@ def get_sensor_type_by_id(db: Session, id_tipo: int):
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener tipo de sensor: {e}")
         raise Exception("Error de base de datos al obtener el tipo de sensor")
-
+        
+def get_active_sensor_types(db: Session):
+    try:
+        query = text("""
+            SELECT id_tipo, nombre, modelo
+            FROM tipo_sensores
+            WHERE estado = true
+            ORDER BY nombre
+        """)
+        result = db.execute(query).mappings().all()
+        return result
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener tipos de sensores activos: {e}")
+        raise Exception("Error de base de datos al obtener los tipos de sensores activos")
 
 def get_all_sensor_types(db: Session):
     try:
