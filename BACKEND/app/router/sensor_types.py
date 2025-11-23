@@ -12,7 +12,7 @@ from app.crud import sensor_types as crud_sensor_types
 router = APIRouter()
 modulo = 17
 
-@router.post("/tipo-sensor/crear", status_code=status.HTTP_201_CREATED)
+@router.post("/crear", status_code=status.HTTP_201_CREATED)
 def create_sensor_type(
     tipo: SensorTypeCreate,
     db: Session = Depends(get_db),
@@ -28,7 +28,7 @@ def create_sensor_type(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/tipo-sensor/by-id/{id_tipo}", response_model=SensorTypeOut)
+@router.get("/by-id/{id_tipo}", response_model=SensorTypeOut)
 def get_sensor_type(
     id_tipo: int,
     db: Session = Depends(get_db),
@@ -45,8 +45,21 @@ def get_sensor_type(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/activos")
+def get_active_sensor_types(
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    try:
+        id_rol = user_token.id_rol
+        if not verify_permissions(db, id_rol, modulo, "seleccionar"):
+            raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        tipos_activos = crud_sensor_types.get_active_sensor_types(db)
+        return tipos_activos
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/tipo-sensor/all", response_model=List[SensorTypeOut])
+@router.get("/all", response_model=List[SensorTypeOut])
 def get_all_sensor_types(
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
@@ -61,7 +74,7 @@ def get_all_sensor_types(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/tipo-sensor/by-id/{id_tipo}")
+@router.put("/by-id/{id_tipo}")
 def update_sensor_type(
     id_tipo: int,
     tipo: SensorTypeUpdate,
@@ -80,7 +93,7 @@ def update_sensor_type(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/tipo-sensor/cambiar-estado/{id_tipo}", status_code=status.HTTP_200_OK)
+@router.put("/cambiar-estado/{id_tipo}", status_code=status.HTTP_200_OK)
 def change_sensor_type_status(
     id_tipo: int,
     nuevo_estado: bool,
