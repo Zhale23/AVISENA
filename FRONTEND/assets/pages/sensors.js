@@ -1,5 +1,5 @@
 import { sensorService } from "../js/api/sensor.service.js";
-import { tipoSensorService } from "../js/api/sensorType.service.js";
+import { sensorTypeService } from "../js/api/sensorType.service.js";
 import { shedService } from "../js/api/shed.service.js";
 
 let modalInstance = null;
@@ -20,9 +20,9 @@ function createSensorRow(sensor) {
       <td class="cell">
         <div class="form-check form-switch d-inline-block">
           <input class="form-check-input sensor-status-switch" type="checkbox" role="switch" 
-                 id="switch-${sensorId}" data-sensor-id="${sensorId}" 
+                 id="switch-sensor-${sensorId}" data-sensor-id="${sensorId}" 
                  ${sensor.estado ? 'checked' : ''}>
-          <label class="form-check-label" for="switch-${sensorId}">
+          <label class="form-check-label" for="switch-sensor-${sensorId}">
             ${sensor.estado ? 'Activo' : 'Inactivo'}
           </label>
         </div>
@@ -37,7 +37,7 @@ function createSensorRow(sensor) {
 }
 
 function filterSensors() {
-  const estadoFilter = document.getElementById("filter-estado").value;
+  const estadoFilter = document.getElementById("filter-sensor-estado").value;
   const tipoFilter = document.getElementById("filter-tipo").value;
   const galponFilter = document.getElementById("filter-galpon").value;
 
@@ -60,8 +60,6 @@ function filterSensors() {
   const tableBody = document.getElementById("sensors-table-body");
   if (!tableBody) return;
 
-
-
   if (filteredSensors.length > 0) {
     tableBody.innerHTML = filteredSensors.map(createSensorRow).join("");
   } else {
@@ -75,7 +73,7 @@ function filterSensors() {
 
 async function cargarFiltros() {
   try {
-    allTipos = await tipoSensorService.getTipoSensores();
+    allTipos = await sensorTypeService.getSensorTypes();
     const filterTipo = document.getElementById("filter-tipo");
     if (filterTipo) {
       filterTipo.innerHTML = '<option value="all">Todos los tipos</option>';
@@ -84,7 +82,7 @@ async function cargarFiltros() {
       });
     }
 
-    allGalpones = await shedService.getGalponesActivos();
+    allGalpones = await shedService.getActiveSheds();
     const filterGalpon = document.getElementById("filter-galpon");
     if (filterGalpon) {
       filterGalpon.innerHTML = '<option value="all">Todos los galpones</option>';
@@ -99,24 +97,20 @@ async function cargarFiltros() {
 
 async function cargarTiposSensores() {
   try {
-    const tipos = await tipoSensorService.getTipoSensoresActivos();
+    const tipos = await sensorTypeService.getActiveSensorTypes();
 
-    const selectCrear = document.getElementById("create-id_tipo_sensor");
+    const selectCrear = document.getElementById("create-sensor-id_tipo_sensor");
     if (selectCrear) {
-      selectCrear.innerHTML =
-        '<option value="" disabled selected>Seleccione un tipo</option>';
-
+      selectCrear.innerHTML = '<option value="" disabled selected>Seleccione un tipo</option>';
       tipos.forEach((t) => {
         if (t.id_tipo !== null && t.id_tipo !== undefined)
           selectCrear.innerHTML += `<option value="${t.id_tipo}">${t.nombre} - ${t.modelo}</option>`;
       });
     }
 
-    const selectEditar = document.getElementById("edit-id_tipo_sensor");
+    const selectEditar = document.getElementById("edit-sensor-id_tipo_sensor");
     if (selectEditar) {
-      selectEditar.innerHTML =
-        '<option value="" disabled selected>Seleccione un tipo</option>';
-
+      selectEditar.innerHTML = '<option value="" disabled selected>Seleccione un tipo</option>';
       tipos.forEach((t) => {
         if (t.id_tipo !== null && t.id_tipo !== undefined)
           selectEditar.innerHTML += `<option value="${t.id_tipo}">${t.nombre} - ${t.modelo}</option>`;
@@ -129,21 +123,23 @@ async function cargarTiposSensores() {
 
 async function cargarGalpones() {
   try {
-    const galpones = await shedService.getGalponesActivos();
+    const galpones = await shedService.getActiveSheds();
 
-    const selectCrear = document.getElementById("create-id_galpon");
-    selectCrear.innerHTML =
-      '<option value="" disabled selected>Seleccione un galpón</option>';
-    galpones.forEach((g) => {
-      selectCrear.innerHTML += `<option value="${g.id_galpon}">${g.nombre}</option>`;
-    });
+    const selectCrear = document.getElementById("create-sensor-id_galpon");
+    if (selectCrear) {
+      selectCrear.innerHTML = '<option value="" disabled selected>Seleccione un galpón</option>';
+      galpones.forEach((g) => {
+        selectCrear.innerHTML += `<option value="${g.id_galpon}">${g.nombre}</option>`;
+      });
+    }
 
-    const selectEditar = document.getElementById("edit-id_galpon");
-    selectEditar.innerHTML =
-      '<option value="" disabled selected>Seleccione un galpón</option>';
-    galpones.forEach((g) => {
-      selectEditar.innerHTML += `<option value="${g.id_galpon}">${g.nombre}</option>`;
-    });
+    const selectEditar = document.getElementById("edit-sensor-id_galpon");
+    if (selectEditar) {
+      selectEditar.innerHTML = '<option value="" disabled selected>Seleccione un galpón</option>';
+      galpones.forEach((g) => {
+        selectEditar.innerHTML += `<option value="${g.id_galpon}">${g.nombre}</option>`;
+      });
+    }
   } catch (error) {
     console.error("Error al cargar galpones:", error);
   }
@@ -151,16 +147,16 @@ async function cargarGalpones() {
 
 async function openEditModal(sensorId) {
   const modalElement = document.getElementById("edit-sensor-modal");
-  if (!modalInstance){
+  if (!modalInstance) {
     modalInstance = new bootstrap.Modal(modalElement);
   }
   try {
     const sensor = await sensorService.getSensorById(sensorId);
     document.getElementById("edit-sensor-id").value = sensor.id_sensor;
-    document.getElementById("edit-nombre").value = sensor.nombre;
-    document.getElementById("edit-id_tipo_sensor").value = sensor.id_tipo_sensor;
-    document.getElementById("edit-id_galpon").value = sensor.id_galpon;
-    document.getElementById("edit-descripcion").value = sensor.descripcion;
+    document.getElementById("edit-sensor-nombre").value = sensor.nombre;
+    document.getElementById("edit-sensor-id_tipo_sensor").value = sensor.id_tipo_sensor;
+    document.getElementById("edit-sensor-id_galpon").value = sensor.id_galpon;
+    document.getElementById("edit-sensor-descripcion").value = sensor.descripcion;
     modalInstance.show();
   } catch (error) {
     console.error("Error al obtener sensor:", error);
@@ -176,7 +172,7 @@ async function handleUpdateSubmit(event) {
   event.preventDefault();
 
   const sensorId = document.getElementById("edit-sensor-id").value;
-  const descripcion = document.getElementById("edit-descripcion").value;
+  const descripcion = document.getElementById("edit-sensor-descripcion").value;
 
   if (descripcion.length < 10) {
     Swal.fire({
@@ -188,29 +184,26 @@ async function handleUpdateSubmit(event) {
   }
 
   const updatedData = {
-    nombre: document.getElementById("edit-nombre").value,
-    id_tipo_sensor: Number(document.getElementById("edit-id_tipo_sensor").value),
-    id_galpon: Number(document.getElementById("edit-id_galpon").value),
-    descripcion: document.getElementById("edit-descripcion").value,
+    nombre: document.getElementById("edit-sensor-nombre").value,
+    id_tipo_sensor: Number(document.getElementById("edit-sensor-id_tipo_sensor").value),
+    id_galpon: Number(document.getElementById("edit-sensor-id_galpon").value),
+    descripcion: document.getElementById("edit-sensor-descripcion").value,
   };
 
   try {
     await sensorService.updateSensor(sensorId, updatedData);
     modalInstance.hide();
-
     Swal.fire({
       icon: "success",
       title: "Éxito",
       text: "Sensor actualizado exitosamente.",
     });
-
     init();
   } catch (error) {
     console.error("Error al actualizar sensor:", error);
-
     Swal.fire({
       icon: "error",
-      title: "Actualizar",
+      title: "Error",
       text: "No se pudo actualizar el sensor.",
     });
   }
@@ -219,10 +212,10 @@ async function handleUpdateSubmit(event) {
 async function handleCreateSubmit(event) {
   event.preventDefault();
 
-  const nombre = document.getElementById("create-nombre").value.trim();
-  const id_tipo_sensor = Number(document.getElementById("create-id_tipo_sensor").value);
-  const id_galpon = Number(document.getElementById("create-id_galpon").value);
-  const descripcion = document.getElementById("create-descripcion").value.trim();
+  const nombre = document.getElementById("create-sensor-nombre").value.trim();
+  const id_tipo_sensor = Number(document.getElementById("create-sensor-id_tipo_sensor").value);
+  const id_galpon = Number(document.getElementById("create-sensor-id_galpon").value);
+  const descripcion = document.getElementById("create-sensor-descripcion").value.trim();
 
   if (descripcion.length < 10) {
     Swal.fire({
@@ -233,30 +226,20 @@ async function handleCreateSubmit(event) {
     return;
   }
 
-  const newSensorData = {
-    nombre,
-    id_tipo_sensor,
-    id_galpon,
-    descripcion,
-    estado: true,
-  };
+  const newSensorData = { nombre, id_tipo_sensor, id_galpon, descripcion, estado: true };
 
   try {
     await sensorService.createSensor(newSensorData);
-
     if (createModalInstance) createModalInstance.hide();
     document.getElementById("create-sensor-form").reset();
-
     Swal.fire({
       icon: "success",
       title: "Éxito",
       text: "Sensor creado exitosamente.",
     });
-
     init();
   } catch (error) {
     console.error("Error al crear sensor:", error);
-
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -283,13 +266,11 @@ async function handleStatusSwitch(event) {
     if (result.isConfirmed) {
       try {
         await sensorService.changeSensorStatus(sensorId, newStatus);
-
         Swal.fire({
           icon: "success",
           title: "Éxito",
           text: `El sensor ha sido ${newStatus ? "activado" : "desactivado"}.`,
         });
-
         init();
       } catch (error) {
         console.error("Error al cambiar estado:", error);
@@ -311,7 +292,6 @@ async function handleTableClick(event) {
   if (editButton) {
     const sensorId = editButton.dataset.sensorId;
     openEditModal(sensorId);
-    return;
   }
 }
 
@@ -324,8 +304,12 @@ async function init() {
   if (!tableBody) return;
 
   const colspan = 6;
-  tableBody.innerHTML =
-    `<tr><td colspan="${colspan}" class="text-center">Cargando sensores</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center">Cargando sensores</td></tr>`;
+
+  const createModalElement = document.getElementById("create-sensor-modal");
+  if (createModalElement && !createModalInstance) {
+    createModalInstance = new bootstrap.Modal(createModalElement);
+  }
 
   await cargarFiltros();
   await cargarTiposSensores();
@@ -338,18 +322,16 @@ async function init() {
     if (allSensors.length > 0) {
       tableBody.innerHTML = allSensors.map(createSensorRow).join("");
     } else {
-      tableBody.innerHTML =
-        `<tr><td colspan="${colspan}" class="text-center">No hay sensores registrados.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center">No hay sensores registrados.</td></tr>`;
     }
   } catch (error) {
     console.error("Error al cargar sensores:", error);
-    tableBody.innerHTML =
-      `<tr><td colspan="${colspan}" class="text-center text-danger">Error al cargar datos.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-danger">Error al cargar datos.</td></tr>`;
   }
 
   const editForm = document.getElementById("edit-sensor-form");
   const createForm = document.getElementById("create-sensor-form");
-  const filterEstado = document.getElementById("filter-estado");
+  const filterEstado = document.getElementById("filter-sensor-estado");
   const filterTipo = document.getElementById("filter-tipo");
   const filterGalpon = document.getElementById("filter-galpon");
 
@@ -380,5 +362,17 @@ async function init() {
     filterGalpon.addEventListener("change", handleFilterChange);
   }
 }
+
+document.addEventListener("sensorTypesUpdated", async () => {
+  try {
+    await cargarFiltros();
+    await cargarTiposSensores();
+    const sensors = await sensorService.getSensors();
+    allSensors = sensors || [];
+    filterSensors();
+  } catch (err) {
+    console.error("Error al procesar sensorTypesUpdated:", err);
+  }
+});
 
 export { init };
