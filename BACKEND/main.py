@@ -7,7 +7,7 @@ app = FastAPI()
 # Incluir en el objeto app los routers
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(lands.router, prefix="/lands", tags=["lands"])
-app.include_router(incidentes_genrales.router, prefix="/incidentes_genrales", tags=["incidentes_generales"])
+app.include_router(incidentes_generales.router, prefix="/incidentes_generales", tags=["incidentes_generales"])
 app.include_router(registro_sensores.router, prefix="/registro-sensores", tags=["Registro Sensores"])
 app.include_router(categories.router, prefix="/categories", tags=["categories"])
 app.include_router(inventory.router, prefix="/inventory", tags=["inventory"])
