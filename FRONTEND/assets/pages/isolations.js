@@ -45,9 +45,9 @@ async function fetchIsolations(page = 1, page_size = 10, fechaInicio = "", fecha
 
   if (fechaInicio && fechaFin) {
     // USAR EL MISMO FORMATO QUE EN EL CURL: YYYY-MM-DD sin tiempo
-    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/isolations/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
+    url = `http://avisenabackend.20.168.14.245.sslip.io:10000/isolations/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
   } else {
-    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/isolations/all_isolations-pag?page=${page}&limit=${page_size}`;
+    url = `http://avisenabackend.20.168.14.245.sslip.io:10000/isolations/all_isolations-pag?page=${page}&limit=${page_size}`;
   }
 
   try {
@@ -186,7 +186,7 @@ async function loadGalponesSelectCreate() {
 
   try {
     const token = localStorage.getItem('access_token');
-    const res = await fetch('http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/sheds/all', {
+    const res = await fetch('http://avisenabackend.20.168.14.245.sslip.io:10000/sheds/all', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -246,7 +246,7 @@ async function loadGalponesSelectEdit(selectedId) {
 
   try {
     const token = localStorage.getItem('access_token');
-    const res = await fetch('http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/sheds/all', {
+    const res = await fetch('http://avisenabackend.20.168.14.245.sslip.io:10000/sheds/all', {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
     });
     if (!res.ok) throw new Error('Error al cargar galpones');
