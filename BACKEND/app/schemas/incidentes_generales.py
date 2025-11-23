@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class IncidenteGeneralBase(BaseModel):
@@ -19,3 +19,14 @@ class IncidenteGeneralUpdate(BaseModel):
 
 class IncidenteGeneralOut(IncidenteGeneralBase):
     id_incidente: int
+    nombre_finca: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+# Nuevo schema para la respuesta paginada
+class IncidenteGeneralPaginado(BaseModel):
+    incidentes: List[IncidenteGeneralOut]
+    total: int
+    skip: int
+    limit: int
