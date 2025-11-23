@@ -277,7 +277,7 @@ async function loadGalponesSelectEdit(selectedId) {
 
   try {
     const token = localStorage.getItem('access_token');
-    const res = await fetch('http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/sheds/all', {
+    const res = await fetch('http://avisenabackend.20.168.14.245.sslip.io:10000/sheds/all', {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
     });
     if (!res.ok) throw new Error('Error al cargar galpones');
