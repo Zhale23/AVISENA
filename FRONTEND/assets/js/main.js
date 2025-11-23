@@ -30,11 +30,6 @@ const loadContent = async (page) => {
         .then(incident_chickenModule => incident_chickenModule.init());  // llama la función modulo en isolations.js
     }
 
-    if (page === 'chickens') {
-      import('../pages/chickens.js')
-        .then(isolationModule => isolationModule.init());  // llama la función modulo en isolations.js
-    }
-
     if (page === 'rescue') {
       import('../pages/rescue.js')
         .then(isolationModule => isolationModule.init());  // llama la función modulo en isolations.js
