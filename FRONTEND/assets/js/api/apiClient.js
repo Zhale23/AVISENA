@@ -5,7 +5,9 @@
 // La importamos para usarla en caso de un error 401.
 import { authService } from './auth.service.js';
 
+const proxyUrl = "https://api.allorigins.win/raw?url=";
 const API_BASE_URL = 'http://avisenabackend.20.168.14.245/';
+const loginUrl = proxyUrl + API_BASE_URL;
 
 /**
  * Cliente central para realizar todas las peticiones a la API.
@@ -14,7 +16,7 @@ const API_BASE_URL = 'http://avisenabackend.20.168.14.245/';
  * @returns {Promise<any>} - La respuesta de la API en formato JSON.
  */
 export async function request(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${loginUrl}${endpoint}`;
     const token = localStorage.getItem('access_token');
 
     // Configuramos las cabeceras por defecto
