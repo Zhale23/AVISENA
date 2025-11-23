@@ -1,18 +1,4 @@
-// Cliente HTTP universal para TODOS los módulos
 import { authService } from './auth.service.js';
-
-// Configuración - FORZAR HTTPS en producción
-const getApiBaseUrl = () => {
-    const isProduction = window.location.hostname.includes('render.com');
-    const backendHost = 'avisenabackend.20.168.14.245.sslip.io:10000';
-    
-    // En producción usar HTTPS, en desarrollo usar HTTP
-    return isProduction 
-        ? `https://${backendHost}`
-        : `http://${backendHost}`;
-};
-
-const API_BASE_URL = getApiBaseUrl();
 
 const PROXIES = [
     "https://api.allorigins.win/raw?url=",
@@ -21,14 +7,13 @@ const PROXIES = [
     "https://noki-cors.herokuapp.com/"
 ];
 
-/**
- * Función principal que usan TODOS los módulos
- */
+const BACKEND_URL = 'http://avisenabackend.20.168.14.245.sslip.io:10000';
+
 export async function request(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const targetUrl = `${BACKEND_URL}${endpoint}`;
     const token = localStorage.getItem('access_token');
 
-    console.log(`🔍 [apiclient] Request a: ${url}`);
+    console.log(`🔍 [apiclient] Request a: ${endpoint}`);
 
     // Configurar headers
     const headers = {
@@ -53,13 +38,8 @@ export async function request(endpoint, options = {}) {
     }
 
     try {
-        // Intentar conexión directa primero
-        let response = await fetch(url, fetchOptions);
-        
-        if (!response.ok) {
-            // Si falla, intentar con proxies
-            response = await tryWithProxies(url, fetchOptions);
-        }
+        // Usar proxies directamente (sin intentar conexión directa)
+        const response = await tryWithProxies(targetUrl, fetchOptions);
 
         // Manejar errores HTTP
         if (response.status === 401 || response.status === 403) {
@@ -76,25 +56,17 @@ export async function request(endpoint, options = {}) {
     } catch (error) {
         console.error(`❌ [apiclient] Error en ${endpoint}:`, error);
         
-        // Mostrar alerta específica para Mixed Content
-        if (error.message.includes('Mixed Content') || error.message.includes('Failed to fetch')) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error de conexión',
-                html: `No se puede conectar con el servidor backend.<br><br>
-                       <strong>Problema:</strong> El backend no tiene certificado SSL.<br>
-                       <strong>Solución:</strong> Contactar al administrador para configurar HTTPS en el backend.`,
-                confirmButtonColor: '#d33'
-            });
-        }
+        await Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'No se puede conectar con el servidor. Todos los métodos fallaron.',
+            confirmButtonColor: '#d33'
+        });
         
         throw error;
     }
 }
 
-/**
- * Intentar con diferentes proxies
- */
 async function tryWithProxies(url, options) {
     for (let proxy of PROXIES) {
         try {
@@ -114,9 +86,6 @@ async function tryWithProxies(url, options) {
     throw new Error('Todos los proxies fallaron');
 }
 
-/**
- * Manejar errores de autenticación
- */
 async function handleAuthError(status) {
     const title = status === 401 ? 'Sesión expirada' : 'Acceso denegado';
     const text = status === 401 
@@ -137,5 +106,4 @@ async function handleAuthError(status) {
     }
 }
 
-// Exportación por defecto
 export default { request };
