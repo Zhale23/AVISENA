@@ -1,72 +1,113 @@
-import { request } from './apiclient.js';
+// Cliente HTTP universal para TODOS los módulos
+import { authService } from './auth.service.js';
 
-export const userService = {
-    async getUsers() {
-        try {
-            console.log('🔍 [userService] Iniciando getUsers...');
-            
-            // Verificar si hay token
-            const token = localStorage.getItem('access_token');
-            if (!token) {
-                throw new Error('No hay token de autenticación');
-            }
-            
-            console.log('🔍 [userService] Token encontrado, haciendo request...');
-            
-            const response = await request('/users/get-by-centro?centro_id=1');
-            
-            // Validar que la respuesta no sea undefined
-            if (response === undefined || response === null) {
-                throw new Error('Respuesta undefined del servidor');
-            }
-            
-            console.log('✅ [userService] Respuesta exitosa:', typeof response, response);
-            return response;
-            
-        } catch (error) {
-            console.error('❌ [userService] Error crítico en getUsers:', {
-                message: error.message,
-                name: error.name,
-                stack: error.stack
-            });
-            
-            // Mostrar alerta al usuario
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error de conexión',
-                    text: 'No se pudieron cargar los usuarios. Verifique la conexión.',
-                    confirmButtonColor: '#d33'
-                });
-            }
-            
-            throw error;
+// Configuración
+const API_BASE_URL = 'http://avisenabackend.20.168.14.245.sslip.io:10000';
+const PROXIES = [
+    "https://api.allorigins.win/raw?url=",
+    "https://corsproxy.io/?", 
+    "https://proxy.cors.sh/",
+    "https://noki-cors.herokuapp.com/"
+];
+
+/**
+ * Función principal que usan TODOS los módulos
+ */
+export async function request(endpoint, options = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const token = localStorage.getItem('access_token');
+
+    // Configurar headers
+    const headers = {
+        'Content-Type': 'application/json',
+        'accept': 'application/json',
+        ...options.headers,
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const fetchOptions = {
+        ...options,
+        headers,
+        mode: 'cors'
+    };
+
+    // Convertir body a JSON si es objeto
+    if (options.body && typeof options.body === 'object') {
+        fetchOptions.body = JSON.stringify(options.body);
+    }
+
+    try {
+        console.log(`🔍 [apiclient] Request a: ${endpoint}`);
+        
+        // Intentar conexión directa primero
+        let response = await fetch(url, fetchOptions);
+        
+        if (!response.ok) {
+            // Si falla, intentar con proxies
+            response = await tryWithProxies(url, fetchOptions);
         }
-    },
 
-    async getUsersByCentro(centroId) {
+        // Manejar errores HTTP
+        if (response.status === 401 || response.status === 403) {
+            await handleAuthError(response.status);
+            throw new Error('Error de autenticación');
+        }
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return response.status === 204 ? {} : await response.json();
+
+    } catch (error) {
+        console.error(`❌ [apiclient] Error en ${endpoint}:`, error);
+        throw error;
+    }
+}
+
+/**
+ * Intentar con diferentes proxies
+ */
+async function tryWithProxies(url, options) {
+    for (let proxy of PROXIES) {
         try {
-            if (!centroId) {
-                throw new Error('centroId es requerido');
-            }
-
-            const response = await request(`/users/get-by-centro?centro_id=${centroId}`);
+            const proxyUrl = proxy + encodeURIComponent(url);
+            console.log(`🔄 [apiclient] Intentando proxy: ${proxy}`);
             
-            // Validar respuesta
-            if (response === undefined) {
-                console.warn('⚠️ Respuesta undefined, retornando array vacío');
-                return [];
-            }
-            
-            return response;
-            
+            const response = await fetch(proxyUrl, options);
+            if (response.ok) return response;
         } catch (error) {
-            console.error(`Error en getUsersByCentro(${centroId}):`, error);
-            
-            // En caso de error, retornar array vacío para que la UI no se rompa
-            return [];
+            continue;
         }
     }
-};
+    throw new Error('Todos los proxies fallaron');
+}
 
-export default userService;
+/**
+ * Manejar errores de autenticación
+ */
+async function handleAuthError(status) {
+    const title = status === 401 ? 'Sesión expirada' : 'Acceso denegado';
+    const text = status === 401 
+        ? 'Su sesión ha expirada. Por favor, inicie sesión nuevamente.'
+        : 'No tiene permisos para realizar esta acción.';
+
+    if (typeof Swal !== 'undefined') {
+        await Swal.fire({
+            icon: 'error',
+            title: title,
+            text: text,
+            confirmButtonColor: '#d33'
+        });
+    }
+    
+    if (authService && authService.logout) {
+        authService.logout();
+    }
+}
+
+// Exportación por defecto
+export default { request };
