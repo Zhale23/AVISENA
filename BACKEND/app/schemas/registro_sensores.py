@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import List, Optional
 
 class RegistroSensorBase(BaseModel):
     id_sensor: int
@@ -12,4 +13,14 @@ class RegistroSensorCreate(RegistroSensorBase):
 
 class RegistroSensorOut(RegistroSensorBase):
     id_registro: int
-    nombre_sensor: str | None = None  # viene del JOIN
+    nombre_sensor: Optional[str] = None  # viene del JOIN
+
+    class Config:
+        from_attributes = True
+
+# Nuevo schema para la respuesta paginada
+class RegistroSensorPaginado(BaseModel):
+    registros: List[RegistroSensorOut]
+    total: int
+    skip: int
+    limit: int
