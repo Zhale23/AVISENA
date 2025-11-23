@@ -1,72 +1,75 @@
 import { request } from './apiClient.js';
 
 export const sensorService = {
+
     /**
+     * Create a new sensor
+     * @param {object} sensorData
      * @returns {Promise<object>}
-    */
-    getSensors: () => {
-        const endpoint = `/sensors/sensor/all`;
-        return request(endpoint);
+     */
+    createSensor: (sensorData) => {
+        return request(`/sensors/crear`, {
+            method: 'POST',
+            body: JSON.stringify(sensorData),
+        });
     },
 
     /**
+     * Get all sensors
+     * @returns {Promise<object>}
+     */
+    getSensors: () => {
+        return request(`/sensors/all`);
+    },
+
+    /**
+     * Get sensor by ID
      * @param {number} sensorId
      * @returns {Promise<object>}
      */
     getSensorById: (sensorId) => {
-        const endpoint = `/sensors/sensor/by-id/${sensorId}`;
-        return request(endpoint);
+        return request(`/sensors/by-id/${sensorId}`);
     },
 
+    /**
+     * Get sensors by shed (galpón)
+     * @param {number} galponId
+     * @returns {Promise<object>}
+     */
+    getSensorsByShed: (galponId) => {
+        return request(`/sensors/by-galpon/${galponId}`);
+    },
 
     /**
+     * Get active sheds (galpones)
+     * @returns {Promise<object>}
+     */
+    getActiveSheds: () => {
+        return request(`/sheds/activos`);
+    },
+
+    /**
+     * Update a sensor
      * @param {number} sensorId
      * @param {object} sensorData
      * @returns {Promise<object>}
      */
     updateSensor: (sensorId, sensorData) => {
-        return request(`/sensors/sensor/by-id/${sensorId}`, {
+        return request(`/sensors/by-id/${sensorId}`, {
             method: 'PUT',
             body: JSON.stringify(sensorData),
         });
     },
 
     /**
+     * Change sensor active/inactive status
      * @param {number} sensorId
      * @param {boolean} newStatus
      * @returns {Promise<object>}
      */
     changeSensorStatus: (sensorId, newStatus) => {
-        return request(`/sensors/sensor/cambiar-estado/${sensorId}?nuevo_estado=${newStatus}`, {
+        return request(`/sensors/cambiar-estado/${sensorId}?nuevo_estado=${newStatus}`, {
             method: 'PUT',
         });
-    },
-
-    /**
-     * @param {number} galponId
-     * @returns {Promise<object>}
-     */
-    getSensorsByGalpon: (galponId) => {
-        const endpoint = `/sensors/sensor/by-galpon/${galponId}`;
-        return request(endpoint);
-    },
-
-    getSensorsByTipo: (idTipo) => {
-        return request(`/sensors/sensor/by-tipo/${idTipo}`);
-    },
-
-    /**
-     * @param {object} sensorData
-     * @returns {Promise<object>}
-     */
-    createSensor: (sensorData) => {
-        return request(`/sensors/sensor/crear`, {
-            method: 'POST',
-            body: JSON.stringify(sensorData),
-        });
-    },
-    getGalponesActivos: () => {
-        const endpoint = `/sensors/galpon/activos`;
-        return request(endpoint);
     },
 };
