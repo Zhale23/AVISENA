@@ -1,4 +1,4 @@
-import { stockService } from "../api/stock.service.js";
+import { stockService } from "../js/api/stock.service.js";
 
 let modalEditInstance = null;
 
