@@ -1,8 +1,19 @@
 // Cliente HTTP universal para TODOS los módulos
 import { authService } from './auth.service.js';
 
-// Configuración
-const API_BASE_URL = 'http://avisenabackend.20.168.14.245.sslip.io:10000';
+// Configuración - FORZAR HTTPS en producción
+const getApiBaseUrl = () => {
+    const isProduction = window.location.hostname.includes('render.com');
+    const backendHost = 'avisenabackend.20.168.14.245.sslip.io:10000';
+    
+    // En producción usar HTTPS, en desarrollo usar HTTP
+    return isProduction 
+        ? `https://${backendHost}`
+        : `http://${backendHost}`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
 const PROXIES = [
     "https://api.allorigins.win/raw?url=",
     "https://corsproxy.io/?", 
@@ -16,6 +27,8 @@ const PROXIES = [
 export async function request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     const token = localStorage.getItem('access_token');
+
+    console.log(`🔍 [apiclient] Request a: ${url}`);
 
     // Configurar headers
     const headers = {
@@ -40,8 +53,6 @@ export async function request(endpoint, options = {}) {
     }
 
     try {
-        console.log(`🔍 [apiclient] Request a: ${endpoint}`);
-        
         // Intentar conexión directa primero
         let response = await fetch(url, fetchOptions);
         
@@ -64,6 +75,19 @@ export async function request(endpoint, options = {}) {
 
     } catch (error) {
         console.error(`❌ [apiclient] Error en ${endpoint}:`, error);
+        
+        // Mostrar alerta específica para Mixed Content
+        if (error.message.includes('Mixed Content') || error.message.includes('Failed to fetch')) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error de conexión',
+                html: `No se puede conectar con el servidor backend.<br><br>
+                       <strong>Problema:</strong> El backend no tiene certificado SSL.<br>
+                       <strong>Solución:</strong> Contactar al administrador para configurar HTTPS en el backend.`,
+                confirmButtonColor: '#d33'
+            });
+        }
+        
         throw error;
     }
 }
@@ -78,8 +102,12 @@ async function tryWithProxies(url, options) {
             console.log(`🔄 [apiclient] Intentando proxy: ${proxy}`);
             
             const response = await fetch(proxyUrl, options);
-            if (response.ok) return response;
+            if (response.ok) {
+                console.log(`✅ [apiclient] Éxito con proxy: ${proxy}`);
+                return response;
+            }
         } catch (error) {
+            console.log(`❌ [apiclient] Proxy falló: ${proxy}`);
             continue;
         }
     }
