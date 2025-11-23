@@ -6,10 +6,10 @@ let createModalInstance = null;
 function createTypeChickenRow(typeChicken) {
   return `
     <tr>
-      <td class="px-0 text-center">${typeChicken.id_tipo_gallinas}</td>
-      <td class="px-0 text-center">${typeChicken.raza}</td>
-      <td class="px-0 text-center">${typeChicken.descripcion}</td>
-      <td class="px-0 text-center text-end">
+      <td class="px-0 ">${typeChicken.id_tipo_gallinas}</td>
+      <td class="px-0 ">${typeChicken.raza}</td>
+      <td class="px-0 ">${typeChicken.descripcion}</td>
+      <td class="px-0 text-end">
           <button class="btn btn-sm btn-success btn-edit-tipo-gallina" data-tipo-gallina-id="${typeChicken.id_tipo_gallinas}"><i class="fa-regular fa-pen-to-square"></i></button>
       </td>
     </tr>
