@@ -6,7 +6,7 @@
 import { authService } from './auth.service.js';
 
 const proxyUrl = "https://api.allorigins.win/raw?url=";
-const API_BASE_URL = 'http://avisenabackend.20.168.14.245/';
+const API_BASE_URL = 'http://avisenabackend.20.168.14.245';
 const loginUrl = proxyUrl + API_BASE_URL;
 
 /**
