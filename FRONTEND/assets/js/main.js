@@ -20,11 +20,6 @@ const loadContent = async (page) => {
     //  // Actualizar clase active en el menú
     // updateActiveMenuItem(page);
 
-    // cuando se carga la página users
-    if (page === 'usuarios') {
-      import('../pages/users.js')
-        .then(usersModule => usersModule.init());  // llama la función modulo en user.js
-    }
     
     if (page === 'aislamientos') {
       import('../pages/isolations.js')
@@ -52,61 +47,61 @@ const loadContent = async (page) => {
     
     //______________ GRUPO A____________
     if (page === 'incidentes') {
-      import('./pages/incidentes.js')
+      import('../pages/incidentes.js')
         .then(incidentesModule => incidentesModule.init());
     }
     if (page === 'galpones') {
-      import('./pages/sheds.js')
+      import('../pages/sheds.js')
         .then(shedsModule => shedsModule.init());  // llama la función modulo en sheds.js
     }
     if (page === 'categorias_inventario') {
-      import('./pages/categories_inventory.js')
+      import('../pages/categories_inventory.js')
         .then(categoriesInventoryModule => categoriesInventoryModule.init());
     }
     if (page === 'inventario') {
-      import('./pages/inventory.js')
+      import('../pages/inventory.js')
         .then(inventoryModule => inventoryModule.init());
     }
     if (page === "sensors") {
-      import("./pages/sensors.js").then((sensorsModule) =>
+      import("../pages/sensors.js").then((sensorsModule) =>
         sensorsModule.init()),
-      import('./pages/registro-sensores.js')
+      import('../pages/registro-sensores.js')
         .then(registroSensoresModule => registroSensoresModule.init()),
-      import("./pages/sensor_types.js").then((sensorTypesModule) =>
+      import("../pages/sensor_types.js").then((sensorTypesModule) =>
         sensorTypesModule.init());
     }
 
     if (page === 'lands') {
-      import('./pages/lands.js')
+      import('../pages/lands.js')
         .then(landsModule => landsModule.init());
     }
 
     if (page === 'produccion_huevos') {
-      import('./pages/produccionHuevos.js')
+      import('../pages/produccionHuevos.js')
         .then(module => module.init());
     }
     if (page === 'stock') {
-      import('./pages/stock.js')
+      import('../pages/stock.js')
         .then(module => module.init());
     }
 
     if (page === 'users') {
-      import('./pages/users.js')
+      import('../pages/users.js')
         .then(usersModule => usersModule.init());
     }
 
     if (page === 'metodos_pago') {
-      import('./pages/metodo_pago.js')
+      import('../pages/metodo_pago.js')
         .then(modulo => modulo.init());
     }
 
     if (page === 'detalles_venta'){
-      import('./pages/detalles_venta.js').then(ventaDetalleModule => ventaDetalleModule.init());
+      import('../pages/detalles_venta.js').then(ventaDetalleModule => ventaDetalleModule.init());
       
     }
 
     if (page === 'tareas') {
-      import('./pages/tareas.js')
+      import('../pages/tareas.js')
         .then(module => {
           console.log("cargando tareas , esto para terminar que el dom cargue.");
           requestAnimationFrame(() => {
@@ -117,12 +112,12 @@ const loadContent = async (page) => {
     }
 
     if(page === 'ventas') {
-      import ('./pages/ventas.js')
+      import ('../pages/ventas.js')
         .then(ventasModule => ventasModule.init());
     }
 
     if(page === 'info_venta') {
-      import ('./pages/info_venta.js')
+      import ('../pages/info_venta.js')
         .then(infoVentaModule => infoVentaModule.init());
     }
 
@@ -131,18 +126,6 @@ const loadContent = async (page) => {
     mainContent.innerHTML = `<h3 class="text-center text-danger p-5">No se pudo cargar el contenido. Revisa la consola (F12).</h3>`;
   }
 
-  // Función para actualizar el item activo en el menú
-// const updateActiveMenuItem = (page) => {
-//   // Remover clase active de todos los links
-//   document.querySelectorAll('#app-nav-main .nav-link').forEach(link => {
-//     link.classList.remove('active');
-//   });
-  
-//   // Agregar clase active al link correspondiente
-//   const activeLink = document.querySelector(`#app-nav-main .nav-link[data-page="${page}"]`);
-//   if (activeLink) {
-//     activeLink.classList.add('active');
-//   }
 };
 
 navLinks.addEventListener('click', (event) => {
