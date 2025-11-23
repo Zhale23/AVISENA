@@ -1,4 +1,4 @@
-import { request } from './api/apiClient';
+import { request } from './api/apiClient.js';
 
 export const chickenService = {
     /**
