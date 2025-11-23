@@ -844,7 +844,7 @@ async function fetchWithDates(page, size) {
     const endpoint = `/rescue/all-pag-by-date?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${size}`;
     const token = localStorage.getItem('access_token');
     
-    const response = await fetch(`http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000${endpoint}`, {
+    const response = await fetch(`http://avisenabackend.20.168.14.245.sslip.io:10000${endpoint}`, {
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -862,7 +862,7 @@ async function fetchWithoutDates(page, size) {
     const endpoint = `/rescue/all-pag?page=${page}&page_size=${size}`;
     const token = localStorage.getItem('access_token');
     
-    const response = await fetch(`http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000${endpoint}`, {
+    const response = await fetch(`http://avisenabackend.20.168.14.245.sslip.io:10000${endpoint}`, {
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
