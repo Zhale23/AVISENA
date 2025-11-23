@@ -10,14 +10,14 @@ function createStockRow(stock) {
 
   return `
     <tr>
-        <td>${stock.id_producto}</td>
-        <td>${stock.unidad_medida}</td>
-        <td>${stock.id_produccion}</td>
-        <td>${stock.cantidad_disponible}</td>
+        <td class="px-0">${stock.id_producto}</td>
+        <td class="px-0">${stock.unidad_medida}</td>
+        <td class="px-0">${stock.id_produccion}</td>
+        <td class="px-0" >${stock.cantidad_disponible}</td>
 
-        <td class="text-end">
-            <button class="btn btn-sm btn-info btn-edit-stock" data-id="${stock.id_producto}">
-                <i class="fa-regular fa-pen-to-square"></i>
+        <td class="text-end justify-content-end gap-2">
+            <button class="btn btn-sm btn-edit-stock" data-id="${stock.id_producto}" style="color: black; background-color:rgb(117, 189, 127);">
+                <i class="fa fa-pen me-0"></i>
             </button>
 
         </td>
