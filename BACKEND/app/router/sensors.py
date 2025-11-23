@@ -12,7 +12,7 @@ from app.crud import sensors as crud_sensors
 router = APIRouter()
 modulo = 16
 
-@router.post("/sensor/crear", status_code=status.HTTP_201_CREATED)
+@router.post("/crear", status_code=status.HTTP_201_CREATED)
 def create_sensor(
     sensor: SensorCreate,
     db: Session = Depends(get_db),
@@ -28,7 +28,7 @@ def create_sensor(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/sensor/by-id/{id_sensor}", response_model=SensorOut)
+@router.get("/by-id/{id_sensor}", response_model=SensorOut)
 def get_sensor(
     id_sensor: int,
     db: Session = Depends(get_db),
@@ -46,7 +46,7 @@ def get_sensor(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/sensor/all", response_model=List[SensorOut])
+@router.get("/all", response_model=List[SensorOut])
 def get_all_sensores(
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
@@ -61,7 +61,7 @@ def get_all_sensores(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/sensor/by-galpon/{id_galpon}", response_model=List[SensorOut])
+@router.get("/by-galpon/{id_galpon}", response_model=List[SensorOut])
 def get_sensores_by_galpon(
     id_galpon: int,
     db: Session = Depends(get_db),
@@ -77,7 +77,7 @@ def get_sensores_by_galpon(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/sensor/by-id/{id_sensor}")
+@router.put("/by-id/{id_sensor}")
 def update_sensor(
     id_sensor: int,
     sensor: SensorUpdate,
@@ -96,7 +96,7 @@ def update_sensor(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/sensor/cambiar-estado/{id_sensor}", status_code=status.HTTP_200_OK)
+@router.put("/cambiar-estado/{id_sensor}", status_code=status.HTTP_200_OK)
 def change_sensor_status(
     id_sensor: int,
     nuevo_estado: bool,
