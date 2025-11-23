@@ -84,14 +84,16 @@
 	    </div><!--//auth-background-col-->
     
     </div><!--//row-->
-</body><script>
+</body>
+	<script>
     const boton = document.getElementById("login");
 
     boton.addEventListener("click", (event) => {
         event.preventDefault();
         
         // SOLUCIÓN: Remover el protocolo específico
-        const loginUrl = "//avisenabackend.20.168.14.245.sslip.io:10000/access/token";
+        // Cambia solo esta línea:
+		const loginUrl = "https://cors-anywhere.herokuapp.com/http://avisenabackend.20.168.14.245.sslip.io:10000/access/token";
 
         let correo = document.getElementById("signin-email").value;
         let contrasenia = document.getElementById("signin-password").value;
