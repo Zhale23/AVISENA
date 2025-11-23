@@ -152,5 +152,43 @@
 
     </script>
 	<script src="./assets/js/main.js"></script>
+	<script>
+		const form = document.querySelector(".login-form");
+
+		form.addEventListener("submit", (event) => {
+		    event.preventDefault();
+		
+		    const correo = document.getElementById("signin-email").value;
+		    const contrasenia = document.getElementById("signin-password").value;
+		
+		    const formData = new URLSearchParams();
+		    formData.append("username", correo);
+		    formData.append("password", contrasenia);
+		
+		    fetch(loginUrl, {
+		        method: "POST",
+		        headers: {
+		            "Content-Type": "application/x-www-form-urlencoded",
+		            "accept": "application/json"
+		        },
+		        body: formData
+		    })
+		    .then(response => {
+		        if (!response.ok) return response.json().then(err => { throw err });
+		        return response.json();
+		    })
+		    .then(data => {
+		        localStorage.setItem("access_token", data.access_token);
+		        localStorage.setItem("user", JSON.stringify(data.user));
+		        window.location.href = "index1.html";
+		    })
+		    .catch(error => {
+		        const mensaje = document.getElementById('error-message');
+		        mensaje.innerHTML = error.detail || "Usuario o contraseña incorrectos";
+		        console.error("Error en login:", error);
+		    });
+		});
+
+	</script>
 </html> 
 
