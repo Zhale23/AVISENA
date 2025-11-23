@@ -17,17 +17,17 @@ function createProduccionRow(produccion) {
   
   const tabla = `
     <tr>
-      <td>${produccion.id_produccion}</td>
-      <td>${produccion.nombre_galpon}</td>
-      <td>${produccion.cantidad || 'Sin Cantidad'}</td>
-      <td>${produccion.fecha}</td>
-      <td>${produccion.tamaño}</td>
-      <td class="text-end">
-        <button class="btn btn-sm btn-info btn-edit-produccion" data-produccion-id="${produccion.id_produccion}">
-          <i class="fa-regular fa-pen-to-square"></i>
+      <td class="px-0">${produccion.id_produccion}</td>
+      <td class="px-0">${produccion.nombre_galpon}</td>
+      <td class="px-0">${produccion.cantidad || 'Sin Cantidad'}</td>
+      <td class="px-0">${produccion.fecha}</td>
+      <td class="px-0">${produccion.tamaño}</td>
+      <td class="text-end justify-content-end gap-2">
+        <button class="btn btn-sm btn-edit-produccion" data-produccion-id="${produccion.id_produccion}" style="color: black; background-color:rgb(117, 189, 127);">
+          <i class="fa fa-pen me-0"></i>
         </button>
         ${idRol === 1 || idRol === 2 ? `
-          <button class="btn btn-sm btn-danger btn-eliminar-produccion" data-produccion-id="${produccion.id_produccion}">
+          <button class="btn btn-sm btn-secondary btn-eliminar-produccion" data-produccion-id="${produccion.id_produccion}">
             <i class="fa-regular fa-trash-can"></i>
           </button>
         ` : ''}
