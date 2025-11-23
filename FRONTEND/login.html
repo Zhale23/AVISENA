@@ -18,7 +18,54 @@
     <!-- App CSS -->  
     <link id="theme-style" rel="stylesheet" href="assets/css/portal.css">
 
-</head> 
+</head>
+<script>
+	document.addEventListener("DOMContentLoaded", () => {
+	    const form = document.querySelector(".login-form");
+	    const mensaje = document.getElementById("error-message");
+	
+	    form.addEventListener("submit", async (event) => {
+	        event.preventDefault();
+	
+	        mensaje.innerHTML = ""; // Limpiar mensaje anterior
+	
+	        const correo = document.getElementById("signin-email").value;
+	        const contrasenia = document.getElementById("signin-password").value;
+	
+	        const formData = new URLSearchParams();
+	        formData.append("username", correo);
+	        formData.append("password", contrasenia);
+	
+	        try {
+	            const response = await fetch("https://avisenabackend.20.168.14.245:10000/access/token", {
+	                method: "POST",
+	                headers: {
+	                    "Content-Type": "application/x-www-form-urlencoded",
+	                    "accept": "application/json"
+	                },
+	                body: formData
+	            });
+	
+	            if (!response.ok) {
+	                const err = await response.json();
+	                throw err;
+	            }
+	
+	            const data = await response.json();
+	
+	            localStorage.setItem("access_token", data.access_token);
+	            localStorage.setItem("user", JSON.stringify(data.user));
+	
+	            window.location.href = "index1.html"; // Redirección exitosa
+	
+	        } catch (error) {
+	            mensaje.innerHTML = error.detail || "Usuario o contraseña incorrectos";
+	            console.error("Error en login:", error);
+	        }
+	    });
+	});
+</script>
+
 
 <body class="app app-login p-0">    	
     <div class="row g-0 app-auth-wrapper">
@@ -152,43 +199,5 @@
 
     </script>
 	<script src="./assets/js/main.js"></script>
-	<script>
-		const form = document.querySelector(".login-form");
-
-		form.addEventListener("submit", (event) => {
-		    event.preventDefault();
-		
-		    const correo = document.getElementById("signin-email").value;
-		    const contrasenia = document.getElementById("signin-password").value;
-		
-		    const formData = new URLSearchParams();
-		    formData.append("username", correo);
-		    formData.append("password", contrasenia);
-		
-		    fetch(loginUrl, {
-		        method: "POST",
-		        headers: {
-		            "Content-Type": "application/x-www-form-urlencoded",
-		            "accept": "application/json"
-		        },
-		        body: formData
-		    })
-		    .then(response => {
-		        if (!response.ok) return response.json().then(err => { throw err });
-		        return response.json();
-		    })
-		    .then(data => {
-		        localStorage.setItem("access_token", data.access_token);
-		        localStorage.setItem("user", JSON.stringify(data.user));
-		        window.location.href = "index1.html";
-		    })
-		    .catch(error => {
-		        const mensaje = document.getElementById('error-message');
-		        mensaje.innerHTML = error.detail || "Usuario o contraseña incorrectos";
-		        console.error("Error en login:", error);
-		    });
-		});
-
-	</script>
 </html> 
 
