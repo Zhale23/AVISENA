@@ -1,4 +1,4 @@
-import { produccionHuevosService } from '../api/produccionHuevos.service.js';
+import { produccionHuevosService } from '../js/api/produccionHuevos.service.js';
 
 let modalInstance = null; // Guardará la instancia del modal
 let originalFecha = null;
