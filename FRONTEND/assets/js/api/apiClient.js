@@ -6,7 +6,7 @@
 import { authService } from './auth.service.js';
 
 // const API_BASE_URL = 'https://avisena-backend.onrender.com';
-const API_BASE_URL = 'http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000';
+const API_BASE_URL = 'http://avisenabackend.20.168.14.245.sslip.io:10000';
 
 /**
  * Cliente central para realizar todas las peticiones a la API.
