@@ -29,10 +29,14 @@ const loadContent = async (page) => {
       import('../pages/incident_chicken.js')
         .then(incident_chickenModule => incident_chickenModule.init());  // llama la función modulo en isolations.js
     }
-
+     if (page === 'chickens') {
+      import('../pages/chickens.js')
+        .then(cihckensModule => cihckensModule.init());  // llama la función modulo en isolations.js
+    }
+    
     if (page === 'rescue') {
       import('../pages/rescue.js')
-        .then(isolationModule => isolationModule.init());  // llama la función modulo en isolations.js
+        .then(rescueModule => rescueModule.init());  // llama la función modulo en isolations.js
     }
 
     if (page === 'tipos_gallinas') {
