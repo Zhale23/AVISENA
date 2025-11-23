@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -6,7 +6,7 @@ from app.crud import registro_sensores as crud_registro
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.schemas.users import UserOut
-from app.schemas.registro_sensores import RegistroSensorCreate, RegistroSensorOut
+from app.schemas.registro_sensores import RegistroSensorCreate, RegistroSensorOut, RegistroSensorPaginado
 from core.database import get_db
 
 router = APIRouter()
@@ -31,9 +31,11 @@ def create_registro_sensor(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Listar todos los registros
-@router.get("/all", response_model=list[RegistroSensorOut])
+# Listar todos los registros CON PAGINACIÓN
+@router.get("/all", response_model=RegistroSensorPaginado)
 def get_all_registros_sensor(
+    skip: int = Query(0, ge=0, description="Número de registros a saltar"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
@@ -42,8 +44,8 @@ def get_all_registros_sensor(
         if not verify_permissions(db, id_rol, modulo, "seleccionar"):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
 
-        registros = crud_registro.get_all_registros(db)
-        return registros
+        result = crud_registro.get_all_registros(db, skip=skip, limit=limit)
+        return result
 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
