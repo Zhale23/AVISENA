@@ -1,5 +1,5 @@
 import { ventaService } from "../api/venta.service.js";
-import {loadContent} from "../main.js";
+//import {loadContent} from "../main.js";
 
 let modalInstance = null; // Guardará la instancia del modal de Bootstrap
 let createModalInstance = null; // Guardará la instancia del modal de Bootstrap
