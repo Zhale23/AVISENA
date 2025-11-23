@@ -58,9 +58,9 @@ async function fetchIncidents(page = 1, page_size = 10, fechaInicio = "", fechaF
   let url;
 
   if (fechaInicio && fechaFin) {
-    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/incident/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
+    url = `http://avisenabackend.20.168.14.245.sslip.io:10000/incident/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
   } else {
-    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/incident/all_incidentes-gallinas-pag?page=${page}&limit=${page_size}`;
+    url = `http://avisenabackend.20.168.14.245.sslip.io:10000/incident/all_incidentes-gallinas-pag?page=${page}&limit=${page_size}`;
   }
 
   try {
