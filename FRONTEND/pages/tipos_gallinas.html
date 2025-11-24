@@ -1,104 +1,340 @@
-<!--  Row 1 -->
-<div class="row">
-  <div class="col-12">
-    <div class="card">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="card-title mb-0">Tipos de gallinas</h4>
-          <div class="d-flex gap-2">
-              <div class="btn-group me-3">
-                  <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="export-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                      <i class="fa fa-file-export me-1"></i> Exportar
-                  </button>
-                  <ul class="dropdown-menu" aria-labelledby="export-btn">
-                      <li><a class="dropdown-item export-format" href="#" data-format="csv">Exportar CSV</a></li>
-                      <li><a class="dropdown-item export-format" href="#" data-format="excel">Exportar Excel</a></li>
-                      <li><a class="dropdown-item export-format" href="#" data-format="pdf">Exportar Pdf</a></li>
-                  </ul>
-              </div>
-              <div class="ms-auto mt-3 mt-md-0">
-                  <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#create-tipo-gallina-modal">
-                      <i class="fa fa-plus me-1"></i>Agregar
-                  </button>
-              </div>
-          </div>
-        </div>
-        <div class="table-responsive mt-4">
-          <table class="table table-striped table-hover table-sm mb-0 text-nowrap align-middle">
-            <thead>
-              <tr>
-                <th scope="col" class="fw-semibold">ID</th>
-                <th scope="col" class="fw-semibold">Raza</th>
-                <th scope="col" class="fw-semibold">Descripción</th>
-                <th scope="col" class="fw-semibold text-end">Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tipo-gallina-table-body">
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</div> <!-- end row -->
+import { typeChickenService } from '../js/type_chickens.service.js';
 
+let modalInstance = null; // Guardará la instancia del modal de Bootstrap
+let createModalInstance = null;
+let allTypeChickens = [];
 
-<!-- Modal Crear -->
-<div class="modal fade" id="create-tipo-gallina-modal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="create-tipo-gallina-title">Crear tipo de gallina</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="create-tipo-gallina-form">
-          <div class="mb-3">
-            <label for="create-raza" class="form-label">Raza</label>
-            <input type="text" class="form-control" id="create-raza" required>
-          </div>
-          <div class="mb-3">
-            <label for="create-descripcion" class="form-label">Descripción</label>
-            <input type="text" class="form-control" id="create-descripcion" required>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-success">Crear tipo de gallina</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
+function createTypeChickenRow(typeChicken) {
+  return `
+    <tr>
+      <td class="px-0">${typeChicken.id_tipo_gallinas}</td>
+      <td class="px-0">${typeChicken.raza}</td>
+      <td class="px-0">${typeChicken.descripcion}</td>
+      <td class="px-0 text-end">
+          <button class="btn btn-success btn-sm btn-edit-tipo-gallina" aria-label="Editar" title="Editar" data-tipo-gallina-id="${typeChicken.id_tipo_gallinas}">
+            <i class="fa fa-pen me-0"></i>
+          </button>
+      </td>
+    </tr>
+  `;
+}
 
-<!-- Modal Editar -->
-<div class="modal fade" id="edit-tipo-gallina-modal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="edit-tipo-gallina-title">Editar tipo de gallina</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="edit-tipo-gallina-form">
-          <input type="hidden" id="edit-tipo-gallina-id">
+// --- LÓGICA DE MODAL ---
 
-          <div class="mb-3">
-            <label for="edit-raza" class="form-label">Raza</label>
-            <input type="text" class="form-control" id="edit-raza" required>
-          </div>
+async function openEditModal(id) {
+  const modalElement = document.getElementById('edit-tipo-gallina-modal');
+  if (!modalInstance) {
+    modalInstance = new bootstrap.Modal(modalElement);
+  }
+  try {
+    const typeChicken = await typeChickenService.getTypeChickenById(id);
+    document.getElementById('edit-tipo-gallina-id').value = typeChicken.id_tipo_gallinas;
+    document.getElementById('edit-raza').value = typeChicken.raza;
+    document.getElementById('edit-descripcion').value = typeChicken.descripcion;
+    modalInstance.show();
+  } catch (error) {
+    console.error(`Error al obtener datos del tipo de gallina ${id}:`, error);
+    await Swal.fire({
+      icon: "error",
+      text: "No se pudieron cargar los datos del tipo de gallina."
+    });
+  }
+}
 
-          <div class="mb-3">
-            <label for="edit-descripcion" class="form-label">Descripción</label>
-            <input type="text" class="form-control" id="edit-descripcion" required>
-          </div>
+// --- MANEJADORES DE EVENTOS ---
 
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-success">Guardar Cambios</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
+async function handleUpdateSubmit(event) {
+  event.preventDefault();
+  const typeChickenId = document.getElementById('edit-tipo-gallina-id').value;
+  const updatedData = {
+    raza: document.getElementById('edit-raza').value,
+    descripcion: document.getElementById('edit-descripcion').value
+  };
+
+  try {
+    await typeChickenService.updateTypeChicken(typeChickenId, updatedData);
+    modalInstance.hide();
+    await Swal.fire({
+      icon: "success",
+      text: "Tipo de gallina actualizado exitosamente."
+    });
+    init(); // Recargamos la tabla para ver los cambios
+  } catch (error) {
+    console.error(`Error al actualizar el tipo de gallina ${typeChickenId}:`, error);
+    await Swal.fire({
+      icon: "error",
+      text: "No se pudo actualizar el tipo de gallina."
+    });
+  }
+}
+
+async function handleTableClick(event) {
+    // Manejador para el botón de editar
+  const editButton = event.target.closest('.btn-edit-tipo-gallina');
+  if (editButton) {
+    const id = editButton.dataset.tipoGallinaId;
+    console.log(`Edit type chiken with id: ${id}`);
+    openEditModal(id);
+    return;
+  }
+}
+  
+
+// --- FUNCIÓN PRINCIPAL DE INICIALIZACIÓN ---
+
+// manejador de formulario crear tipos
+async function handleCreateSubmit(event) {
+  event.preventDefault();
+
+  const newtypeChikenData = {
+    raza: document.getElementById('create-raza').value,
+    descripcion: document.getElementById('create-descripcion').value
+  };
+
+  try {
+    await typeChickenService.createTypeChicken(newtypeChikenData);
+    if(createModalInstance) createModalInstance.hide();
+    document.getElementById('create-tipo-gallina-form').reset(); // Limpiamos el formulario
+    await Swal.fire({
+      icon: "success",
+      text: "Tipo de gallina creado exitosamente."
+    });
+    init(); // Recargamos la tabla para ver el nuevo tipo
+  } catch (error) {
+    console.error('Error al crear tipo de gallina:', error);
+    if (error.message === "El tipo de gallina con esa raza y descripción ya existe.") {
+      await Swal.fire({
+        icon: "error",
+        text: "El tipo de gallina con esa raza y descripción ya existe."
+      });
+    } else {
+      await Swal.fire({
+        icon: "error",
+        text: "Error al crear tipo de gallina."
+      });
+    }
+  }
+}
+
+//EXPORTACION
+document.addEventListener("click", function(event) {
+    const exportBtn = event.target.closest(".export-format");
+    if (!exportBtn) return;
+    event.preventDefault();
+    handleExportClick(event);
+});
+
+function handleExportClick(event) {
+    const item = event.target.closest(".export-format");
+    if (!item) return;
+    event.preventDefault();
+
+    const fmt = item.dataset.format;
+    const dateTag = new Date().toISOString().slice(0, 10);
+    const data = allTypeChickens;
+    if (!data || data.length === 0) {
+        Swal.fire({ title: "No hay datos para exportar.", icon: "info" });
+        return;
+    }
+
+    if (fmt === "csv") {
+        exportToCSV(data, `Tipos de gallinas${dateTag}.csv`);
+    } else if (fmt === "excel") {
+        exportToExcel(data, `Tipos de gallinas${dateTag}.xlsx`);
+    } else if (fmt === "pdf") {
+        exportToPDF(data, `Tipos de gallinas${dateTag}.pdf`);
+    }
+}
+
+function convertToCSV(rows, columns) {
+    const escapeCell = (val) => {
+        if (val === null || val === undefined) return "";
+        const s = String(val);
+
+        return `${s.replace(/"/g, '""')}`;
+    };
+
+    const header = columns.map((c) => escapeCell(c.header)).join(",");
+    const body = rows
+        .map((row) =>
+        columns
+            .map((c) => {
+            const v = typeof c.key === "function" ? c.key(row) : row[c.key];
+            return escapeCell(v);
+            })
+            .join(",")
+        )
+        .join("\n");
+    return `${header}\n${body}`;
+}
+
+function downloadBlob(content, mimeType, filename) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
+function exportToCSV(data, filename = "Tipos de gallinas.csv") {
+    const columns = [
+        { header: "ID", key: "id_tipo_gallinas" },
+        { header: "Raza", key: "raza" },
+        { header: "Descripcion", key: "descripcion" },
+    ];
+    const csv = convertToCSV(data, columns);
+    downloadBlob(csv, "text/csv;charset=utf-8;", filename);
+}
+
+async function exportToExcel(data, filename = "Tipos de gallinas.xlsx") {
+    // Intentar usar SheetJS (XLSX) para crear un .xlsx real en el navegador.
+    // Si no está cargado, lo cargamos dinámicamente desde CDN.
+    const loadSheetJS = () =>
+        new Promise((resolve, reject) => {
+            if (window.XLSX) return resolve(window.XLSX);
+            const script = document.createElement("script");
+            script.src =
+                "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
+            script.onload = () => resolve(window.XLSX);
+            script.onerror = (e) => reject(new Error("No se pudo cargar SheetJS"));
+            document.head.appendChild(script);
+        });
+
+    try {
+        await loadSheetJS();
+    } catch (err) {
+        console.warn(
+        "SheetJS no disponible, se usará exportación CSV en su lugar",
+        err
+        );
+        // Fallback al CSV con extensión xlsx si falla la carga
+        exportToCSV(data, filename.replace(/\.xlsx?$/, ".csv"));
+        return;
+    }
+
+    // Mapear datos a objetos planos para json_to_sheet
+    const rows = data.map((r) => ({
+        ID: r.id_tipo_gallinas,
+        Raza: r.raza,
+        Descripcion: r.descripcion,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "tipos de gallinas");
+
+    try {
+        XLSX.writeFile(wb, filename);
+    } catch (e) {
+        // Algunos navegadores / entornos pueden requerir otra ruta: crear blob desde write
+        try {
+            const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+            const blob = new Blob([wbout], { type: "application/octet-stream" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error("No se pudo generar el archivo .xlsx:", err);
+            Swal.fire({
+                title: "Error al generar .xlsx",
+                text: err.message || String(err),
+                icon: "error",
+            });
+        }
+    }
+}
+
+async function exportToPDF(data, filename = "Tipos de gallinas.pdf") {
+    const sanitizedData = data.map(row => ({
+        id_tipo_gallinas: row.id_tipo_gallinas || '',
+        raza: row.raza || '',
+        descripcion: row.descripcion || '',
+    }));
+
+    if (!window.jspdf) {
+        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    }
+    // Cargar autoTable desde jsDelivr
+    if (!window.jspdfAutoTable) {
+        await loadScript("https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js");
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Verificar que autoTable exista
+    if (typeof doc.autoTable !== "function") {
+        console.error("autoTable no se cargó correctamente");
+        return;
+    }
+
+    doc.setFontSize(16);
+    doc.text("Reporte de tipos de gallinas", 14, 15);
+
+    const columns = [
+        { header: "ID", dataKey: "id_tipo_gallinas" },
+        { header: "Raza", dataKey: "raza" },
+        { header: "Descripcion", dataKey: "descripcion" },
+    ];
+
+    doc.autoTable({ columns, body: sanitizedData, startY: 25, styles: { fontSize: 9 } });
+    doc.save(filename);
+}
+
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = () => reject(`Error cargando script: ${src}`);
+        document.body.appendChild(script);
+    });
+}
+
+async function init() {
+  console.log('tipos_gallinas cargado');
+  const tableBody = document.getElementById('tipo-gallina-table-body');
+  if (!tableBody) return;
+
+    if (!createModalInstance) {
+        const createModalElement = document.getElementById('create-tipo-gallina-modal');
+        createModalInstance = new bootstrap.Modal(createModalElement);
+    }
+
+  tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Cargando tipos de gallinas ... </td></tr>'; // ✅ CORRECCIÓN: colspan="4"
+
+  try {
+    const typeChicken = await typeChickenService.getTypeChicken();
+    allTypeChickens = typeChicken;
+    if (typeChicken && typeChicken.length > 0) {
+      tableBody.innerHTML = typeChicken.map(createTypeChickenRow).join('');
+    } else {
+      tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No se encontraron tipos de gallinas.</td></tr>'; // ✅ CORRECCIÓN: colspan="4"
+    }
+  } catch (error) {
+    console.error('Error al obtener los tipos de gallinas:', error);
+    tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error al cargar los datos.</td></tr>`; // ✅ CORRECCIÓN: colspan="4"
+  }
+
+  // Aplicamos el patrón remove/add para evitar listeners duplicados
+  const editForm = document.getElementById('edit-tipo-gallina-form');
+  const createForm = document.getElementById('create-tipo-gallina-form');
+  tableBody.removeEventListener('click', handleTableClick);
+  tableBody.addEventListener('click', handleTableClick);
+  editForm.removeEventListener('submit', handleUpdateSubmit);
+  editForm.addEventListener('submit', handleUpdateSubmit);
+  createForm.removeEventListener('submit', handleCreateSubmit);
+  createForm.addEventListener('submit', handleCreateSubmit);
+
+}
+
+export { init };
