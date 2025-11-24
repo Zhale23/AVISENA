@@ -77,72 +77,98 @@ async function fetchIncidents(page = 1, page_size = 10, fechaInicio = "", fechaF
 
 // Modificar la función init para que pase correctamente los filtros a la paginación
 function renderPagination(total_pages, currentPage = 1) {
-  const container = document.querySelector("#pagination");
-  if (!container) return;
+    const container = document.querySelector("#pagination");
+    if (!container) return;
 
-  container.innerHTML = "";
-  
-  const anterior = document.createElement("button");
-  anterior.classList.add('btn', 'btn-sm', 'btn-outline-primary', 'mx-1', 'border', 'border-success', 'my-2');
-  anterior.textContent = "<";
-  anterior.addEventListener("click", () => {
-    const prevPage = currentPage === 1 ? total_pages : currentPage - 1;
-    init(prevPage, 10, activeFechaInicio, activeFechaFin);
-  });
-  container.appendChild(anterior);
+    container.innerHTML = "";
 
-  const maxVisible = 5;
-  let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-  let endPage = Math.min(total_pages, startPage + maxVisible - 1);
+    // ---------- BOTÓN ANTERIOR ----------
+    const prevLi = document.createElement("li");
+    prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
+    prevLi.innerHTML = `
+        <a class="page-link text-success" href="#" data-page="${currentPage - 1}">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+    `;
+    prevLi.addEventListener("click", () => {
+        if (currentPage !== 1) {
+            const prevPage = currentPage - 1;
+            init(prevPage, 10, activeFechaInicio, activeFechaFin);
+        }
+    });
+    container.appendChild(prevLi);
 
-  if (endPage - startPage + 1 < maxVisible) {
-    startPage = Math.max(1, endPage - maxVisible + 1);
-  }
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(total_pages, startPage + maxVisible - 1);
 
-  if (startPage > 1) {
-    const first = createPageButton(1, currentPage);
-    container.appendChild(first);
-    if (startPage > 2) {
-      container.appendChild(createDots());
+    if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
     }
-  }
 
-  for (let i = startPage; i <= endPage; i++) {
-    container.appendChild(createPageButton(i, currentPage));
-  }
-
-  if (endPage < total_pages) {
-    if (endPage < total_pages - 1) {
-      container.appendChild(createDots());
+    // ---------- PRIMERA PÁGINA + ... ----------
+    if (startPage > 1) {
+        container.appendChild(createPageLi(1, currentPage));
+        if (startPage > 2) container.appendChild(createDotsLi());
     }
-    const last = createPageButton(total_pages, currentPage);
-    container.appendChild(last);
-  }
-  
-  const next = document.createElement("button");
-  next.classList.add('btn', 'btn-sm', 'btn-outline-primary', 'mx-1', 'border', 'border-success', 'my-2');
-  next.textContent = ">";
-  next.addEventListener("click", () => {
-    const nextPage = currentPage === total_pages ? 1 : currentPage + 1;
-    init(nextPage, 10, activeFechaInicio, activeFechaFin);
-  });
-  container.appendChild(next);
+
+    // ---------- NÚMEROS DE PÁGINA ----------
+    for (let i = startPage; i <= endPage; i++) {
+        container.appendChild(createPageLi(i, currentPage));
+    }
+
+    // ---------- ... + ÚLTIMA PÁGINA ----------
+    if (endPage < total_pages) {
+        if (endPage < total_pages - 1) container.appendChild(createDotsLi());
+        container.appendChild(createPageLi(total_pages, currentPage));
+    }
+
+    // ---------- BOTÓN SIGUIENTE ----------
+    const nextLi = document.createElement("li");
+    nextLi.className = `page-item ${currentPage === total_pages ? "disabled" : ""}`;
+    nextLi.innerHTML = `
+        <a class="page-link text-success" href="#" data-page="${currentPage + 1}">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    `;
+    nextLi.addEventListener("click", () => {
+        if (currentPage !== total_pages) {
+            const nextPage = currentPage + 1;
+            init(nextPage, 10, activeFechaInicio, activeFechaFin);
+        }
+    });
+    container.appendChild(nextLi);
 }
 
-function createPageButton(page, currentPage) {
-  const btn = document.createElement("button");
-  btn.textContent = page;
-  btn.disabled = page === currentPage;
-  btn.classList.add('btn', 'btn-sm', 'btn-outline-primary', 'mx-1', 'border', 'border-success', 'my-2');
-  btn.addEventListener("click", () => init(page, 10, activeFechaInicio, activeFechaFin));
-  return btn;
+// ========== BOTÓN DE NÚMERO DE PÁGINA ==========
+function createPageLi(page, currentPage) {
+    const li = document.createElement("li");
+
+    const isActive = page === currentPage;
+
+    li.className = `page-item ${isActive ? 'active' : ''}`;
+    li.innerHTML = `
+        <a class="page-link ${isActive ? "bg-success border-success text-white" : "text-success"}"
+           href="#" data-page="${page}">
+           ${page}
+        </a>
+    `;
+
+    li.addEventListener("click", () => {
+        if (!isActive) {
+            init(page, 10, activeFechaInicio, activeFechaFin);
+        }
+    });
+
+    return li;
 }
 
-function createDots() {
-  const span = document.createElement("span");
-  span.textContent = "...";
-  span.classList.add('mx-2');
-  return span;
+// ========== PUNTOS SUSPENSIVOS ==========
+function createDotsLi() {
+    const li = document.createElement("li");
+    li.className = "page-item disabled";
+    li.innerHTML = `<a class="page-link text-success">...</a>`;
+    return li;
 }
 
 //______________________ para filtrar por fechas_______________________________________
