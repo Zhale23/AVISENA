@@ -863,13 +863,10 @@ async function fetchWithDates(fechaInicio, fechaFin, page, size) {
         return data;
 
     } catch (error) {
-        console.error("Error al cargar rescates por fechas:", error.message, error);
+        console.error("Error al cargar salvamentos por fechas:", error.message, error);
         throw error;
     }
 }
-
-
-
 
 async function fetchWithoutDates(page, size) {
     try {
