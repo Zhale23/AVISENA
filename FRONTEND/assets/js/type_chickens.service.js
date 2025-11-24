@@ -1,5 +1,5 @@
 
-import { request } from './apiClient.js';
+import { request } from '../js/api/apiClient.js';
 
 export const typeChickenService = {
     /**
