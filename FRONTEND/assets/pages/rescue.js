@@ -75,7 +75,7 @@ function createRescueRow(rescue) {
             <td class="px-0">${rescue.cantidad_gallinas} gallinas</td>
             <td class="px-0 text-end">
                 <button class="btn btn-success btn-sm btn-edit-rescue" data-rescue-id="${rescueId}" aria-label="Editar">
-                    <i class="fa fa-pen me-0"></i>
+                    <i class="fa-regular fa-pen-to-square me-0"></i>
                 </button>
                 ${idRol === 1 || idRol === 2 ? `
                     <button class="btn btn-secondary btn-sm btn-delete-rescue" data-rescue-id="${rescueId}">
