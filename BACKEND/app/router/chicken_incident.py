@@ -89,35 +89,35 @@ def update_chicken_incident(
     user_token: UserOut = Depends(get_current_user)
 ):
     try:
+        id_rol = user_token.id_rol
 
-        if chicken_incidente.galpon_origen <= 0:
-            raise HTTPException(
-                status_code=400,
-                detail="El id del galpón debe ser mayor a cero"
-            )
-
-      
-        result = db.execute(
-            text("SELECT id_galpon FROM galpones WHERE id_galpon = :id"),
-            {"id": chicken_incidente.galpon_origen}
-        ).first()
-
-        if not result:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No se encontró un galpón con id {chicken_incidente.galpon_origen}"
-            )
-
-
-        id_rol = user_token.id_rol 
-
+        # Verificación de permisos
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(
                 status_code=401,
                 detail="Usuario no autorizado para actualizar incidentes de gallinas"
             )
 
+        # Validar galpón solo si se envió
+        if chicken_incidente.galpon_origen is not None:
+            if chicken_incidente.galpon_origen <= 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="El id del galpón debe ser mayor a cero"
+                )
 
+            result = db.execute(
+                text("SELECT id_galpon FROM galpones WHERE id_galpon = :id"),
+                {"id": chicken_incidente.galpon_origen}
+            ).first()
+
+            if not result:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No se encontró un galpón con id {chicken_incidente.galpon_origen}"
+                )
+
+        # Llamar al CRUD para actualizar solo los campos enviados
         success = crud_chicken_incident.update_chicken_incident_by_id(
             db, chicken_incident_id, chicken_incidente
         )
@@ -140,10 +140,6 @@ def update_chicken_incident(
             status_code=500,
             detail=f"Error inesperado: {str(e)}"
         )
-
-
-
-
 
 
 @router.get("/rango-fechas", response_model=PaginatedChickenIncidents)
