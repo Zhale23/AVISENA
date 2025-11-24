@@ -28,7 +28,7 @@ function createChickenRow(chicken) {
             <td class="text-end">
                 <div class="d-flex justify-content-end gap-2">
                     <button class="btn btn-sm btn-success btn-edit-chicken" aria-label="Editar" title="Editar" data-chicken-id="${chickenId}">
-                        <i class="fa fa-pen me-0"></i>
+                        <i class="fa-regular fa-pen-to-square me-0"></i>
                     </button>
                     ${idRol === 1 || idRol === 2 ? `
                         <button class="btn btn-sm btn-secondary btn-delete-chicken" aria-label="Eliminar" title="Eliminar" data-chicken-id="${chickenId}">

@@ -21,7 +21,7 @@ function createIsolationRow(isolation) {
       <td class="px-0">${fechaFormateada}</td>
       <td class="px-0">${isolation.nombre}</td>
       <td class="text-end justify-content-end gap-2">
-          <button class="btn btn-sm btn-success btn-edit-isolation" data-isolation-id="${isolationId}" aria-label="Editar"><i class="fa fa-pen me-0"></i></button>
+          <button class="btn btn-sm btn-success btn-edit-isolation" data-isolation-id="${isolationId}" aria-label="Editar"><i class="fa-regular fa-pen-to-square me-0"></i></button>
       </td>
     </tr>
   `;
@@ -40,41 +40,23 @@ function formatDateForAPI(dateStr) {
 //______________________________paginación para todos los datos y filtrados_____________
 
 async function fetchIsolations(page = 1, page_size = 10, fechaInicio = "", fechaFin = "") {
-  const token = localStorage.getItem('access_token');
-  let url;
-
-  if (fechaInicio && fechaFin) {
-    // USAR EL MISMO FORMATO QUE EN EL CURL: YYYY-MM-DD sin tiempo
-    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/isolations/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
-  } else {
-    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/isolations/all_isolations-pag?page=${page}&limit=${page_size}`;
-  }
-
   try {
-    const res = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (res.status === 401) throw new Error("No autorizado.");
-
-    if (res.status === 404) {
-      return {
-        isolation: [],
-        total_isolation: 0,
-        total_pages: 0,
-        page: page,
-        page_size: page_size
-      };
+    let response;
+    if (fechaInicio && fechaFin) {
+      response = await isolationService.getIsolationAllDate(fechaInicio, fechaFin, page, page_size);
+    } else {
+      response = await isolationService.getIsolationAll(page, page_size);
     }
 
-    if (!res.ok) throw new Error(`Error al cargar aislamientos: ${res.status}`);
+    if (!response || response.length === 0) {
+      return [];
+    }
 
-    const json = await res.json();
-    return json;
+    return response;
   } catch (error) {
+    if (error.message.includes("No hay asilamiento en ese rango de fechas") || error.response?.status === 404) {
+      return [];
+    }
     throw error;
   }
 }

@@ -27,13 +27,13 @@ function createIncidenteRow(incidente) {
         <div class="btn-group">
           ${!incidente.esta_resuelta ? `
             <button class="btn btn-sm btn-success btn-edit-incidente" data-incidente-id="${incidente.id_incidente}">
-              Editar
+                <i class="fa-regular fa-pen-to-square"></i>
             </button>
           ` : ''}
           
           ${incidente.esta_resuelta ? `
             <button class="btn btn-sm btn-secondary btn-delete-incidente" data-incidente-id="${incidente.id_incidente}">
-              Eliminar
+                <i class="fa-regular fa-trash-can"></i>
             </button>
           ` : ''}
         </div>

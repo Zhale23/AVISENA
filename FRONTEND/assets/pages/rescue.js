@@ -75,7 +75,7 @@ function createRescueRow(rescue) {
             <td class="px-0">${rescue.cantidad_gallinas} gallinas</td>
             <td class="px-0 text-end">
                 <button class="btn btn-success btn-sm btn-edit-rescue" data-rescue-id="${rescueId}" aria-label="Editar">
-                    <i class="fa fa-pen me-0"></i>
+                    <i class="fa-regular fa-pen-to-square me-0"></i>
                 </button>
                 ${idRol === 1 || idRol === 2 ? `
                     <button class="btn btn-secondary btn-sm btn-delete-rescue" data-rescue-id="${rescueId}">
@@ -798,7 +798,7 @@ async function loadRescuesWithPagination() {
         
         if (fechaInicio && fechaFin) {
             // Usar endpoint con filtro de fechas
-            response = await fetchWithDates(currentPage, pageSize);
+            response = await fetchWithDates(fechaInicio, fechaFin, currentPage, pageSize);
         } else {
             // Usar endpoint normal
             response = await fetchWithoutDates(currentPage, pageSize);
@@ -840,41 +840,43 @@ async function loadRescuesWithPagination() {
     }
 }
 
-async function fetchWithDates(page, size) {
-    const endpoint = `/rescue/all-pag-by-date?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${size}`;
-    const token = localStorage.getItem('access_token');
-    
-    const response = await fetch(`http://avisenabackend.20.168.14.245.sslip.io:10000${endpoint}`, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
-    });
-    
-    if (!response.ok) {
-        throw new Error('Error en la petición');
+async function fetchWithDates(fechaInicio, fechaFin, page, size) {
+    // Validación de fechas antes de la petición
+    if (!fechaInicio || !fechaFin) {
+        throw new Error("Debe proporcionar fechas válidas en formato YYYY-MM-DD");
     }
-    
-    return await response.json();
+
+    try {
+        const data = await rescueService.getRescuesAllDate(fechaInicio, fechaFin, page, size);
+        // Validación para cuando no hay datos
+        if (!data || (Array.isArray(data.rescue) && data.rescue.length === 0)) {
+            return {
+                rescue: [],
+                total_rescue: 0,
+                total_pages: 0,
+                page,
+                size
+            };
+        }
+
+        return data;
+
+    } catch (error) {
+        console.error("Error al cargar salvamentos por fechas:", error.message, error);
+        throw error;
+    }
 }
 
 async function fetchWithoutDates(page, size) {
-    const endpoint = `/rescue/all-pag?page=${page}&page_size=${size}`;
-    const token = localStorage.getItem('access_token');
-    
-    const response = await fetch(`http://avisenabackend.20.168.14.245.sslip.io:10000${endpoint}`, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
-    });
-    
-    if (!response.ok) {
-        throw new Error('Error en la petición');
+    try {
+        const data = await rescueService.getRescuesAll(page, size);
+        return data;
+    } catch (error) {
+        console.error("Error al cargar los salvamentos:", error.message);
+        throw error;
     }
-    
-    return await response.json();
 }
+
 
 function updatePaginationInfo() {
     const infoElement = document.getElementById('pagination-info');
