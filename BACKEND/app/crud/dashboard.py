@@ -226,7 +226,7 @@ def get_ultimos_registros_sensores(db: Session) -> Dict:
                 rs.fecha_hora
             FROM registro_sensores rs
             JOIN sensores s ON rs.id_sensor = s.id_sensor
-            JOIN tipo_sensores st ON s.id_tipo_sensor = st.id_tipo_sensor
+            JOIN tipo_sensores st ON s.id_tipo_sensor = st.id_tipo
             WHERE rs.fecha_hora >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
             ORDER BY rs.fecha_hora DESC
             LIMIT 20
@@ -306,8 +306,16 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
         gallinas = db.execute(query_gallinas).mappings().all()
         incidentes = db.execute(query_incidentes).mappings().all()
         
-        # Combinar y ordenar
-        actividades = list(produccion) + list(gallinas) + list(incidentes)
+        # Combinar y ordenar - convertir RowMapping a dict
+        actividades = []
+        for act in list(produccion) + list(gallinas) + list(incidentes):
+            act_dict = dict(act)
+            fecha = act_dict['fecha_registro']
+            # Convertir date a datetime para poder ordenar
+            if isinstance(fecha, date) and not isinstance(fecha, datetime):
+                act_dict['fecha_registro'] = datetime.combine(fecha, datetime.min.time())
+            actividades.append(act_dict)
+        
         actividades.sort(key=lambda x: x['fecha_registro'], reverse=True)
         
         # Calcular tiempo relativo
