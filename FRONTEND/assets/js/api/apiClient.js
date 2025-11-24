@@ -5,7 +5,7 @@
 // La importamos para usarla en caso de un error 401.
 import { authService } from './auth.service.js';
 
-const API_BASE_URL = 'http://avisenabackend.20.168.14.245.sslip.io:10000';
+const API_BASE_URL = 'https://avisena-back.onrender.com';
 
 /**
  * Cliente central para realizar todas las peticiones a la API.
