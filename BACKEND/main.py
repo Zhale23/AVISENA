@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.router import tareas
-from app.router import users, auth, ventas,modulos, permisos, roles, detalle_huevos, metodo_pago, detalle_salvamento, produccion_huevos, stock, tipo_huevos, rescue, chickens, isolation, type_chickens, chicken_incident, sheds, lands, incidentes_generales, registro_sensores, categories, inventory, sensor_types, sensors
+from app.router import users, auth, ventas,modulos, permisos, roles, detalle_huevos, metodo_pago, detalle_salvamento, produccion_huevos, stock, tipo_huevos, rescue, chickens, isolation, type_chickens, chicken_incident, sheds, lands, incidentes_generales, registro_sensores, categories, inventory, sensor_types, sensors, dashboard
 app = FastAPI()
  
 # Incluir en el objeto app los routers
@@ -31,6 +31,7 @@ app.include_router(tareas.router, prefix="/tareas", tags=["tareas"])
 app.include_router(detalle_huevos.router, prefix="/detalle_huevos", tags=["detalle_huevos"])
 app.include_router(metodo_pago.router, prefix="/metodo_pago", tags=["metodo_pago"])
 app.include_router(detalle_salvamento.router, prefix="/detalle_salvamento", tags=["detalle_salvamento"])
+app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 
 
 

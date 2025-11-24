@@ -1,0 +1,388 @@
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
+from datetime import date, datetime, timedelta
+from typing import Optional, List, Dict
+import logging
+
+logger = logging.getLogger(__name__)
+
+def get_total_gallinas(db: Session) -> int:
+    """Obtiene el total de gallinas en todos los galpones"""
+    try:
+        query = text("""
+            SELECT COALESCE(SUM(cant_actual), 0) as total
+            FROM galpones
+        """)
+        result = db.execute(query).mappings().first()
+        return result['total'] if result else 0
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener total de gallinas: {e}")
+        return 0
+
+def get_produccion_hoy(db: Session) -> int:
+    """Obtiene la producción de huevos de hoy"""
+    try:
+        hoy = date.today()
+        query = text("""
+            SELECT COALESCE(SUM(cantidad), 0) as total
+            FROM produccion_huevos
+            WHERE fecha = :fecha
+        """)
+        result = db.execute(query, {"fecha": hoy}).mappings().first()
+        return result['total'] if result else 0
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener producción de hoy: {e}")
+        return 0
+
+def get_galpones_activos(db: Session) -> int:
+    """Obtiene el número de galpones activos"""
+    try:
+        query = text("""
+            SELECT COUNT(*) as total
+            FROM galpones
+            WHERE cant_actual > 0
+        """)
+        result = db.execute(query).mappings().first()
+        return result['total'] if result else 0
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener galpones activos: {e}")
+        return 0
+
+def get_alertas_activas(db: Session) -> int:
+    """Obtiene el número de incidentes activos"""
+    try:
+        query = text("""
+            SELECT COUNT(*) as total
+            FROM incidentes_gallinas
+            WHERE estado = 'pendiente'
+        """)
+        result = db.execute(query).mappings().first()
+        return result['total'] if result else 0
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener alertas activas: {e}")
+        return 0
+
+def get_produccion_semanal(db: Session) -> Dict:
+    """Obtiene la producción de los últimos 7 días"""
+    try:
+        hoy = date.today()
+        hace_7_dias = hoy - timedelta(days=6)
+        hace_14_dias = hoy - timedelta(days=13)
+        
+        # Semana actual
+        query_actual = text("""
+            SELECT fecha, COALESCE(SUM(cantidad), 0) as total
+            FROM produccion_huevos
+            WHERE fecha BETWEEN :inicio AND :fin
+            GROUP BY fecha
+            ORDER BY fecha
+        """)
+        resultados_actual = db.execute(query_actual, {
+            "inicio": hace_7_dias,
+            "fin": hoy
+        }).mappings().all()
+        
+        # Semana anterior
+        query_anterior = text("""
+            SELECT fecha, COALESCE(SUM(cantidad), 0) as total
+            FROM produccion_huevos
+            WHERE fecha BETWEEN :inicio AND :fin
+            GROUP BY fecha
+            ORDER BY fecha
+        """)
+        resultados_anterior = db.execute(query_anterior, {
+            "inicio": hace_14_dias,
+            "fin": hace_7_dias - timedelta(days=1)
+        }).mappings().all()
+        
+        # Crear labels y datos
+        dias_semana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+        data_actual = [0] * 7
+        data_anterior = [0] * 7
+        
+        # Llenar datos actuales
+        for row in resultados_actual:
+            dia_index = (row['fecha'] - hace_7_dias).days
+            if 0 <= dia_index < 7:
+                data_actual[dia_index] = row['total']
+        
+        # Llenar datos anteriores
+        for row in resultados_anterior:
+            dia_index = (row['fecha'] - hace_14_dias).days
+            if 0 <= dia_index < 7:
+                data_anterior[dia_index] = row['total']
+        
+        return {
+            "labels": dias_semana,
+            "data_actual": data_actual,
+            "data_anterior": data_anterior
+        }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener producción semanal: {e}")
+        return {
+            "labels": ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            "data_actual": [0, 0, 0, 0, 0, 0, 0],
+            "data_anterior": [0, 0, 0, 0, 0, 0, 0]
+        }
+
+def get_distribucion_tipos(db: Session) -> List[Dict]:
+    """Obtiene la distribución de gallinas por tipo"""
+    try:
+        query = text("""
+            SELECT 
+                tg.raza as tipo,
+                COALESCE(SUM(ig.cantidad_gallinas), 0) as cantidad
+            FROM tipo_gallinas tg
+            LEFT JOIN ingreso_gallinas ig ON tg.id_tipo_gallinas = ig.id_tipo_gallina
+            GROUP BY tg.raza
+            HAVING SUM(ig.cantidad_gallinas) > 0
+            ORDER BY cantidad DESC
+        """)
+        resultados = db.execute(query).mappings().all()
+        
+        total = sum(r['cantidad'] for r in resultados)
+        
+        return [
+            {
+                "tipo": r['tipo'],
+                "cantidad": r['cantidad'],
+                "porcentaje": round((r['cantidad'] / total * 100), 2) if total > 0 else 0
+            }
+            for r in resultados
+        ]
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener distribución de tipos: {e}")
+        return []
+
+def get_ocupacion_galpones(db: Session) -> List[Dict]:
+    """Obtiene la ocupación de cada galpón"""
+    try:
+        query = text("""
+            SELECT 
+                nombre,
+                capacidad,
+                cant_actual as cantidad_actual,
+                CASE 
+                    WHEN capacidad > 0 THEN ROUND((cant_actual::float / capacidad) * 100)
+                    ELSE 0 
+                END as ocupacion_porcentaje
+            FROM galpones
+            ORDER BY nombre
+            LIMIT 8
+        """)
+        resultados = db.execute(query).mappings().all()
+        
+        return [
+            {
+                "nombre": r['nombre'],
+                "capacidad": r['capacidad'],
+                "cantidad_actual": r['cantidad_actual'],
+                "ocupacion_porcentaje": int(r['ocupacion_porcentaje'])
+            }
+            for r in resultados
+        ]
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener ocupación de galpones: {e}")
+        return []
+
+def get_incidentes_recientes(db: Session, limit: int = 5) -> List[Dict]:
+    """Obtiene los incidentes más recientes"""
+    try:
+        query = text("""
+            SELECT 
+                id_incidente as id,
+                tipo_incidente as tipo,
+                CASE 
+                    WHEN estado = 'pendiente' THEN 'warning'
+                    WHEN estado = 'resuelto' THEN 'success'
+                    ELSE 'danger'
+                END as severidad,
+                descripcion,
+                fecha,
+                CASE 
+                    WHEN fecha = CURRENT_DATE THEN 'Hoy'
+                    WHEN fecha = CURRENT_DATE - 1 THEN 'Ayer'
+                    ELSE CAST(EXTRACT(DAY FROM CURRENT_DATE - fecha) AS TEXT) || ' días'
+                END as tiempo
+            FROM incidentes_gallinas
+            ORDER BY fecha DESC, id_incidente DESC
+            LIMIT :limit
+        """)
+        resultados = db.execute(query, {"limit": limit}).mappings().all()
+        
+        return [dict(r) for r in resultados]
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener incidentes recientes: {e}")
+        return []
+
+def get_ultimos_registros_sensores(db: Session) -> Dict:
+    """Obtiene los últimos registros de sensores"""
+    try:
+        query = text("""
+            SELECT 
+                st.nombre as tipo_sensor,
+                rs.valor,
+                rs.fecha_hora
+            FROM registro_sensores rs
+            JOIN sensores s ON rs.id_sensor = s.id_sensor
+            JOIN tipo_sensores st ON s.id_tipo_sensor = st.id_tipo_sensor
+            WHERE rs.fecha_hora >= NOW() - INTERVAL '1 hour'
+            ORDER BY rs.fecha_hora DESC
+            LIMIT 20
+        """)
+        resultados = db.execute(query).mappings().all()
+        
+        # Agrupar por tipo de sensor y obtener el último valor
+        sensores = {
+            "temperatura": 25.0,
+            "humedad": 60.0,
+            "co2": 450,
+            "luminosidad": 750
+        }
+        
+        for r in resultados:
+            tipo = r['tipo_sensor'].lower()
+            if 'temperatura' in tipo:
+                sensores['temperatura'] = float(r['valor'])
+            elif 'humedad' in tipo:
+                sensores['humedad'] = float(r['valor'])
+            elif 'co2' in tipo or 'dioxido' in tipo:
+                sensores['co2'] = int(float(r['valor']))
+            elif 'luz' in tipo or 'luminosidad' in tipo:
+                sensores['luminosidad'] = int(float(r['valor']))
+        
+        return sensores
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener datos de sensores: {e}")
+        return {
+            "temperatura": 25.0,
+            "humedad": 60.0,
+            "co2": 450,
+            "luminosidad": 750
+        }
+
+def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
+    """Obtiene la actividad reciente del sistema"""
+    try:
+        # Obtener últimas producciones
+        query_produccion = text("""
+            SELECT 
+                'produccion' as tipo,
+                'Producción registrada: ' || cantidad || ' huevos' as descripcion,
+                fecha as fecha_registro,
+                'success' as color
+            FROM produccion_huevos
+            ORDER BY fecha DESC
+            LIMIT 3
+        """)
+        
+        # Obtener últimos ingresos de gallinas
+        query_gallinas = text("""
+            SELECT 
+                'gallinas' as tipo,
+                'Nuevo registro de gallinas en ' || g.nombre as descripcion,
+                ig.fecha as fecha_registro,
+                'primary' as color
+            FROM ingreso_gallinas ig
+            JOIN galpones g ON ig.id_galpon = g.id_galpon
+            ORDER BY ig.fecha DESC
+            LIMIT 3
+        """)
+        
+        # Obtener últimos incidentes
+        query_incidentes = text("""
+            SELECT 
+                'incidente' as tipo,
+                'Alerta: ' || tipo_incidente as descripcion,
+                fecha as fecha_registro,
+                'warning' as color
+            FROM incidentes_gallinas
+            ORDER BY fecha DESC
+            LIMIT 3
+        """)
+        
+        produccion = db.execute(query_produccion).mappings().all()
+        gallinas = db.execute(query_gallinas).mappings().all()
+        incidentes = db.execute(query_incidentes).mappings().all()
+        
+        # Combinar y ordenar
+        actividades = list(produccion) + list(gallinas) + list(incidentes)
+        actividades.sort(key=lambda x: x['fecha_registro'], reverse=True)
+        
+        # Calcular tiempo relativo
+        ahora = datetime.now()
+        resultado = []
+        for act in actividades[:limit]:
+            fecha = act['fecha_registro']
+            if isinstance(fecha, date) and not isinstance(fecha, datetime):
+                fecha = datetime.combine(fecha, datetime.min.time())
+            
+            diff = ahora - fecha
+            if diff.days == 0:
+                if diff.seconds < 3600:
+                    tiempo = f"Hace {diff.seconds // 60} min"
+                else:
+                    tiempo = f"Hace {diff.seconds // 3600} horas"
+            else:
+                tiempo = f"Hace {diff.days} días"
+            
+            resultado.append({
+                "tipo": act['tipo'],
+                "descripcion": act['descripcion'],
+                "tiempo": tiempo,
+                "color": act['color']
+            })
+        
+        return resultado
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener actividad reciente: {e}")
+        return []
+
+def calcular_tendencias(db: Session) -> Dict:
+    """Calcula las tendencias de gallinas y producción"""
+    try:
+        # Tendencia de gallinas (comparar con mes anterior)
+        query_gallinas = text("""
+            SELECT 
+                SUM(CASE WHEN fecha >= CURRENT_DATE - INTERVAL '30 days' THEN cantidad_gallinas ELSE 0 END) as mes_actual,
+                SUM(CASE WHEN fecha BETWEEN CURRENT_DATE - INTERVAL '60 days' AND CURRENT_DATE - INTERVAL '31 days' THEN cantidad_gallinas ELSE 0 END) as mes_anterior
+            FROM ingreso_gallinas
+        """)
+        result_gallinas = db.execute(query_gallinas).mappings().first()
+        
+        mes_actual = result_gallinas['mes_actual'] or 0
+        mes_anterior = result_gallinas['mes_anterior'] or 1
+        
+        if mes_anterior > 0:
+            trend_gallinas = ((mes_actual - mes_anterior) / mes_anterior) * 100
+        else:
+            trend_gallinas = 0
+        
+        # Tendencia de producción (comparar hoy con ayer)
+        query_produccion = text("""
+            SELECT 
+                COALESCE(SUM(CASE WHEN fecha = CURRENT_DATE THEN cantidad ELSE 0 END), 0) as hoy,
+                COALESCE(SUM(CASE WHEN fecha = CURRENT_DATE - 1 THEN cantidad ELSE 0 END), 1) as ayer
+            FROM produccion_huevos
+        """)
+        result_produccion = db.execute(query_produccion).mappings().first()
+        
+        hoy = result_produccion['hoy'] or 0
+        ayer = result_produccion['ayer'] or 1
+        
+        if ayer > 0:
+            trend_produccion = ((hoy - ayer) / ayer) * 100
+        else:
+            trend_produccion = 0
+        
+        return {
+            "gallinas_trend": f"{'+' if trend_gallinas >= 0 else ''}{trend_gallinas:.1f}%",
+            "produccion_trend": f"{'+' if trend_produccion >= 0 else ''}{trend_produccion:.1f}%"
+        }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al calcular tendencias: {e}")
+        return {
+            "gallinas_trend": "+0.0%",
+            "produccion_trend": "+0.0%"
+        }
