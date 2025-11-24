@@ -73,8 +73,8 @@ function createInvRow(inv) {
       <td class="px-0 ">${fincaText}</td>
       <td class="px-0">
         <div class="d-flex gap-2">
-          <button class="btn btn-sm btn-warning" data-action="edit" data-id="${invId}">Editar</button>
-          <button class="btn btn-sm btn-danger" data-action="delete" data-id="${invId}">Eliminar</button>
+          <button class="btn btn-sm btn-success" data-action="edit" data-id="${invId}"><i class="fa-regular fa-pen-to-square"></i></button>
+          <button class="btn btn-sm btn-secondary" data-action="delete" data-id="${invId}"><i class="fa-regular fa-trash-can"></i></button>
         </div>
       </td>
     </tr>
