@@ -24,6 +24,11 @@ export const incident_chickenService = {
         return request(endpoint);
     },
 
+     getGalponesAll: () => {
+        // Construimos la URL con el parámetro ?id_usuario=
+        const endpoint = `/sheds/all`;
+        return request(endpoint);
+    },
     /**
      * Actualizar un incidente.
      * @param {string | number} incidenteId - El ID del incidente a actualizar.
