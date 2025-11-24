@@ -109,8 +109,7 @@ def update_chicken_incident(
             )
 
 
-        id_rol = user_token.id_rol
-        modulo = "incidentes_gallinas" 
+        id_rol = user_token.id_rol 
 
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(
