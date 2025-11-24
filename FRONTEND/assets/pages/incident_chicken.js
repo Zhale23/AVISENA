@@ -35,7 +35,7 @@ function createIncidentRow(incident) {
       <td class="px-0">${fechaFormateada}</td>
       <td class="text-end justify-content-end gap-2">
         <button class="btn btn-sm btn-success btn-edit-incident" data-incident-id="${incidentId}" aria-label="Editar">
-          <i class="fa fa-pen me-0"></i>
+          <i class="fa-regular fa-pen-to-square me-0"></i>
         </button>
       </td>
     </tr>
