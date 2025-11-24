@@ -1,27 +1,27 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
 from typing import Optional
-from core.security import get_hashed_password
+from sqlalchemy.exc import SQLAlchemyError
 import logging
-
+from core.security import get_hashed_password
 from app.schemas.users import UserCreate, UserUpdate
+from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
 
 def create_user(db: Session, user: UserCreate) -> Optional[bool]:
     try:
-        pass_encript=get_hashed_password(user.pass_hash)
-        user.pass_hash=pass_encript
+        pass_encript = get_hashed_password(user.pass_hash)
+        user.pass_hash = pass_encript
         sentencia = text("""
-            INSERT INTO usuarios(
-                nombre, id_rol, email,
-                telefono, documento,   
-                pass_hash, estado
+            INSERT INTO usuarios (
+                nombre, documento, id_rol,
+                email, pass_hash,
+                telefono, estado
             ) VALUES (
-                :nombre, :id_rol, :email,
-                :telefono, :documento,
-                :pass_hash, :estado
+                :nombre, :documento, :id_rol,
+                :email, :pass_hash,
+                :telefono, :estado
             )
         """)
         db.execute(sentencia, user.model_dump())
@@ -30,96 +30,72 @@ def create_user(db: Session, user: UserCreate) -> Optional[bool]:
     except SQLAlchemyError as e:
         db.rollback()
         logger.error(f"Error al crear usuario: {e}")
-        raise Exception("Error de base de datos al crear el usuario")
+
+
+        error_msg = str(e.__cause__)
+
+
+        if "Duplicate entry" in error_msg and "email" in error_msg:
+            raise HTTPException(
+                status_code=400,
+                detail="El correo ya está registrado."
+            )
+        if "Duplicate entry" in error_msg and "documento" in error_msg:
+            raise HTTPException(
+                status_code=400,
+                detail="El número de documento ya existe."
+            )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno al crear el usuario."
+        )
+        # raise Exception("Error de base de datos al crear el usuario")
 
 def get_user_by_email_for_login(db: Session, email: str):
     try:
-        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado AS estado, nombre_rol, pass_hash
-                 FROM usuarios INNER JOIN roles ON usuarios.id_rol=roles.id_rol
-                 WHERE email = :correo
-            """)
+        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado, nombre_rol, pass_hash
+                     FROM usuarios
+                     JOIN roles ON usuarios.id_rol = roles.id_rol
+                     WHERE email = :correo
+                     """)
         result = db.execute(query, {"correo": email}).mappings().first()
         return result
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener usuario por email: {e}")
         raise Exception("Error de base de datos al obtener el usuario")
+
+
 
 def get_user_by_email(db: Session, email: str):
     try:
-        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado AS estado, nombre_rol
-                 FROM usuarios INNER JOIN roles ON usuarios.id_rol=roles.id_rol
-                 WHERE email = :correo
-            """)
+        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado, nombre_rol
+                     FROM usuarios
+                     JOIN roles ON usuarios.id_rol = roles.id_rol
+                     WHERE email = :correo
+                     """)
         result = db.execute(query, {"correo": email}).mappings().first()
         return result
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener usuario por email: {e}")
         raise Exception("Error de base de datos al obtener el usuario")
 
+
+
 def get_all_user_except_admins(db: Session):
     try:
-        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado AS estado, nombre_rol
-                    FROM usuarios INNER JOIN roles ON usuarios.id_rol=roles.id_rol
-                    WHERE usuarios.id_rol NOT IN (1,2)
-                """)
+        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado, nombre_rol
+                     FROM usuarios
+                     JOIN roles ON usuarios.id_rol = roles.id_rol
+                     WHERE usuarios.id_rol NOT IN (1,2)
+                     """)
         result = db.execute(query).mappings().all()
         return result
     except SQLAlchemyError as e:
-        logger.error(f"Error al obtener usuarios: {e}")
+        logger.error(f"Error al obtener los usuarios: {e}")
         raise Exception("Error de base de datos al obtener los usuarios")
     
-def get_all_user_except_admins_pag(db: Session, skip: int = 0, limit: int = 10):
-    """
-    Obtiene todos los usuarios excepto administradores con paginación.
-    Tambien realiza una segunda consulta para contar el total de usuarios.
-    Compatible con postgreSQL, MySQL y SQLite.
-    """
-    try:
-        # 1. contarr el total de usuarios excepto admins
-        count_query = text("""
-            SELECT COUNT(id_usuario) AS total
-            FROM usuarios
-            WHERE id_rol NOT IN (1,2)
-                """)
-        total_result = db.execute(count_query).scalar()
 
-        # 2. Consultar usuario paginados
-        query = text("""
-            SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado AS estado, nombre_rol
-            FROM usuarios 
-            INNER JOIN roles ON usuarios.id_rol=roles.id_rol
-            WHERE usuarios.id_rol NOT IN (1,2)
-            ORDER BY id_usuario
-            LIMIT :limit OFFSET :skip
-        """)
-        result = db.execute(query, {"skip": skip, "limit": limit}).mappings().all()
-
-        #3. retornar resultados
-        return {
-            "total": total_result or 0, 
-            "users": [dict(row) for row in result]
-        }
-
-    except SQLAlchemyError as e:
-        logger.error(f"Error al obtener usuarios: {e}")
-        raise Exception("Error de base de datos al obtener los usuarios")
-
-# def update_user_by_id(db: Session, user_id: int, user_update: UserUpdate) -> bool:
-#     try:
-#         fields = user_update.model_dump(exclude_unset=True)
-#         if not fields:
-#             return False
-#         set_clause = ", ".join([f"{key} = :{key}" for key in fields])
-#         fields["user_id"] = user_id
-
-#         query = text(f"UPDATE usuarios SET {set_clause} WHERE id_usuario = :user_id")
-#         db.execute(query, fields)
-#         db.commit()
-#         return True
-#     except Exception as e:
-#         db.rollback()
-#         logger.error(f"Error al actualizar usuario: {e}")
-#         raise Exception("Error de base de datos al actualizar el usuario")
 
 def update_user_by_id(db: Session, user_id: int, user: UserUpdate) -> Optional[bool]:
     try:
@@ -146,16 +122,109 @@ def update_user_by_id(db: Session, user_id: int, user: UserUpdate) -> Optional[b
     except SQLAlchemyError as e:
         db.rollback()
         logger.error(f"Error al actualizar usuario {user_id}: {e}")
+        error_msg = str(e.__cause__)
+        if "Duplicate entry" in error_msg and "email" in error_msg:
+            raise HTTPException(
+                status_code=400,
+                detail="El correo ya está registrado."
+            )
+        if "Duplicate entry" in error_msg and "documento" in error_msg:
+            raise HTTPException(
+                status_code=400,
+                detail="El número de documento ya existe."
+            )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno al actualizar el usuario."
+        )
+        # raise Exception("Error de base de datos al actualizar el usuario")
+
+
+def update_user(db: Session, user_id: int, user_update: UserUpdate) -> bool:
+    try:
+        fields = user_update.model_dump(exclude_unset=True)
+        if not fields:
+            return False
+        set_clause = ", ".join([f"{key} = :{key}" for key in fields])
+        fields["user_id"] = user_id
+
+        query = text(f"UPDATE usuario SET {set_clause} WHERE id_usuario = :user_id")
+        db.execute(query, fields)
+        db.commit()
+        return True
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Error al actualizar usuario: {e}")
         raise Exception("Error de base de datos al actualizar el usuario")
 
-def get_user_by_id(db:Session, id:int):
+
+def get_user_by_id(db: Session, id: int):
     try:
-        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado AS estado, nombre_rol
-                 FROM usuarios INNER JOIN roles ON usuarios.id_rol=roles.id_rol
-                 WHERE id_usuario = :id_user
-            """)
+        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado, nombre_rol
+                     FROM usuarios
+                     JOIN roles ON usuarios.id_rol = roles.id_rol
+                     WHERE id_usuario = :id_user
+                     """)
         result = db.execute(query, {"id_user": id}).mappings().first()
         return result
     except SQLAlchemyError as e:
-        logger.error(f"Error al obtener usuario por email: {e}")
+        logger.error(f"Error al obtener usuario por id: {e}")
         raise Exception("Error de base de datos al obtener el usuario")
+    
+def get_user_by_document_number(db: Session, document: str):
+    try:
+        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado, nombre_rol
+                     FROM usuarios INNER JOIN roles ON usuarios.id_rol=roles.id_rol
+                     WHERE usuarios.documento = :document
+                """)
+        result = db.execute(query, {"document": document}).mappings().first()
+        return result
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener usuario por su documento: {e}")
+        raise Exception("Error de base de datos al obtener el usuario")
+
+def get_user_by_role(db: Session, role: str):
+    try:
+        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado, nombre_rol
+                     FROM usuarios INNER JOIN roles ON usuarios.id_rol=roles.id_rol
+                     WHERE LOWER(roles.nombre_rol) = LOWER(:role)
+                """)
+        result = db.execute(query, {"role": role}).mappings().all()
+        return result
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener usuario por rol: {e}")
+        raise Exception("Error de base de datos al obtener los usuarios")
+
+def change_user_status(db: Session, id_usuario: int, nuevo_estado: bool) -> bool:
+    try:
+        sentencia = text("""
+            UPDATE usuarios
+            SET estado = :estado
+            WHERE id_usuario = :id_usuario
+        """)
+        result = db.execute(sentencia, {"estado": nuevo_estado, "id_usuario": id_usuario})
+        db.commit()
+
+        return result.rowcount > 0
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Error al cambiar el estado del usuario {id_usuario}: {e}")
+        raise Exception("Error de base de datos al cambiar el estado del usuario")
+
+
+
+def get_all_user_except_superadmins(db: Session):
+    try:
+        query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado, nombre_rol
+                     FROM usuarios
+                     JOIN roles ON usuarios.id_rol = roles.id_rol
+                     WHERE usuarios.id_rol NOT IN (1)
+                     """)
+        result = db.execute(query).mappings().all()
+        return result
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener los usuarios: {e}")
+        raise Exception("Error de base de datos al obtener los usuarios")
+    
