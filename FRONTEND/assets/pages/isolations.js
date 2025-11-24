@@ -40,41 +40,23 @@ function formatDateForAPI(dateStr) {
 //______________________________paginación para todos los datos y filtrados_____________
 
 async function fetchIsolations(page = 1, page_size = 10, fechaInicio = "", fechaFin = "") {
-  const token = localStorage.getItem('access_token');
-  let url;
-
-  if (fechaInicio && fechaFin) {
-    // USAR EL MISMO FORMATO QUE EN EL CURL: YYYY-MM-DD sin tiempo
-    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/isolations/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
-  } else {
-    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/isolations/all_isolations-pag?page=${page}&limit=${page_size}`;
-  }
-
   try {
-    const res = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    let response;
 
-    if (res.status === 401) throw new Error("No autorizado.");
-
-    if (res.status === 404) {
-      return {
-        isolation: [],
-        total_isolation: 0,
-        total_pages: 0,
-        page: page,
-        page_size: page_size
-      };
+    if (fechaInicio && fechaFin) {
+      // Llamamos al service para filtrar por rango de fechas
+      response = await isolationService.getIsolationAllDate(fechaInicio, fechaFin, page, page_size);
+    } else {
+      // Llamamos al isolationService para obtener todos los aislamientos paginados
+      response = await isolationService.getIsolationAll(page, page_size);
     }
 
-    if (!res.ok) throw new Error(`Error al cargar aislamientos: ${res.status}`);
+    // Verificamos posibles errores en la respuesta
+    if (!response) throw new Error("No se recibió respuesta del servidor.");
 
-    const json = await res.json();
-    return json;
+    return response;
   } catch (error) {
+    console.error("Error al cargar aislamientos:", error);
     throw error;
   }
 }
