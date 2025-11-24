@@ -69,7 +69,7 @@ function renderPagination(total_pages, currentPage = 1) {
   container.innerHTML = "";
   
   const anterior = document.createElement("button");
-  anterior.classList.add('btn', 'btn-sm', 'btn-outline-primary', 'mx-1', 'border', 'border-success', 'my-2');
+  anterior.classList.add('btn', 'page-link', 'text-success');
   anterior.textContent = "<";
   anterior.addEventListener("click", () => {
     const prevPage = currentPage === 1 ? total_pages : currentPage - 1;
@@ -106,7 +106,7 @@ function renderPagination(total_pages, currentPage = 1) {
   }
   
   const next = document.createElement("button");
-  next.classList.add('btn', 'btn-sm', 'btn-outline-primary', 'mx-1', 'border', 'border-success', 'my-2');
+  next.classList.add('page-link', 'text-success');
   next.textContent = ">";
   next.addEventListener("click", () => {
     const nextPage = currentPage === total_pages ? 1 : currentPage + 1;
@@ -119,7 +119,7 @@ function createPageButton(page, currentPage) {
   const btn = document.createElement("button");
   btn.textContent = page;
   btn.disabled = page === currentPage;
-  btn.classList.add('btn', 'btn-sm', 'btn-outline-primary', 'mx-1', 'border', 'border-success', 'my-2');
+  btn.classList.add('page-link');
   btn.addEventListener("click", () => init(page, 10, activeFechaInicio, activeFechaFin));
   return btn;
 }
