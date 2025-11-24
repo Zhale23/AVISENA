@@ -21,7 +21,7 @@ function createIsolationRow(isolation) {
       <td class="px-0">${fechaFormateada}</td>
       <td class="px-0">${isolation.nombre}</td>
       <td class="text-end justify-content-end gap-2">
-          <button class="btn btn-sm btn-success btn-edit-isolation" data-isolation-id="${isolationId}" aria-label="Editar"><i class="fa fa-pen me-0"></i></button>
+          <button class="btn btn-sm btn-success btn-edit-isolation" data-isolation-id="${isolationId}" aria-label="Editar"><i class="fa-regular fa-pen-to-square me-0"></i></button>
       </td>
     </tr>
   `;
