@@ -13,17 +13,11 @@ function createShedRow(shed) {
 
   return `
     <tr>
-      <td class="px-0">
-        <div class="d-flex align-items-center">
-          <div class="ms-3">
-            <h6 class="mb-0">${shed.nombre_finca}</h6>
-          </div>
-        </div>
-      </td>
-      <td class="px-0">${shed.nombre}</td>
-      <td class="px-0">${shed.capacidad}</td>
-      <td class="px-0">${shed.cant_actual}</td>
-      <td class="px-0">
+      <td class="cell">{shed.nombre_finca}</td>
+      <td class="cell">${shed.nombre}</td>
+      <td class="cell">${shed.capacidad}</td>
+      <td class="cell">${shed.cant_actual}</td>
+      <td class="cell">
         <div class="form-check form-switch">
             <input class="form-check-input shed-status-switch" type="checkbox" role="switch" 
                    id="switch-${shedId}" data-shed-id="${shedId}" 
