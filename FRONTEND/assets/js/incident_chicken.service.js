@@ -29,6 +29,19 @@ export const incident_chickenService = {
         const endpoint = `/sheds/all`;
         return request(endpoint);
     },
+
+     getIsolationAllDate: (fechaInicio, fechaFin, page = 1, page_size = 10) => {
+        // Construimos la URL con el parámetro ?id_usuario=
+        const endpoint = `/incident/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
+        return request(endpoint);
+    },
+
+    getIsolationAll: (page = 1, page_size = 10) => {
+        // Construimos la URL con el parámetro ?id_usuario=
+        const endpoint = `/incident/all_incidentes-gallinas-pag?page=${page}&limit=${page_size}`;
+        return request(endpoint);
+    },
+    
     /**
      * Actualizar un incidente.
      * @param {string | number} incidenteId - El ID del incidente a actualizar.
