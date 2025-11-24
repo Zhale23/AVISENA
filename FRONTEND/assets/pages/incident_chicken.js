@@ -70,7 +70,7 @@ async function fetchIncidents(page = 1, page_size = 10, fechaInicio = "", fechaF
 
     return response;
   } catch (error) {
-    console.error("Error al cargar aislamientos:", error);
+    console.error("Error al cargar los incidentes de gallinas:", error);
     throw error;
   }
 }
