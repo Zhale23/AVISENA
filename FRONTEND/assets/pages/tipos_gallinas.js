@@ -12,7 +12,7 @@ function createTypeChickenRow(typeChicken) {
       <td class="px-0">${typeChicken.descripcion}</td>
       <td class="px-0 text-end">
           <button class="btn btn-success btn-sm btn-edit-tipo-gallina" aria-label="Editar" title="Editar" data-tipo-gallina-id="${typeChicken.id_tipo_gallinas}">
-            <i class="fa fa-pen me-0"></i>
+            <i class="fa-regular fa-pen-to-square me-0"></i>
           </button>
       </td>
     </tr>
