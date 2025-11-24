@@ -58,9 +58,9 @@ async function fetchIncidents(page = 1, page_size = 10, fechaInicio = "", fechaF
   let url;
 
   if (fechaInicio && fechaFin) {
-    url = `http://avisenabackend.20.168.14.245.sslip.io:10000/incident/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
+    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/incident/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
   } else {
-    url = `http://avisenabackend.20.168.14.245.sslip.io:10000/incident/all_incidentes-gallinas-pag?page=${page}&limit=${page_size}`;
+    url = `http://i8sg4c8880g8oggskwo8gkc8.20.168.14.245.sslip.io:10000/incident/all_incidentes-gallinas-pag?page=${page}&limit=${page_size}`;
   }
 
   try {
@@ -195,20 +195,12 @@ async function loadGalponesSelectCreate() {
   const select = document.getElementById('create_id_galpon');
 
   try {
-    const token = localStorage.getItem('access_token');
-    const res = await fetch('https://proyecto-sena-oatr.onrender.com/sheds/all', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    // Obtener galpones desde el service
+    const galpones = await incident_chickenService.getGalponesAll();
 
-    if (!res.ok) throw new Error('Error al obtener galpones');
-
-    const galpones = await res.json();
-
-    // Limpia y llena las opciones
+    // Limpia y agrega opción por defecto
     select.innerHTML = '<option value="">Selecciona un galpón</option>';
+
     galpones.forEach(g => {
       const option = document.createElement('option');
       option.value = g.id_galpon;
@@ -216,33 +208,33 @@ async function loadGalponesSelectCreate() {
       select.appendChild(option);
     });
 
-    // Activa el buscador (solo si usas Select2)
+    // Inicializar Select2
     if (window.$ && $(select).select2) {
-      $(document).ready(function() {
-        $('#create_id_galpon').select2({
-          dropdownParent: $('#createIncidenteGallinaModal'),
-          width: '100%',
-          placeholder: 'Selecciona un galpón',
-          allowClear: true,
-          dropdownCssClass: 'select2-scroll',
-          matcher: function(params, data) {
-            if ($.trim(params.term) === '') return data;
+      $(select).select2({
+        dropdownParent: $('#exampleModal'), // tu modal
+        width: '100%',
+        placeholder: 'Selecciona un galpón',
+        allowClear: true,
+        dropdownCssClass: 'select2-scroll',
 
-            const term = params.term.toLowerCase();
-            const text = (data.text || '').toLowerCase();
-            const id = (data.id || '').toLowerCase();
+        // Buscador personalizado
+        matcher: function(params, data) {
+          if ($.trim(params.term) === '') return data;
 
-            // Buscar coincidencia parcial en texto o en ID
-            if (text.indexOf(term) > -1 || id.indexOf(term) > -1) {
-              return data;
-            }
-            return null;
+          const term = params.term.toLowerCase();
+          const text = (data.text || '').toLowerCase();
+          const id = (data.id || '').toLowerCase();
+
+          if (text.includes(term) || id.includes(term)) {
+            return data;
           }
-        });
+          return null;
+        }
       });
     }
 
   } catch (error) {
+    console.error("Error al cargar galpones:", error);
     select.innerHTML = '<option value="">Error al cargar galpones</option>';
   }
 }
@@ -271,32 +263,30 @@ createModal.addEventListener('show.bs.modal', function() {
   loadTiposIncidenteCreate();
 });
 
-async function loadGalponesSelectEdit(selectedId) {
-  const select = document.getElementById('edit_id_galpon');
-  select.innerHTML = '<option value="">Cargando galpones...</option>';
+async function loadGalponesSelectEdit(select, selectedId = null) {
+    try {
+        // Llamamos directamente al servicio
+        const galpones = await incident_chickenService.getGalponesAll();
 
-  try {
-    const token = localStorage.getItem('access_token');
-    const res = await fetch('http://avisenabackend.20.168.14.245.sslip.io:10000/sheds/all', {
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-    });
-    if (!res.ok) throw new Error('Error al cargar galpones');
+        // Limpiar y agregar opción por defecto
+        select.innerHTML = '<option value="">Selecciona un galpón</option>';
 
-    const galpones = await res.json();
-    select.innerHTML = '<option value="">Selecciona un galpón</option>';
+        // Llenar el select
+        galpones.forEach(g => {
+            const option = document.createElement('option');
+            option.value = g.id_galpon;
+            option.textContent = g.nombre;
 
-    galpones.forEach(g => {
-      const option = document.createElement('option');
-      option.value = g.id_galpon;
-      option.textContent = g.nombre;
-      if (g.id_galpon == selectedId) option.selected = true;
-      select.appendChild(option);
-    });
+            if (g.id_galpon === selectedId) option.selected = true;
 
-  } catch (error) {
-    select.innerHTML = '<option value="">Error al cargar galpones</option>';
-  }
+            select.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Error al cargar galpones:", error);
+    }
 }
+
 
 // Función para cargar tipos de incidente en el select de edición
 function loadTiposIncidenteEdit(selectedTipo) {
@@ -330,14 +320,15 @@ async function openEditModal(id_incidente_gallina) {
     // Obtener datos del incidente - CORREGIDO: usar el método correcto del service
     const incident = await incident_chickenService.getChickenIncidentById(id_incidente_gallina);
     console.log("Datos del incidente:", incident);
-
+    
     // Llenar el formulario con los datos
     document.getElementById('edit-id_inc_gallina').value = incident.id_inc_gallina;
     document.getElementById('edit-cantidad').value = incident.cantidad;
     document.getElementById('edit-descripcion').value = incident.descripcion;
     
     // CORREGIDO: Usar galpon_origen en lugar de id_galpon
-    await loadGalponesSelectEdit(incident.galpon_origen);
+    const selectGalpon = document.getElementById('edit_id_galpon');
+    await loadGalponesSelectEdit(selectGalpon, incident.galpon_origen);
     loadTiposIncidenteEdit(incident.tipo_incidente);
     
     // Mostrar modal
