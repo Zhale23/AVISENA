@@ -848,7 +848,6 @@ async function fetchWithDates(fechaInicio, fechaFin, page, size) {
 
     try {
         const data = await rescueService.getRescuesAllDate(fechaInicio, fechaFin, page, size);
-
         // Validación para cuando no hay datos
         if (!data || (Array.isArray(data.rescue) && data.rescue.length === 0)) {
             return {
@@ -856,7 +855,7 @@ async function fetchWithDates(fechaInicio, fechaFin, page, size) {
                 total_rescue: 0,
                 total_pages: 0,
                 page,
-                page_size
+                size
             };
         }
 
