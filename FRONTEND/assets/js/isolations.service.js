@@ -44,6 +44,16 @@ export const isolationService = {
         });
     },
 
+    getIsolationAllDate: (fechaInicio, fechaFin, page = 1, page_size = 10) => {
+        const endpoint = `/isolations/rango-fechas?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${page_size}`;
+        return request(endpoint);
+    },
+
+    getIsolationAll: (page = 1, page_size = 10) => {
+        const endpoint = `/isolations/all_isolations-pag?page=${page}&limit=${page_size}`;
+        return request(endpoint);
+    },
+    
     /**
      * Crear un usuario.
      * @param {object} isolationData - Los nuevos datos del usuario.
