@@ -293,35 +293,77 @@ async function handleCreateSubmit(event) {
 // PAGINACIÓN
 
 function renderPagination(total_pages, currentPage = 1) {
-    const container = document.querySelector("#paginacion");
+    const container = document.querySelector("#pagination");
     if (!container) return;
 
     container.innerHTML = "";
-    const anterior = document.createElement("button");
-    anterior.classList.add('btn', 'btn-sm', 'btn-outline-primary', 'mx-1', 'border', 'border-success', 'my-2');
-    anterior.textContent="<";
-    anterior.addEventListener("click", () => {
-      const prevPage = currentPage === 1 ? total_pages : currentPage - 1;
-      init(prevPage, document.getElementById("pageSize").value);
-    })
-    container.appendChild(anterior);
 
+    // Botón Anterior
+    const prevItem = document.createElement("li");
+    prevItem.classList.add('page-item');
+    if (currentPage === 1) prevItem.classList.add('disabled');
+    
+    const prevLink = document.createElement("a");
+    prevLink.classList.add('page-link', 'text-success');
+    prevLink.href = "#";
+    prevLink.innerHTML = "&lt;";
+    prevLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (currentPage > 1) {
+            const prevPage = currentPage - 1;
+            init(prevPage, document.getElementById("pageSize").value);
+        }
+    });
+    
+    prevItem.appendChild(prevLink);
+    container.appendChild(prevItem);
+
+    // Botones de páginas numeradas
     for (let i = 1; i <= total_pages; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = i;
-        btn.disabled = i === currentPage;
-        btn.classList.add('btn', 'btn-sm', 'btn-outline-primary', 'mx-1', 'border', 'border-success', 'my-2');
-        btn.addEventListener("click", () => init(i, document.getElementById("pageSize").value));
-        container.appendChild(btn);
+        const pageItem = document.createElement("li");
+        pageItem.classList.add('page-item');
+        
+        const pageLink = document.createElement("a");
+        
+        if (i === currentPage) {
+            // Página activa - fondo verde con texto blanco
+            pageLink.classList.add('page-link', 'bg-success', 'border-success', 'text-white');
+            pageItem.classList.add('active');
+        } else {
+            // Páginas inactivas - texto verde
+            pageLink.classList.add('page-link', 'text-success');
+        }
+        
+        pageLink.href = "#";
+        pageLink.textContent = i;
+        pageLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            init(i, document.getElementById("pageSize").value);
+        });
+        
+        pageItem.appendChild(pageLink);
+        container.appendChild(pageItem);
     }
-    const next = document.createElement("button");
-    next.classList.add('btn', 'btn-sm', 'btn-outline-primary', 'mx-1', 'border', 'border-success', 'my-2');
-    next.textContent=">";
-    next.addEventListener("click", () => {
-      const nextPage = currentPage === total_pages ? 1 : currentPage + 1;
-        init(nextPage, document.getElementById("pageSize").value);
-    })
-    container.appendChild(next);
+
+    // Botón Siguiente
+    const nextItem = document.createElement("li");
+    nextItem.classList.add('page-item');
+    if (currentPage === total_pages) nextItem.classList.add('disabled');
+    
+    const nextLink = document.createElement("a");
+    nextLink.classList.add('page-link', 'text-success');
+    nextLink.href = "#";
+    nextLink.innerHTML = "&gt;";
+    nextLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (currentPage < total_pages) {
+            const nextPage = currentPage + 1;
+            init(nextPage, document.getElementById("pageSize").value);
+        }
+    });
+    
+    nextItem.appendChild(nextLink);
+    container.appendChild(nextItem);
 }
 
 // FILTROS
