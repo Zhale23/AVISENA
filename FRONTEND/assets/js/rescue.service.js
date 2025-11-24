@@ -21,6 +21,15 @@ export const rescueService = {
         return request(endpoint);
     },
 
+     getRescuesAll: (page = 1, size = 10) => {
+        const endpoint = `/rescue/all-pag?page=${page}&page_size=${size}`;  
+        return request(endpoint);
+    },
+    
+    getRescuesAllDate: (fechaInicio, fechaFin, page = 1, size = 10) => {
+        const endpoint = `/rescue/all-pag-by-date?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&page=${page}&page_size=${size}`;
+        return request(endpoint);
+    },
     /**
      * Actualizar un rescate
      * @param {string | number} rescueId - El ID del rescate a actualizar
