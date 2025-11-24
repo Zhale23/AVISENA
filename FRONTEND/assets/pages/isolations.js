@@ -42,21 +42,21 @@ function formatDateForAPI(dateStr) {
 async function fetchIsolations(page = 1, page_size = 10, fechaInicio = "", fechaFin = "") {
   try {
     let response;
-
     if (fechaInicio && fechaFin) {
-      // Llamamos al service para filtrar por rango de fechas
       response = await isolationService.getIsolationAllDate(fechaInicio, fechaFin, page, page_size);
     } else {
-      // Llamamos al isolationService para obtener todos los aislamientos paginados
       response = await isolationService.getIsolationAll(page, page_size);
     }
 
-    // Verificamos posibles errores en la respuesta
-    if (!response) throw new Error("No se recibió respuesta del servidor.");
+    if (!response || response.length === 0) {
+      return [];
+    }
 
     return response;
   } catch (error) {
-    console.error("Error al cargar aislamientos:", error);
+    if (error.message.includes("No hay asilamiento en ese rango de fechas") || error.response?.status === 404) {
+      return [];
+    }
     throw error;
   }
 }
