@@ -26,6 +26,11 @@ export const isolationService = {
         return request(endpoint);
     },
 
+     getGalponesAll: () => {
+        // Construimos la URL con el parámetro ?id_usuario=
+        const endpoint = `/sheds/all`;
+        return request(endpoint);
+    },
     /**
      * Actualizar un usuario.
      * @param {string | number} aislamientoId - El ID del usuario a actualizar.
