@@ -194,7 +194,8 @@ async function handleTableClick(e) {
           // Mostrar mensaje de error
           swalWithBootstrapButtons.fire({
             title: "Error",
-            text: "Error al eliminar la categoría: " + (error.message || error),
+            // text: "Error al eliminar la categoría: " + (error.message || error),
+            text: "Error al eliminar la categoría: Puede que esté en uso.",
             icon: "error",
             draggable: true
           });
@@ -245,6 +246,44 @@ async function init() {
   editForm.addEventListener('submit', handleUpdateSubmit);
   createForm.removeEventListener('submit', handleCreateSubmit);
   createForm.addEventListener('submit', handleCreateSubmit);
+
+  // Delegated handler dentro del módulo Categorias para ir al Inventario (sin tocar main.js)
+  try {
+    const pageRoot = tableBody.closest('.card') || document.getElementById('main-content') || document;
+    if (pageRoot.__inventarioHandler) {
+      pageRoot.removeEventListener('click', pageRoot.__inventarioHandler);
+      pageRoot.__inventarioHandler = null;
+    }
+
+    const inventarioHandler = function (ev) {
+      const target = ev.target;
+      const shortcut = target.closest('[data-page="inventario"]') || target.closest('#btn-ir-inventario') || target.closest('button.app-nav') || target.closest('a.app-nav');
+      if (!shortcut) return;
+      if (!pageRoot.contains(shortcut)) return;
+      ev.preventDefault();
+
+      // Intentar disparar el enlace del nav principal
+      const shellLink = document.querySelector('.app-nav a[data-page="inventario"]');
+      if (shellLink) {
+        shellLink.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true }));
+        return;
+      }
+
+      // Usar navigateTo si está disponible
+      if (typeof window.navigateTo === 'function') {
+        window.navigateTo('inventario');
+        return;
+      }
+
+      // Fallback: redirigir a index1.html
+      window.location.href = 'index1.html?page=inventario';
+    };
+
+    pageRoot.addEventListener('click', inventarioHandler);
+    pageRoot.__inventarioHandler = inventarioHandler;
+  } catch (err) {
+    console.error('Error wiring inventario shortcut in init():', err);
+  }
 
 }
 
