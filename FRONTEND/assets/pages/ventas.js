@@ -1,5 +1,5 @@
-import { ventaService } from "../js/api/venta.service.js";
-//import {loadContent} from "../js/main.js";
+import { ventaService } from "../api/venta.service.js";
+import {loadContent} from "../main.js";
 
 let modalInstance = null; // Guardará la instancia del modal de Bootstrap
 let createModalInstance = null; // Guardará la instancia del modal de Bootstrap
@@ -35,7 +35,7 @@ function createVentaRow(venta) {
             </td>
             <td class="cell d-flex justify-content-end gap-2">
               <button class="btn btn-success btn-sm btn-edit-venta me-1" data-venta-id="${venta.id_venta}" aria-label="Editar">
-                <i class="fa fa-pen me-0"></i>
+                <i class="fa-regular fa-pen-to-square"></i>
               </button>
               <button class="btn btn-success btn-sm btn-detalles-venta me-1" data-venta-id="${
                     venta.id_venta}" data-page="info_venta">
@@ -103,56 +103,64 @@ export { init };
 
 //  Cambiar estado
 async function handleStatusSwitch(event) {
-    // casos:
-    // Activa a cancelada (Permitir)
-    // Cancelada a activa (No permitir)
+  const switchElement = event.target;
 
-    const switchElement = event.target;
+  if (!switchElement.classList.contains("venta-status-switch")) return;
 
-    if (!switchElement.classList.contains("venta-status-switch")) return;
+  const ventaId = switchElement.dataset.ventaId;
 
-    const ventaId = switchElement.dataset.ventaId;
+  const previousStatus = !switchElement.checked;
+  const newStatus = switchElement.checked;
 
-    const previousStatus = !switchElement.checked;
-    const newStatus = switchElement.checked;
+  // Si la venta estaba cancelada y está intentando habilitar
+  if (previousStatus === false && newStatus === true) {
+    Swal.fire({
+      icon: "error",
+      title: "Ups...",
+      text: "La venta ya fue cancelada, no se puede habilitar",
+    });
+    switchElement.checked = false;
+    return;
+  }
 
-    // Si la venta YA estaba cancelada antes del clic
-    if (previousStatus === false && newStatus === true) {
+  // Confirmación con SweetAlert2
+  const result = await Swal.fire({
+    title: "¿Estás seguro de cancelar esta venta?",
+    text: "Una vez cancelada no se puede revertir.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, cancelar",
+    cancelButtonText: "No, volver",
+    reverseButtons: true,
+  });
+
+  if (result.isConfirmed) {
+    try {
+      await ventaService.cambiarEstado(ventaId, false);
+
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: "Venta cancelada con éxito",
+      });
+
+      init(); 
+    } catch (error) {
+      console.error("Error al cancelar venta:", error);
       Swal.fire({
         icon: "error",
-        title: 'Ups...',
-        text: "La venta ya fue cancelada, no se puede habilitar",
+        title: "Ups...",
+        text: "Hubo un error al cancelar la venta",
       });
-        switchElement.checked = false;
-        return;
-    }
 
-    if (
-        confirm(
-        "¿Estás seguro de que deseas cancelar esta venta? No se puede revertir la acción"
-        )
-    ) {
-        try {
-          await ventaService.cambiarEstado(ventaId, false);
-          Swal.fire({
-            icon: 'success',
-            title: "Exito",
-            text: "Venta cancelada con exito",
-          });
-          init();
-        } catch (error) {
-          console.error("Error al cancelar venta:", error);
-          Swal.fire({
-            icon: "error",
-            title: 'Ups...',
-            text: "No se pudo crear la venta",
-          });
-          switchElement.checked = true; // revertir el cambio
-        }
-    } else {
-        switchElement.checked = true;
+      switchElement.checked = true; // revertir el cambio
     }
+  } else {
+    // si el usuario cancela, revierte el switch
+    switchElement.checked = true;
+  }
 }
+
 
 
 // manejador para crear usuario (al dar click en el botón)
