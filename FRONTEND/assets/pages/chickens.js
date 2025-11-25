@@ -3,7 +3,6 @@ import { chickenService } from '../js/chickens.service.js';
 // VARIABLES GLOBALES
 
 let modalInstance = null;
-let createModalInstance = null;
 
 let cacheGalpones = null;
 let cacheTipos = null;
@@ -45,27 +44,35 @@ function createChickenRow(chicken) {
 
 // FUNCIONES DE CARGA DE SELECTS
 
-async function cargarSelectGalpones() {
+async function cargarSelectGalpones(force = false) {
     const selectCreate = document.getElementById('create-id_galpon');
     const selectEdit = document.getElementById('edit-id_galpon');
 
     try {
-        if (!cacheGalpones) {
+        if (!cacheGalpones || force) {
             cacheGalpones = await chickenService.getGalpones();
         }
 
-        const options = cacheGalpones.map(g => `
-            <option value="${g.id_galpon}">
-                ${g.nombre}
-            </option>
-        `).join('');
-
         if (selectCreate) {
-            selectCreate.innerHTML = `<option value="" disabled selected>Seleccione un galpón</option>${options}`;
+            selectCreate.innerHTML =
+                `<option value="" disabled selected>Seleccione un galpón</option>` +
+                cacheGalpones.map(g => {
+                    const disponible = g.capacidad - g.cant_actual;
+                    return `<option value="${g.id_galpon}">
+                                ${g.nombre} (${disponible} disponibles)
+                            </option>`;
+                }).join('');
         }
 
         if (selectEdit) {
-            selectEdit.innerHTML = `<option value="" disabled>Seleccione un galpón</option>${options}`;
+            selectEdit.innerHTML =
+                `<option value="" disabled selected>Seleccione un galpón</option>` +
+                cacheGalpones.map(g => {
+                    const disponible = g.capacidad - g.cant_actual;
+                    return `<option value="${g.id_galpon}">
+                                ${g.nombre} (${disponible} disponibles)
+                            </option>`;
+                }).join('');
         }
 
     } catch (error) {
@@ -79,27 +86,25 @@ async function cargarSelectGalpones() {
     }
 }
 
-async function cargarSelectTypeChickens() {
+async function cargarSelectTypeChickens(force = false) {
     const selectCreate = document.getElementById('create-id_tipo_gallina');
     const selectEdit = document.getElementById('edit-id_tipo_gallina');
 
     try {
-        if (!cacheTipos) {
+        if (!cacheTipos || force) {
             cacheTipos = await chickenService.getTypeChickens();
         }
 
-        const options = cacheTipos.map(t => `
-            <option value="${t.id_tipo_gallinas}">
-                ${t.raza}
-            </option>
-        `).join('');
-
         if (selectCreate) {
-            selectCreate.innerHTML = `<option value="" disabled selected>Seleccione un tipo</option>${options}`;
+            selectCreate.innerHTML =
+                `<option value="" disabled selected>Seleccione un tipo</option>` +
+                cacheTipos.map(t => `<option value="${t.id_tipo_gallinas}">${t.raza}</option>`).join('');
         }
 
         if (selectEdit) {
-            selectEdit.innerHTML = `<option value="" disabled>Seleccione un tipo</option>${options}`;
+            selectEdit.innerHTML =
+                `<option value="" disabled selected>Seleccione un tipo</option>` +
+                cacheTipos.map(t => `<option value="${t.id_tipo_gallinas}">${t.raza}</option>`).join('');
         }
 
     } catch (error) {
@@ -191,11 +196,21 @@ async function handleUpdateSubmit(event) {
     } catch (error) {
         console.error(`Error al actualizar el registro ${chickenId}:`, error);
 
-        Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "No se pudo actualizar el registro..",
-        });
+        const msg = error?.message || error?.toString() || "";
+
+        if (msg.includes("excede") || msg.includes("exced")) {
+            Swal.fire({
+                icon: "warning",
+                title: "Capacidad excedida",
+                text: "La cantidad de gallinas excede la capacidad del galpón.",
+            });
+        } else {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "No se pudo crear el registro.",
+            });
+        }
     }
 }
 
@@ -281,12 +296,22 @@ async function handleCreateSubmit(event) {
         init(); 
     } catch (error) {
         console.error('Error al crear el registro:', error);
-        
-        Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "No se pudo crear el registro.",
-        });
+
+        const msg = error?.message || error?.toString() || "";
+
+        if (msg.includes("excede") || msg.includes("exced")) {
+            Swal.fire({
+                icon: "warning",
+                title: "Capacidad excedida",
+                text: "La cantidad de gallinas excede la capacidad del galpón.",
+            });
+        } else {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "No se pudo crear el registro.",
+            });
+        }
     }
 }
 
@@ -631,14 +656,15 @@ function loadScript(src) {
 
 document.getElementById('btn-filter').addEventListener('click', () => filtrarChickens(1, document.getElementById("pageSize").value));
 
-const btnOpenCreateModal = document.querySelector('[data-bs-target="#createChickenModal"]');
+document.addEventListener("click", async (e) => {
+    if (e.target.matches('[data-bs-target="#createChickenModal"]')) {
+        console.log("Abriendo modal -> cargando selects");
 
-if (btnOpenCreateModal) {
-    btnOpenCreateModal.addEventListener('click', async () => {
-        await cargarSelectGalpones();
-        await cargarSelectTypeChickens();
-    });
-}
+        await cargarSelectGalpones(true);
+        await cargarSelectTypeChickens(true);
+    }
+});
+
 
 const selectPage = document.getElementById("pageSize");
 selectPage.addEventListener("change", () => init(1, selectPage.value));
