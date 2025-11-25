@@ -61,7 +61,7 @@ export const rescueService = {
      * @returns {Promise<object>}
      */
     deleteRescue: (rescueId) => {
-        return request(`/rescue/by-id-delete/${rescueId}`, {
+        return request(`/rescue/by-id/${rescueId}`, {
             method: 'DELETE',
         });
     },
