@@ -1,6 +1,6 @@
 import { produccionHuevosService } from '../js/api/produccionHuevos.service.js';
 
-let modalInstance = null; // Guardará la instancia del modal
+let modalInstance = null;
 let originalFecha = null;
 
 // --- VARIABLES DE PAGINACIÓN ---
@@ -9,80 +9,75 @@ let limit = 10;
 let fechaInicioGlobal = null;
 let fechaFinGlobal = null;
 
-
 // --- FUNCIONES AUXILIARES ---
-
 function createProduccionRow(produccion) {
   const idRol = JSON.parse(localStorage.getItem('user'))?.id_rol;
-  
-  const tabla = `
+
+  return `
     <tr>
-      <td class="px-0">${produccion.id_produccion}</td>
-      <td class="px-0">${produccion.nombre_galpon}</td>
-      <td class="px-0">${produccion.cantidad || 'Sin Cantidad'}</td>
-      <td class="px-0">${produccion.fecha}</td>
-      <td class="px-0">${produccion.tamaño}</td>
-      <td class="text-end justify-content-end gap-2">
-        <button class="btn btn-sm btn-edit-produccion" data-produccion-id="${produccion.id_produccion}" style="color: black; background-color:rgb(117, 189, 127);">
-          <i class="fa fa-pen me-0"></i>
+      <td>${produccion.nombre_galpon}</td>
+      <td>${produccion.cantidad || 'Sin Cantidad'}</td>
+      <td>${produccion.fecha}</td>
+      <td>${produccion.tamaño}</td>
+      <td class="text-end">
+         <button class="btn btn-sm btn-success btn-edit-produccion" 
+          data-produccion-id="${produccion.id_produccion}">
+          <i class="fa-regular fa-pen-to-square"></i>
         </button>
         ${idRol === 1 || idRol === 2 ? `
-          <button class="btn btn-sm btn-secondary btn-eliminar-produccion" data-produccion-id="${produccion.id_produccion}">
-            <i class="fa-regular fa-trash-can"></i>
-          </button>
-        ` : ''}
+          <button class="btn btn-sm btn-secondary btn-eliminar-produccion" 
+            data-produccion-id="${produccion.id_produccion}">
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
+      ` : ''}
       </td>
     </tr>
   `;
-  
-  return tabla;
 }
 
 // --- MODAL DE EDICIÓN ---
-
 async function openEditModal(produccionId) {
   const modalElement = document.getElementById('edit-produccion-modal');
-  if (!modalInstance) {
-    modalInstance = new bootstrap.Modal(modalElement);
-  }
+  if (!modalInstance) modalInstance = new bootstrap.Modal(modalElement);
 
   try {
     const produccion = await produccionHuevosService.GetProduccionHuevosById(produccionId);
 
-    originalFecha = produccion.fecha; // Guardamos la fecha original
+    originalFecha = produccion.fecha;
 
     const inputFecha = document.getElementById('edit-fecha');
+    inputFecha.value = produccion.fecha;
+    inputFecha.max = produccion.fecha;
 
     document.getElementById('edit-produccion-id').value = produccion.id_produccion;
     document.getElementById('edit-produccion-nombre').value = produccion.nombre_galpon;
     document.getElementById('edit-cantidad').value = produccion.cantidad;
     document.getElementById('edit-tamaño').value = produccion.tamaño;
 
-    // --- VALIDACIÓN DE FECHA ---
-    inputFecha.value = produccion.fecha;
-    inputFecha.max = produccion.fecha; // No permite fechas anteriores
-
-    // Opcional: mostrar alerta si se intenta cambiar por debajo del mínimo
-    inputFecha.addEventListener('input', () => {
-      if (inputFecha.value > inputFecha.max) {
-        inputFecha.value = inputFecha.max;
-      }
-    });
-
     modalInstance.show();
+
   } catch (error) {
-    console.error(`Error al obtener datos de la producción ${produccionId}:`, error);
-    alert('No se pudieron cargar los datos de la producción.');
+    console.error("Error:", error);
+
+    Swal.fire({
+      icon: "error",
+      title: "Error al cargar datos",
+      text: "No se pudieron cargar los datos de la producción.",
+      confirmButtonText: "Aceptar",
+      customClass: {
+        confirmButton: "btn btn-danger"
+      },
+      buttonsStyling: false
+    });
   }
 }
 
-
-// --- ENVÍO DEL FORMULARIO DE ACTUALIZACIÓN ---
-
+// --- ACTUALIZAR PRODUCCIÓN ---
 async function handleUpdateSubmit(event) {
   event.preventDefault();
 
   const produccionId = document.getElementById('edit-produccion-id').value;
+
   const updatedData = {
     fecha: document.getElementById('edit-fecha').value,
     cantidad: parseInt(document.getElementById('edit-cantidad').value),
@@ -92,15 +87,38 @@ async function handleUpdateSubmit(event) {
 
   try {
     await produccionHuevosService.UpdateProduccionHuevos(produccionId, updatedData);
+
     modalInstance.hide();
-    init(); // recarga la tabla
+    init();
+
+    // 🔵 SWEETALERT DE ÉXITO
+    Swal.fire({
+      icon: "success",
+      title: "Producción actualizada",
+      text: "Los datos se han guardado correctamente.",
+      timer: 1500,
+      showConfirmButton: false
+    });
+
   } catch (error) {
-    console.error(`Error al actualizar la producción ${produccionId}:`, error);
-    alert('No se pudo actualizar la producción.');
+    console.error("Error:", error);
+
+    // 🔴 SWEETALERT DE ERROR
+    Swal.fire({
+      icon: "error",
+      title: "Error al actualizar",
+      text: "No se pudo actualizar la producción.",
+      confirmButtonText: "Aceptar",
+      customClass: {
+        confirmButton: "btn btn-danger"
+      },
+      buttonsStyling: false
+    });
   }
 }
 
-// --- CREAR NUEVA PRODUCCIÓN ---
+
+// --- CREAR ---
 async function handleCreateSubmit(event) {
   event.preventDefault();
 
@@ -113,126 +131,194 @@ async function handleCreateSubmit(event) {
 
   try {
     await produccionHuevosService.CreateProduccionHuevos(newData);
-    alert('Producción registrada correctamente.');
-    event.target.reset(); // limpia el formulario
-    init(); // recarga tabla
+
+    // 🔵 SWEETALERT DE ÉXITO
+    Swal.fire({
+      icon: "success",
+      title: "Producción registrada!",
+      text: "La nueva producción fue guardada correctamente.",
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    event.target.reset();
+    init();
+
   } catch (error) {
-    console.error('Error al crear la producción:', error);
-    alert('No se pudo registrar la producción.');
+    console.error("Error:", error);
+
+    // 🔴 SWEETALERT DE ERROR
+    Swal.fire({
+      icon: "error",
+      title: "Error al registrar",
+      text: "No se pudo crear la producción.",
+      confirmButtonText: "Aceptar",
+      customClass: {
+        confirmButton: "btn btn-danger"
+      },
+      buttonsStyling: false
+    });
   }
 }
 
-// --- CLICK EN LA TABLA (para editar) ---
 
+// --- TABLA CLICK ---
 async function handleTableClick(event) {
   const editButton = event.target.closest('.btn-edit-produccion');
   if (editButton) {
-    const produccionId = editButton.dataset.produccionId;
-    openEditModal(produccionId);
+    openEditModal(editButton.dataset.produccionId);
+    return;
   }
 
-   const deleteButton = event.target.closest('.btn-eliminar-produccion');
+  const deleteButton = event.target.closest('.btn-eliminar-produccion');
   if (deleteButton) {
-    const produccionId = deleteButton.dataset.produccionId;
-    eliminarProduccion(produccionId); // ← AQUÍ SE CONECTA
+    eliminarProduccion(deleteButton.dataset.produccionId);
     return;
   }
 }
 
-// --- FUNCIÓN PRINCIPAL DE INICIALIZACIÓN ---
+// --- ELIMINAR ---
+async function eliminarProduccion(produccionId) {
+  try {
+    // 🔵 SWEETALERT DE CONFIRMACIÓN
+    const result = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: "Esta producción será eliminada permanentemente.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "No, cancelar",
+      reverseButtons: true,
+      customClass: {
+        confirmButton: "btn btn-danger",
+        cancelButton: "btn btn-secondary"
+      },
+      buttonsStyling: false
+    });
 
-async function init(page = 1) {
+    // ❌ Si cancela, no eliminamos
+    if (!result.isConfirmed) return;
+
+    // 🗑️ Ejecutar eliminación
+    await produccionHuevosService.DeleteProduccionHuevos(produccionId);
+
+    // 🟢 SWEETALERT DE ÉXITO
+    Swal.fire({
+      icon: "success",
+      title: "Producción eliminada",
+      text: "La producción fue eliminada correctamente.",
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    init(currentPage); // recargar tabla
+
+  } catch (error) {
+    console.error("Error:", error);
+
+    // 🔴 SWEETALERT DE ERROR
+    Swal.fire({
+      icon: "error",
+      title: "Error al eliminar",
+      text: "No se pudo eliminar la producción.",
+      confirmButtonText: "Aceptar",
+      customClass: {
+        confirmButton: "btn btn-danger"
+      },
+      buttonsStyling: false
+    });
+  }
+}
+
+
+// --- PAGINACIÓN BONITA ---
+function renderPaginationControls(totalPages = 99) {
+  const pagination = document.getElementById("pagination-controls");
+  if (!pagination) return;
+
+  pagination.innerHTML = "";
+
+  const prevLi = document.createElement("li");
+  prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
+  prevLi.innerHTML = `
+    <a class="page-link text-success" href="#" data-page="${currentPage - 1}">
+      <i class="fas fa-chevron-left"></i>
+    </a>`;
+  pagination.appendChild(prevLi);
+
+  const pageLi = document.createElement("li");
+  pageLi.className = "page-item active";
+  pageLi.innerHTML = `
+    <span class="page-link bg-success border-success text-white">${currentPage}</span>`;
+  pagination.appendChild(pageLi);
+
+  const nextLi = document.createElement("li");
+  nextLi.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
+  nextLi.innerHTML = `
+    <a class="page-link text-success" href="#" data-page="${currentPage + 1}">
+      <i class="fas fa-chevron-right"></i>
+    </a>`;
+  pagination.appendChild(nextLi);
+
+  pagination.onclick = (e) => {
+    const btn = e.target.closest("a[data-page]");
+    if (!btn) return;
+
+    const page = parseInt(btn.dataset.page);
+    if (page > 0) init(page);
+  };
+}
+
+// --- FILTRO POR FECHA ---
+function setupFilterListeners() {
+  const btn = document.getElementById('btn-filtrar');
+  const fi = document.getElementById('filtro-fecha-inicio');
+  const ff = document.getElementById('filtro-fecha-fin');
+
+  if (!btn || !fi || !ff) return;
+
+  btn.onclick = () => {
+    fechaInicioGlobal = fi.value || null;
+    fechaFinGlobal = ff.value || null;
+    init(1);
+  };
+}
+
+// --- INIT ---
+export async function init(page = 1) {
   currentPage = page;
 
   const tableBody = document.getElementById('produccion-table-body');
-  if (!tableBody) return;
-
-  tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando producciones...</td></tr>';
+  tableBody.innerHTML = `<tr><td colspan="6" class="text-center">Cargando...</td></tr>`;
 
   try {
     const producciones = await produccionHuevosService.GetProduccionHuevosAll({
-      page: currentPage,
+      page,
       limit,
       fecha_inicio: fechaInicioGlobal,
       fecha_fin: fechaFinGlobal
     });
 
-    if (producciones && producciones.length > 0) {
-      tableBody.innerHTML = producciones.map(createProduccionRow).join('');
+    if (!producciones || producciones.length === 0) {
+      tableBody.innerHTML = `
+        <tr><td colspan="6" class="text-center">No hay registros.</td></tr>`;
     } else {
-      tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron registros.</td></tr>';
+      tableBody.innerHTML = producciones.map(createProduccionRow).join('');
     }
 
     renderPaginationControls();
 
   } catch (error) {
-    console.error('Error al obtener producciones:', error);
-    tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error al cargar datos.</td></tr>`;
+    console.error(error);
+    tableBody.innerHTML = `
+      <tr><td colspan="6" class="text-danger text-center">Error al cargar datos.</td></tr>`;
   }
 
-  // Listeners
-  const editForm = document.getElementById('edit-produccion-form');
-  tableBody.removeEventListener('click', handleTableClick);
-  tableBody.addEventListener('click', handleTableClick);
-  editForm.removeEventListener('submit', handleUpdateSubmit);
-  editForm.addEventListener('submit', handleUpdateSubmit);
-  const createForm = document.getElementById('create-produccion-form');
-  createForm.removeEventListener('submit', handleCreateSubmit);
-  createForm.addEventListener('submit', handleCreateSubmit);
-}
-
-function renderPaginationControls() {
-  const paginationDiv = document.getElementById("pagination-controls");
-  if (!paginationDiv) return;
-
-  paginationDiv.innerHTML = `
-    <button id="btn-prev" class="btn btn-secondary me-2">Anterior</button>
-    <span>Página ${currentPage}</span>
-    <button id="btn-next" class="btn btn-secondary ms-2">Siguiente</button>
-  `;
-
-  document.getElementById("btn-prev").onclick = () => {
-    if (currentPage > 1) init(currentPage - 1);
-  };
-
-  document.getElementById("btn-next").onclick = () => {
-    init(currentPage + 1);
-  };
-}
-
-// --- FILTRADO POR FECHA ---
-
-function setupFilterListeners() {
-  const btnFiltrar = document.getElementById('btn-filtrar');
-  const inputFechaInicio = document.getElementById('filtro-fecha-inicio');
-  const inputFechaFin = document.getElementById('filtro-fecha-fin');
-
-  if (!btnFiltrar || !inputFechaInicio || !inputFechaFin) return;
-
-  btnFiltrar.addEventListener('click', () => {
-    // Tomar valores o null si están vacíos
-    fechaInicioGlobal = inputFechaInicio.value || null;
-    fechaFinGlobal = inputFechaFin.value || null;
-
-    // Reiniciar a la primera página al filtrar
-    init(1);
-  });
-}
-
-async function eliminarProduccion(produccionId) {
-  try {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta producción?')) return;
-    
-    await produccionHuevosService.DeleteProduccionHuevos(produccionId);
-    alert('Producción eliminada correctamente');
-    init(currentPage);
-  } catch (error) {
-    console.error('Error al eliminar producción:', error);
-    alert('Error: ' + error.message);
-  }
+  document.getElementById('produccion-table-body').onclick = handleTableClick;
+  document.getElementById('edit-produccion-form').onsubmit = handleUpdateSubmit;
+  document.getElementById('create-produccion-form').onsubmit = handleCreateSubmit;
 }
 
 setupFilterListeners();
-
-export { init };
-
+init();
+ 
