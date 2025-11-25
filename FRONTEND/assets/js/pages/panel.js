@@ -16,36 +16,50 @@ class DashboardService {
     };
   }
 
-  async getDashboardCompleto() {
-    try {
-      console.log("Solicitando datos completos del dashboard...");
-      console.log("URL:", `${API_BASE_URL}/dashboard/completo`);
-      console.log("Token:", this.token ? "Token presente" : "Sin token");
+  async getMetricas() {
+    const url = `${API_BASE_URL}/dashboard/metricas`;
+    const res = await fetch(url, { method: "GET", headers: this.getHeaders() });
+    if (!res.ok) throw new Error(`Metricas ${res.status}`);
+    return res.json();
+  }
 
-      const response = await fetch(`${API_BASE_URL}/dashboard/completo`, {
-        method: "GET",
-        headers: this.getHeaders(),
-      });
+  async getProduccionSemanal() {
+    const url = `${API_BASE_URL}/dashboard/produccion-semanal`;
+    const res = await fetch(url, { method: "GET", headers: this.getHeaders() });
+    if (!res.ok) throw new Error(`ProduccionSemanal ${res.status}`);
+    return res.json();
+  }
 
-      console.log(
-        "Respuesta del servidor:",
-        response.status,
-        response.statusText
-      );
+  async getDistribucionTipos() {
+    const url = `${API_BASE_URL}/dashboard/distribucion-tipos`;
+    const res = await fetch(url, { method: "GET", headers: this.getHeaders() });
+    if (!res.ok) throw new Error(`DistribucionTipos ${res.status}`);
+    return res.json();
+  }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error del servidor:", errorText);
-        throw new Error(`Error ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log("Datos recibidos exitosamente:", data);
-      return data;
-    } catch (error) {
-      console.error("Error en getDashboardCompleto:", error);
-      throw error;
+  async getProduccionRango(dias = 7) {
+    const url = `${API_BASE_URL}/dashboard/produccion-rango?dias=${dias}`;
+    const res = await fetch(url, { method: "GET", headers: this.getHeaders() });
+    if (res.status === 404 && dias === 7) {
+      // Fallback a semanal si el endpoint nuevo no existe
+      return this.getProduccionSemanal();
     }
+    if (!res.ok) throw new Error(`ProduccionRango ${dias} -> ${res.status}`);
+    return res.json();
+  }
+
+  async getOcupacionGalpones() {
+    const url = `${API_BASE_URL}/dashboard/ocupacion-galpones`;
+    const res = await fetch(url, { method: "GET", headers: this.getHeaders() });
+    if (!res.ok) throw new Error(`OcupacionGalpones ${res.status}`);
+    return res.json();
+  }
+
+  async getIncidentesRecientes() {
+    const url = `${API_BASE_URL}/dashboard/incidentes-recientes`;
+    const res = await fetch(url, { method: "GET", headers: this.getHeaders() });
+    if (!res.ok) throw new Error(`IncidentesRecientes ${res.status}`);
+    return res.json();
   }
 
   async getSensores() {
@@ -84,36 +98,6 @@ class DashboardService {
       throw error;
     }
   }
-
-  async getProduccionRango(dias = 7) {
-    try {
-      console.log(
-        `[getProduccionRango] Solicitando datos para ${dias} días...`
-      );
-      const response = await fetch(
-        `${API_BASE_URL}/dashboard/produccion-rango?dias=${dias}`,
-        {
-          method: "GET",
-          headers: this.getHeaders(),
-        }
-      );
-
-      console.log(`[getProduccionRango] Status:`, response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[getProduccionRango] Error:`, errorText);
-        throw new Error(`Error al obtener producción por rango: ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log(`[getProduccionRango] Datos recibidos:`, data);
-      return data;
-    } catch (error) {
-      console.error("Error en getProduccionRango:", error);
-      throw error;
-    }
-  }
 }
 
 const dashboardService = new DashboardService();
@@ -136,91 +120,104 @@ let galponesChart = null;
 
 // Función principal para cargar todos los datos del dashboard
 async function cargarDatosDashboard() {
+  // Mostrar indicadores de carga básicos
+  const setSpinner = (id) =>
+    (document.getElementById(id).innerHTML =
+      '<div class="spinner-border spinner-border-sm" role="status"></div>');
+  [
+    "total-gallinas",
+    "produccion-hoy",
+    "galpones-activos",
+    "alertas-activas",
+  ].forEach(setSpinner);
+
+  // 1) Métricas principales (independiente)
   try {
-    // Mostrar indicadores de carga
-    document.getElementById("total-gallinas").innerHTML =
-      '<div class="spinner-border spinner-border-sm" role="status"></div>';
-    document.getElementById("produccion-hoy").innerHTML =
-      '<div class="spinner-border spinner-border-sm" role="status"></div>';
-    document.getElementById("galpones-activos").innerHTML =
-      '<div class="spinner-border spinner-border-sm" role="status"></div>';
-    document.getElementById("alertas-activas").innerHTML =
-      '<div class="spinner-border spinner-border-sm" role="status"></div>';
-
-    // Cargar datos completos del dashboard
-    const data = await dashboardService.getDashboardCompleto();
-
-    console.log("Datos recibidos del dashboard:", data);
-
-    // Actualizar métricas principales
-    actualizarMetricas(data.metricas);
-
-    // Cargar gráfico de producción con rango inicial (7 días)
-    await cargarGraficoProduccion(7);
-
-    // Cargar otros gráficos
-    cargarGraficoTipoGallina(data.distribucion_tipos);
-    cargarGraficoGalpones(data.ocupacion_galpones);
-
-    // Cargar incidentes
-    cargarIncidentes(data.incidentes_recientes);
-
-    // Actualizar sensores
-    actualizarSensoresData(data.sensores);
-
-    // Cargar actividad reciente
-    cargarActividadReciente(data.actividad_reciente);
-
-    // Actualizar sensores cada 30 segundos
-    setInterval(async () => {
-      try {
-        const sensores = await dashboardService.getSensores();
-        actualizarSensoresData(sensores);
-      } catch (error) {
-        console.error("Error actualizando sensores:", error);
-      }
-    }, 30000);
-
-    // Actualizar actividad reciente cada 60 segundos para refrescar tiempos
-    setInterval(async () => {
-      try {
-        const actividades = await dashboardService.getActividadReciente();
-        cargarActividadReciente(actividades);
-      } catch (error) {
-        console.error("Error actualizando actividad reciente:", error);
-      }
-    }, 60000);
-  } catch (error) {
-    console.error("Error cargando datos del dashboard:", error);
-
-    // Mostrar el error específico
-    let mensajeError = "Error al cargar los datos. ";
-
-    if (error.message.includes("401")) {
-      mensajeError +=
-        "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.";
-      // Redirigir al login después de 3 segundos
-      setTimeout(() => {
-        window.location.href = "/login.html";
-      }, 3000);
-    } else if (error.message.includes("500")) {
-      mensajeError +=
-        "Error en el servidor. Por favor, contacta al administrador.";
-    } else if (error.message.includes("404")) {
-      mensajeError +=
-        "No se encontró el endpoint. Verifica la configuración del servidor.";
-    } else {
-      mensajeError += "Verifica tu conexión o recarga la página.";
-    }
-
-    mostrarError(mensajeError);
-
-    // Restaurar el texto de los indicadores
-    document.getElementById("total-gallinas").textContent = "---";
-    document.getElementById("produccion-hoy").textContent = "---";
-    document.getElementById("galpones-activos").textContent = "---";
-    document.getElementById("alertas-activas").textContent = "---";
+    const metricas = await dashboardService.getMetricas();
+    actualizarMetricas(metricas);
+  } catch (e) {
+    console.warn("No se pudieron cargar métricas:", e);
   }
+
+  // 2) Producción con filtros (por defecto 7 días)
+  try {
+    await cargarGraficoProduccionRango(7);
+  } catch (e) {
+    console.error("No se pudo cargar producción semanal:", e);
+    // Fallback local: 7 días con ceros para que no quede en blanco
+    const dias = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    const fallback = {
+      labels: dias,
+      data_actual: [0, 0, 0, 0, 0, 0, 0],
+      data_anterior: [0, 0, 0, 0, 0, 0, 0],
+    };
+    try {
+      const cache = localStorage.getItem("produccion_semanal_cache");
+      if (cache) {
+        const parsed = JSON.parse(cache);
+        if (Array.isArray(parsed.labels) && Array.isArray(parsed.data_actual)) {
+          cargarGraficoProduccion(parsed);
+          return;
+        }
+      }
+    } catch {}
+    cargarGraficoProduccion(fallback);
+  }
+
+  // 3) Gráficos secundarios (best-effort)
+  try {
+    const dist = await dashboardService.getDistribucionTipos();
+    cargarGraficoTipoGallina(dist);
+  } catch (e) {
+    console.warn("Distribución tipos no disponible:", e);
+  }
+
+  try {
+    const galpones = await dashboardService.getOcupacionGalpones();
+    cargarGraficoGalpones(galpones);
+  } catch (e) {
+    console.warn("Ocupación de galpones no disponible:", e);
+  }
+
+  try {
+    const inc = await dashboardService.getIncidentesRecientes();
+    cargarIncidentes(inc);
+  } catch (e) {
+    console.warn("Incidentes recientes no disponibles:", e);
+  }
+
+  // 4) Sensores y Actividad en intervalos (si fallan, continúan)
+  try {
+    const sensores = await dashboardService.getSensores();
+    actualizarSensoresData(sensores);
+  } catch (e) {
+    console.warn("Sensores no disponibles por ahora:", e);
+  }
+
+  try {
+    const actividades = await dashboardService.getActividadReciente();
+    cargarActividadReciente(actividades);
+  } catch (e) {
+    console.warn("Actividad reciente no disponible:", e);
+  }
+
+  setInterval(async () => {
+    try {
+      const sensores = await dashboardService.getSensores();
+      actualizarSensoresData(sensores);
+    } catch (error) {
+      console.error("Error actualizando sensores:", error);
+    }
+  }, 30000);
+
+  setInterval(async () => {
+    try {
+      const actividades = await dashboardService.getActividadReciente();
+      cargarActividadReciente(actividades);
+    } catch (error) {
+      console.error("Error actualizando actividad reciente:", error);
+    }
+  }, 60000);
 }
 
 // Actualizar métricas principales
@@ -239,132 +236,153 @@ function actualizarMetricas(metricas) {
     metricas.produccion_trend;
 }
 
-// Cargar Gráfica de Producción
-async function cargarGraficoProduccion(dias = 7) {
-  try {
-    console.log(
-      `[cargarGraficoProduccion] Iniciando carga para ${dias} días...`
-    );
-    const data = await dashboardService.getProduccionRango(dias);
-    console.log(`[cargarGraficoProduccion] Datos recibidos:`, data);
+// Cargar Producción Semanal como gráfica (con fallback a tarjetas)
+function cargarGraficoProduccion(data) {
+  const container = document.getElementById("produccion-semanal-cards");
+  if (!container) {
+    console.error("Contenedor produccion-semanal-cards no encontrado");
+    return;
+  }
 
-    const ctx = document.getElementById("produccionChart");
+  // Aceptar tanto estructura nueva {labels,data} como antigua {labels,data_actual,data_anterior}
+  const labels = data.labels || [];
+  const datasetActual = Array.isArray(data.data)
+    ? data.data
+    : Array.isArray(data.data_actual)
+    ? data.data_actual
+    : [];
+  const datasetAnterior = Array.isArray(data.data_anterior)
+    ? data.data_anterior
+    : new Array(datasetActual.length).fill(0);
 
-    if (!ctx) {
-      console.error("Canvas produccionChart no encontrado");
-      return;
-    }
+  // Totales
+  const totalActual = datasetActual.reduce((s, v) => s + (v || 0), 0);
+  const promedioDiario = Math.round(totalActual / (datasetActual.length || 1));
+  const totalEl = document.getElementById("total-semana-actual");
+  const promEl = document.getElementById("promedio-diario");
+  const maxEl = document.getElementById("maximo-dia");
+  if (totalEl) totalEl.textContent = totalActual.toLocaleString();
+  if (promEl) promEl.textContent = promedioDiario.toLocaleString();
+  const maximo = datasetActual.length ? Math.max(...datasetActual) : 0;
+  if (maxEl) maxEl.textContent = maximo.toLocaleString();
 
-    // Validar que los datos existan
-    if (!data || !data.labels || !data.data) {
-      console.error("Datos inválidos recibidos:", data);
-      return;
-    }
+  // Crear contenedor canvas
+  container.innerHTML =
+    '<div style="height:300px"><canvas id="produccionChart"></canvas></div>';
+  const canvas = document.getElementById("produccionChart");
+  if (!canvas) return;
 
-    // Destruir gráfica anterior si existe
-    if (produccionChart) {
-      produccionChart.destroy();
-    }
+  // Destruir gráfica previa
+  if (produccionChart) {
+    produccionChart.destroy();
+  }
 
-    // Actualizar estadísticas
-    const total = data.total || 0;
-    const promedio = data.promedio || 0;
-    const maximo =
-      data.data && data.data.length > 0 ? Math.max(...data.data) : 0;
+  // Crear gráfica (mejor calidad visual y gradient)
+  const ctx2d = canvas.getContext("2d");
+  const gradient = ctx2d.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, "rgba(117,193,129,0.35)");
+  gradient.addColorStop(1, "rgba(117,193,129,0.02)");
+  const manyPoints = labels.length > 31;
 
-    console.log(
-      `[cargarGraficoProduccion] Estadísticas - Total: ${total}, Promedio: ${promedio}, Máximo: ${maximo}`
-    );
-
-    document.getElementById("total-periodo").textContent =
-      total.toLocaleString();
-    document.getElementById("promedio-diario").textContent =
-      promedio.toLocaleString();
-    document.getElementById("maximo-dia").textContent = maximo.toLocaleString();
-
-    // Crear nueva gráfica
-    produccionChart = new Chart(ctx.getContext("2d"), {
-      type: "line",
-      data: {
-        labels: data.labels,
-        datasets: [
-          {
-            label: "Producción de Huevos",
-            data: data.data,
-            borderColor: chartColors.success,
-            backgroundColor: function (context) {
-              const ctx = context.chart.ctx;
-              const gradient = ctx.createLinearGradient(0, 0, 0, 280);
-              gradient.addColorStop(0, "rgba(117, 193, 129, 0.3)");
-              gradient.addColorStop(1, "rgba(117, 193, 129, 0.01)");
-              return gradient;
-            },
-            borderWidth: 3,
-            tension: 0.4,
-            fill: true,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            pointBackgroundColor: "#fff",
-            pointBorderColor: chartColors.success,
-            pointBorderWidth: 2,
-            pointHoverBackgroundColor: chartColors.success,
-            pointHoverBorderColor: "#fff",
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
+  produccionChart = new Chart(ctx2d, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Semana actual",
+          data: datasetActual,
+          borderColor: chartColors.success,
+          backgroundColor: gradient,
+          fill: true,
+          borderWidth: 3,
+          tension: 0.35,
+          pointRadius: manyPoints ? 0 : 3,
+          pointHoverRadius: manyPoints ? 2 : 5,
+        },
+        {
+          label: "Semana anterior",
+          data: datasetAnterior,
+          borderColor: chartColors.gray,
+          backgroundColor: "rgba(169,181,201,0.1)",
+          fill: false,
+          borderDash: [6, 4],
+          tension: 0.35,
+          borderWidth: 2,
+          pointRadius: manyPoints ? 0 : 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      devicePixelRatio: 2,
+      plugins: {
+        legend: { display: true, position: "bottom" },
+        tooltip: {
           intersect: false,
           mode: "index",
-        },
-        plugins: {
-          legend: {
-            display: false,
-          },
-          tooltip: {
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
-            padding: 12,
-            titleColor: "#fff",
-            titleFont: {
-              size: 13,
-              weight: "bold",
-            },
-            bodyColor: "#fff",
-            bodyFont: {
-              size: 13,
-            },
-            displayColors: false,
-            callbacks: {
-              label: function (context) {
-                return `Producción: ${context.parsed.y.toLocaleString()} huevos`;
-              },
-            },
-          },
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function (value) {
-                return value.toLocaleString();
-              },
-            },
-            grid: {
-              color: "rgba(0, 0, 0, 0.05)",
-            },
-          },
-          x: {
-            grid: {
-              display: false,
-            },
+          callbacks: {
+            label: (ctx) =>
+              ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} huevos`,
           },
         },
       },
-    });
-  } catch (error) {
-    console.error("Error cargando gráfica de producción:", error);
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (value) => Number(value).toLocaleString(),
+          },
+          grid: { color: "rgba(0,0,0,0.06)" },
+        },
+        x: { grid: { display: false } },
+      },
+    },
+  });
+
+  // Guardar cache local por si el backend falla luego
+  try {
+    const cachePayload = {
+      labels,
+      data_actual: datasetActual,
+      data_anterior: datasetAnterior,
+    };
+    localStorage.setItem(
+      "produccion_semanal_cache",
+      JSON.stringify(cachePayload)
+    );
+  } catch {}
+}
+
+// Cargar por rango (7, 30, 90, 180)
+async function cargarGraficoProduccionRango(dias = 7) {
+  try {
+    const data = await dashboardService.getProduccionRango(dias);
+    // Normalizar estructura del backend nuevo/antiguo
+    if (Array.isArray(data.data)) {
+      // Nuevo endpoint
+      cargarGraficoProduccion({
+        labels: data.labels,
+        data: data.data,
+        data_anterior: new Array(data.data.length).fill(0),
+      });
+    } else {
+      // Antiguo semanal
+      cargarGraficoProduccion(data);
+    }
+  } catch (err) {
+    console.error("Fallo al cargar rango de producción", dias, err);
+    if (dias === 7) {
+      // intentar semanal
+      try {
+        const sem = await dashboardService.getProduccionSemanal();
+        cargarGraficoProduccion(sem);
+        return;
+      } catch {}
+    }
+    // Fallback vacío
+    cargarGraficoProduccion({ labels: [], data: [] });
   }
 }
 
@@ -575,14 +593,12 @@ export function init() {
     cargarDatosDashboard();
   }, 100);
 
-  // Event listeners para filtros de producción
-  document
-    .querySelectorAll('input[name="rangoProduccion"]')
-    .forEach((radio) => {
-      radio.addEventListener("change", async (e) => {
-        const dias = parseInt(e.target.value);
-        console.log(`Cambiando rango de producción a ${dias} días`);
-        await cargarGraficoProduccion(dias);
-      });
+  // Filtros de producción
+  const radios = document.querySelectorAll('input[name="rangoProduccion"]');
+  radios.forEach((r) => {
+    r.addEventListener("change", async (e) => {
+      const dias = parseInt(e.target.value, 10) || 7;
+      await cargarGraficoProduccionRango(dias);
     });
+  });
 }
