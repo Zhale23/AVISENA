@@ -1,4 +1,4 @@
-import { rolesService } from "../api/roles.service.js";
+import { rolesService } from "../js/api/roles.service.js";
 
 console.log("Roles JS cargado");
 
@@ -159,3 +159,4 @@ export async function init() {
 
 // Ejecutar automáticamente
 init();
+
