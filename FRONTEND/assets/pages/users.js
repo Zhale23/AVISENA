@@ -33,7 +33,7 @@ function createUserRow(usuario) {
         </div>
       </td>
 
-      <td class="cell text-center">
+      <td class="cell text-end">
         <button class="btn btn-success btn-sm btn-edit-user" aria-label="Editar" data-user-email="${usuario.email}">
           <i class="fa-regular fa-pen-to-square"></i>
         </button>
