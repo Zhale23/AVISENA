@@ -64,8 +64,76 @@ def get_alertas_activas(db: Session) -> int:
         return 0
 
 def get_produccion_semanal(db: Session) -> Dict:
-    """Obtiene la producción de los últimos 7 días"""
-    return get_produccion_por_rango(db, 7)
+    """Obtiene la producción de los últimos 7 días comparados con la semana anterior"""
+    try:
+        hoy = date.today()
+        inicio_actual = hoy - timedelta(days=6)
+        inicio_anterior = hoy - timedelta(days=13)
+        fin_anterior = hoy - timedelta(days=7)
+        
+        # Producción de la semana actual
+        query_actual = text("""
+            SELECT fecha, COALESCE(SUM(cantidad), 0) as total
+            FROM produccion_huevos
+            WHERE fecha BETWEEN :inicio AND :fin
+            GROUP BY fecha
+            ORDER BY fecha
+        """)
+        
+        resultados_actual = db.execute(query_actual, {
+            "inicio": inicio_actual,
+            "fin": hoy
+        }).mappings().all()
+        
+        # Producción de la semana anterior
+        resultados_anterior = db.execute(query_actual, {
+            "inicio": inicio_anterior,
+            "fin": fin_anterior
+        }).mappings().all()
+        
+        # Crear diccionarios para ambas semanas
+        fechas_actual = {}
+        fechas_anterior = {}
+        dias_semana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+        
+        for i in range(7):
+            fecha_actual = inicio_actual + timedelta(days=i)
+            fecha_anterior = inicio_anterior + timedelta(days=i)
+            fechas_actual[fecha_actual] = 0
+            fechas_anterior[fecha_anterior] = 0
+        
+        # Llenar con datos reales
+        for row in resultados_actual:
+            fechas_actual[row['fecha']] = int(row['total']) if row['total'] else 0
+        
+        for row in resultados_anterior:
+            fechas_anterior[row['fecha']] = int(row['total']) if row['total'] else 0
+        
+        # Generar arrays de datos
+        labels = []
+        data_actual = []
+        data_anterior = []
+        
+        for i in range(7):
+            fecha_actual = inicio_actual + timedelta(days=i)
+            fecha_anterior = inicio_anterior + timedelta(days=i)
+            
+            labels.append(dias_semana[fecha_actual.weekday()])
+            data_actual.append(fechas_actual[fecha_actual])
+            data_anterior.append(fechas_anterior[fecha_anterior])
+        
+        return {
+            "labels": labels,
+            "data_actual": data_actual,
+            "data_anterior": data_anterior
+        }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener producción semanal: {e}")
+        return {
+            "labels": ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            "data_actual": [0, 0, 0, 0, 0, 0, 0],
+            "data_anterior": [0, 0, 0, 0, 0, 0, 0]
+        }
 
 def get_produccion_por_rango(db: Session, dias: int = 7) -> Dict:
     """Obtiene la producción de huevos para un rango de días específico"""
