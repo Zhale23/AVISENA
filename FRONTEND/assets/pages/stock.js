@@ -258,6 +258,9 @@ export async function renderChart() {
     yaxis: {
       title: {
         text: 'Cantidad (unidades)'
+      },
+      labels: {
+        formatter: value => value.toFixed(0)
       }
     },
     fill: { opacity: 1 },
