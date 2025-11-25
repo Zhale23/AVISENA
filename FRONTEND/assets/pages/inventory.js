@@ -495,6 +495,43 @@ async function init() {
   createForm.removeEventListener('submit', handleCreateSubmit);
   createForm.addEventListener('submit', handleCreateSubmit);
 
+  // Delegated handler dentro del módulo Inventario para accesos directos (p. ej. categorias)
+  try {
+    const pageRoot = tableBody.closest('.card') || document.getElementById('main-content') || document;
+    // limpiar handler previo si existe
+    if (pageRoot.__categoriasHandler) {
+      pageRoot.removeEventListener('click', pageRoot.__categoriasHandler);
+      pageRoot.__categoriasHandler = null;
+    }
+
+    const categoriasHandler = function (ev) {
+      const target = ev.target;
+      const shortcut = target.closest('[data-page="categorias_inventario"]') || target.closest('#btn-categorias-inv') || target.closest('button.app-nav') || target.closest('a.app-nav');
+      if (!shortcut) return;
+      // asegurar que el click ocurrió dentro de esta página
+      if (!pageRoot.contains(shortcut)) return;
+      ev.preventDefault();
+      // Intentar disparar el enlace del nav principal
+      const shellLink = document.querySelector('.app-nav a[data-page="categorias_inventario"]');
+      if (shellLink) {
+        shellLink.click();
+        return;
+      }
+      // Usar navigateTo si está disponible
+      if (typeof window.navigateTo === 'function') {
+        window.navigateTo('categorias_inventario');
+        return;
+      }
+      // Fallback: redirigir a index1.html
+      window.location.href = 'index1.html?page=categorias_inventario';
+    };
+
+    pageRoot.addEventListener('click', categoriasHandler);
+    pageRoot.__categoriasHandler = categoriasHandler;
+  } catch (err) {
+    console.error('Error wiring categorias shortcut in init():', err);
+  }
+
 }
 
 // Handler separado para el evento change del filtro
