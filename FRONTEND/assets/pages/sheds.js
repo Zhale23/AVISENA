@@ -13,7 +13,7 @@ function createShedRow(shed) {
 
   return `
     <tr>
-      <td class="cell">{shed.nombre_finca}</td>
+      <td class="cell">${shed.nombre_finca}</td>
       <td class="cell">${shed.nombre}</td>
       <td class="cell">${shed.capacidad}</td>
       <td class="cell">${shed.cant_actual}</td>
