@@ -41,7 +41,7 @@ def get_galpones_activos(db: Session) -> int:
         query = text("""
             SELECT COUNT(*) as total
             FROM galpones
-            WHERE estado = 0
+            WHERE estado = 1
         """)
         result = db.execute(query).mappings().first()
         return result['total'] if result else 0
