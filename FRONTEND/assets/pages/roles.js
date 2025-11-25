@@ -107,15 +107,46 @@ async function handleCreateSubmit(event) {
 
   try {
     await rolesService.CreateRol(newRol);
-    alert("Rol creado correctamente");
+
+    // SweetAlert de éxito
+    const result = await Swal.fire({
+      icon: "success",
+      title: "Rol creado",
+      text: "El rol se ha registrado correctamente.",
+      confirmButtonText: "Aceptar",
+      customClass: {
+        confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
+    });
+
+    // Cerrar modal SOLO si confirmaron el SweetAlert
+    if (result.isConfirmed) {
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById("create-rol-modal")
+      );
+      modal.hide();
+    }
+
     event.target.reset();
     init();
+
   } catch (error) {
     console.error("Error al crear rol:", error);
-    alert("No se pudo registrar el rol.");
+
+    // SweetAlert de error
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudo registrar el rol.",
+      confirmButtonText: "Cerrar",
+      customClass: {
+        confirmButton: "btn btn-danger"
+      },
+      buttonsStyling: false
+    });
   }
 }
-
 // ----------------------------
 // INIT - Principal
 // ----------------------------
@@ -159,5 +190,3 @@ export async function init() {
 
 // Ejecutar automáticamente
 init();
-
-
