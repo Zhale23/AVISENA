@@ -274,7 +274,7 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
                 'success' as color
             FROM produccion_huevos
             ORDER BY fecha DESC
-            LIMIT 3
+            LIMIT 2
         """)
         
         # Obtener últimos ingresos de gallinas
@@ -287,7 +287,7 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
             FROM ingreso_gallinas ig
             JOIN galpones g ON ig.id_galpon = g.id_galpon
             ORDER BY ig.fecha DESC
-            LIMIT 3
+            LIMIT 2
         """)
         
         # Obtener últimos incidentes
@@ -299,16 +299,71 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
                 'warning' as color
             FROM incidentes_gallina
             ORDER BY fecha_hora DESC
-            LIMIT 3
+            LIMIT 2
+        """)
+        
+        # Obtener últimas ventas
+        query_ventas = text("""
+            SELECT 
+                'venta' as tipo,
+                CONCAT('Venta registrada: ', cantidad, ' unidades') as descripcion,
+                fecha as fecha_registro,
+                'info' as color
+            FROM ventas
+            ORDER BY fecha DESC
+            LIMIT 2
+        """)
+        
+        # Obtener últimos movimientos de stock
+        query_stock = text("""
+            SELECT 
+                'stock' as tipo,
+                CONCAT('Movimiento de stock: ', tipo_movimiento) as descripcion,
+                fecha as fecha_registro,
+                'secondary' as color
+            FROM stock
+            ORDER BY fecha DESC
+            LIMIT 2
+        """)
+        
+        # Obtener últimas tareas
+        query_tareas = text("""
+            SELECT 
+                'tarea' as tipo,
+                CONCAT('Tarea: ', titulo) as descripcion,
+                fecha_creacion as fecha_registro,
+                'primary' as color
+            FROM tareas
+            ORDER BY fecha_creacion DESC
+            LIMIT 2
         """)
         
         produccion = db.execute(query_produccion).mappings().all()
         gallinas = db.execute(query_gallinas).mappings().all()
         incidentes = db.execute(query_incidentes).mappings().all()
         
+        # Intentar obtener ventas, stock y tareas (pueden fallar si las tablas están vacías o tienen problemas)
+        try:
+            ventas = db.execute(query_ventas).mappings().all()
+        except Exception as e:
+            logger.warning(f"No se pudieron obtener ventas: {e}")
+            ventas = []
+        
+        try:
+            stock = db.execute(query_stock).mappings().all()
+        except Exception as e:
+            logger.warning(f"No se pudo obtener stock: {e}")
+            stock = []
+        
+        try:
+            tareas = db.execute(query_tareas).mappings().all()
+        except Exception as e:
+            logger.warning(f"No se pudieron obtener tareas: {e}")
+            tareas = []
+        
         # Combinar y ordenar - convertir RowMapping a dict
         actividades = []
-        for act in list(produccion) + list(gallinas) + list(incidentes):
+        for act in list(produccion) + list(gallinas) + list(incidentes) + list(ventas) + list(stock) + list(tareas):
             act_dict = dict(act)
             fecha = act_dict['fecha_registro']
             # Convertir date a datetime para poder ordenar
