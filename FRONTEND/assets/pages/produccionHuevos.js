@@ -1,4 +1,4 @@
-import { produccionHuevosService } from '../js/api/produccionHuevos.service.js';
+import { produccionHuevosService } from '../api/produccionHuevos.service.js';
 
 let modalInstance = null;
 let originalFecha = null;
@@ -20,9 +20,8 @@ function createProduccionRow(produccion) {
       <td>${produccion.fecha}</td>
       <td>${produccion.tamaño}</td>
       <td class="text-end">
-         <button class="btn btn-sm btn-success btn-edit-produccion" 
-          data-produccion-id="${produccion.id_produccion}">
-          <i class="fa-regular fa-pen-to-square"></i>
+        <button class="btn btn-sm btn-success btn-edit-produccion" data-produccion-id="${produccion.id_produccion}">
+          <i class="fa-solid fa-pen-to-square" style="color: black;"></i>
         </button>
         ${idRol === 1 || idRol === 2 ? `
           <button class="btn btn-sm btn-secondary btn-eliminar-produccion" 
@@ -133,7 +132,7 @@ async function handleCreateSubmit(event) {
     await produccionHuevosService.CreateProduccionHuevos(newData);
 
     // 🔵 SWEETALERT DE ÉXITO
-    Swal.fire({
+    await Swal.fire({
       icon: "success",
       title: "Producción registrada!",
       text: "La nueva producción fue guardada correctamente.",
@@ -141,6 +140,13 @@ async function handleCreateSubmit(event) {
       showConfirmButton: false
     });
 
+    // ✅ CERRAR EL MODAL LUEGO DEL SWEETALERT
+    const modal = bootstrap.Modal.getInstance(
+      document.getElementById("create-produccion-modal")
+    );
+    modal.hide();
+
+    // Limpiar el formulario y recargar
     event.target.reset();
     init();
 
@@ -231,59 +237,130 @@ async function eliminarProduccion(produccionId) {
 }
 
 
-// --- PAGINACIÓN BONITA ---
-function renderPaginationControls(totalPages = 99) {
-  const pagination = document.getElementById("pagination-controls");
-  if (!pagination) return;
+// Modificar la función init para que pase correctamente los filtros a la paginación
+function renderPagination(total_pages, currentPage = 1) {
+    const container = document.querySelector("#pagination");
+    if (!container) return;
 
-  pagination.innerHTML = "";
+    container.innerHTML = "";
 
-  const prevLi = document.createElement("li");
-  prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
-  prevLi.innerHTML = `
-    <a class="page-link text-success" href="#" data-page="${currentPage - 1}">
-      <i class="fas fa-chevron-left"></i>
-    </a>`;
-  pagination.appendChild(prevLi);
+    // ---------- BOTÓN ANTERIOR ----------
+    const prevLi = document.createElement("li");
+    prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
+    prevLi.innerHTML = `
+        <a class="page-link text-success" href="#" data-page="${currentPage - 1}">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+    `;
+    prevLi.addEventListener("click", () => {
+        if (currentPage !== 1) {
+            const prevPage = currentPage - 1;
+            init(prevPage, 10, activeFechaInicio, activeFechaFin);
+        }
+    });
+    container.appendChild(prevLi);
 
-  const pageLi = document.createElement("li");
-  pageLi.className = "page-item active";
-  pageLi.innerHTML = `
-    <span class="page-link bg-success border-success text-white">${currentPage}</span>`;
-  pagination.appendChild(pageLi);
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(total_pages, startPage + maxVisible - 1);
 
-  const nextLi = document.createElement("li");
-  nextLi.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
-  nextLi.innerHTML = `
-    <a class="page-link text-success" href="#" data-page="${currentPage + 1}">
-      <i class="fas fa-chevron-right"></i>
-    </a>`;
-  pagination.appendChild(nextLi);
+    if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+    }
 
-  pagination.onclick = (e) => {
-    const btn = e.target.closest("a[data-page]");
-    if (!btn) return;
+    // ---------- PRIMERA PÁGINA + ... ----------
+    if (startPage > 1) {
+        container.appendChild(createPageLi(1, currentPage));
+        if (startPage > 2) container.appendChild(createDotsLi());
+    }
 
-    const page = parseInt(btn.dataset.page);
-    if (page > 0) init(page);
-  };
+    // ---------- NÚMEROS DE PÁGINA ----------
+    for (let i = startPage; i <= endPage; i++) {
+        container.appendChild(createPageLi(i, currentPage));
+    }
+
+    // ---------- ... + ÚLTIMA PÁGINA ----------
+    if (endPage < total_pages) {
+        if (endPage < total_pages - 1) container.appendChild(createDotsLi());
+        container.appendChild(createPageLi(total_pages, currentPage));
+    }
+
+    // ---------- BOTÓN SIGUIENTE ----------
+    const nextLi = document.createElement("li");
+    nextLi.className = `page-item ${currentPage === total_pages ? "disabled" : ""}`;
+    nextLi.innerHTML = `
+        <a class="page-link text-success" href="#" data-page="${currentPage + 1}">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    `;
+    nextLi.addEventListener("click", () => {
+        if (currentPage !== total_pages) {
+            const nextPage = currentPage + 1;
+            init(nextPage, 10, activeFechaInicio, activeFechaFin);
+        }
+    });
+    container.appendChild(nextLi);
 }
 
-// --- FILTRO POR FECHA ---
-function setupFilterListeners() {
-  const btn = document.getElementById('btn-filtrar');
-  const fi = document.getElementById('filtro-fecha-inicio');
-  const ff = document.getElementById('filtro-fecha-fin');
+// ========== BOTÓN DE NÚMERO DE PÁGINA ==========
+function createPageLi(page, currentPage) {
+    const li = document.createElement("li");
 
-  if (!btn || !fi || !ff) return;
+    const isActive = page === currentPage;
 
-  btn.onclick = () => {
-    fechaInicioGlobal = fi.value || null;
-    fechaFinGlobal = ff.value || null;
-    init(1);
-  };
+    li.className = `page-item ${isActive ? 'active' : ''}`;
+    li.innerHTML = `
+        <a class="page-link ${isActive ? "bg-success border-success text-white" : "text-success"}"
+           href="#" data-page="${page}">
+           ${page}
+        </a>
+    `;
+
+    li.addEventListener("click", () => {
+        if (!isActive) {
+            init(page, 10, activeFechaInicio, activeFechaFin);
+        }
+    });
+
+    return li;
 }
 
+// ========== PUNTOS SUSPENSIVOS ==========
+function createDotsLi() {
+    const li = document.createElement("li");
+    li.className = "page-item disabled";
+    li.innerHTML = `<a class="page-link text-success">...</a>`;
+    return li;
+}
+
+//______________________ para filtrar por fechas_______________________________________
+function filtrarAislamientos(fechaInicio, fechaFin) {
+  if (!fechaInicio || !fechaFin) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Error',
+      text: 'Debe seleccionar ambas fechas',
+      confirmButtonColor: 'rgba(51, 136, 221, 1)'
+    });
+    return;
+  }
+
+  // Guardar fechas para usar en fetchIsolations
+  activeFechaInicio = fechaInicio;
+  activeFechaFin = fechaFin;
+
+  // Recargar la tabla desde la página 1 con el filtro
+  init(1, 10);
+}
+
+// Botón para aplicar filtro
+document.getElementById("btn-apply-date-filter").addEventListener("click", () => {
+  const fechaInicio = document.getElementById("fecha-inicio").value;
+  const fechaFin = document.getElementById("fecha-fin").value;
+
+  filtrarAislamientos(fechaInicio, fechaFin);
+
+});
 // --- INIT ---
 export async function init(page = 1) {
   currentPage = page;
