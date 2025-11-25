@@ -3,21 +3,21 @@
   <div class="col-12">
     <div class="card">
       <div class="card-body">
-        <div class="d-md-flex align-items-center">
-          <div class="col-7">
-            <h4 class="card-title">Inventario</h4>
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div>
+            <h4 class="card-title mb-0">Inventario</h4>
           </div>
-          <div class="mt-3 mt-md-0">
-            <!-- Button trigger modal -->
-            <div class="d-flex align-items-end gap-2">
-              <select id="filter-fin-inv" class="form-select form-select-sm rounded border-secondary shadow-sm bg-white col-6"
-                style="min-width:160px;">
-                <option value="" disabled selected>Seleccione la finca</option>
-              </select>
-              <button type="button" class="btn btn-success col-6" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                Agregar Item
-              </button>
-            </div>
+          <div class="d-flex align-items-center gap-2">
+            <select id="filter-fin-inv" class="form-select form-select-sm rounded border-secondary shadow-sm bg-white"
+              style="min-width:160px; max-width: 200px;">
+              <option value="" disabled selected>Seleccione la finca</option>
+            </select>
+            <button type="button" class="btn btn-success btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#exampleModal">
+              + Agregar Item
+            </button>
+            <button id="btn-categorias-inv" type="button" class="btn btn-outline-primary me-2 btn-sm text-nowrap" data-page="categorias_inventario">
+              Categorias Inventario
+            </button>
           </div>
         </div>
         <div class="table-responsive mt-4">
@@ -59,11 +59,11 @@
             <input type="text" class="form-control" id="edit-name-inv">
           </div>
           <div class="mb-3">
-            <label for="edit-des-inv" class="form-label">Cantidad</label>
+            <label for="edit-cant-inv" class="form-label">Cantidad</label>
             <input type="number" class="form-control" id="edit-cant-inv">
           </div>
           <div class="mb-3">
-            <label for="edit-name-inv" class="form-label">Unidad Medida</label>
+            <label for="edit-um-inv" class="form-label">Unidad Medida</label>
             <input type="text" class="form-control" id="edit-um-inv">
           </div>
           <div class="mb-3">
@@ -71,11 +71,11 @@
             <input type="text" class="form-control" id="edit-des-inv">
           </div>
           <div class="mb-3">
-            <label for="edit-name-inv" class="form-label">Categoria</label>
+            <label for="edit-cat-inv" class="form-label">Categoria</label>
             <input type="text" class="form-control" id="edit-cat-inv">
           </div>
           <div class="mb-3">
-            <label for="edit-des-inv" class="form-label">Finca</label>
+            <label for="edit-fin-inv" class="form-label">Finca</label>
             <input type="text" class="form-control" id="edit-fin-inv">
           </div>
           <div class="modal-footer">
