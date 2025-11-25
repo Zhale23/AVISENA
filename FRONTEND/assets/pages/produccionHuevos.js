@@ -383,7 +383,7 @@ export async function init(page = 1) {
       tableBody.innerHTML = producciones.map(createProduccionRow).join('');
     }
 
-    renderPaginationControls();
+    renderPagination();
 
   } catch (error) {
     console.error(error);
@@ -396,6 +396,5 @@ export async function init(page = 1) {
   document.getElementById('create-produccion-form').onsubmit = handleCreateSubmit;
 }
 
-setupFilterListeners();
 init();
  
