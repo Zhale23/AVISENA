@@ -1,76 +1,110 @@
-<div class="row g-3 mb-4 align-items-center justify-content-between">
-    <div class="col-auto">
-        <h1 class="app-page-title mb-0">Stock</h1>
-    </div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock</title>
 
-    <div class="col-auto">
-        <div class="page-utilities">
-            <div class="row g-2 justify-content-start justify-content-md-end align-items-center">
+    <!-- BOOTSTRAP (si tu plantilla ya lo tiene, quítalo para evitar duplicados) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-                <!-- Filtro Unidad -->
-                <div class="col-auto">
-                    <select class="form-select w-auto" id="filter-unidad">
-                        <option selected value="all">Todas las unidades</option>
-                        <option value="unidad">Unidad</option>
-                        <option value="panal">Panál</option>
-                        <option value="docena">Docena</option>
-                        <option value="medio_panal">Medio Panal</option>
-                    </select>
+    <!-- APEXCHARTS -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+
+<body>
+
+<div class="container py-4">
+
+    <!-- =========================================== -->
+    <!--                TÍTULO Y FILTROS             -->
+    <!-- =========================================== -->
+    <div class="row g-3 mb-4 align-items-center justify-content-between">
+        <div class="col-auto">
+            <h1 class="app-page-title mb-0">Stock</h1>
+        </div>
+
+        <div class="col-auto">
+            <div class="page-utilities">
+                <div class="row g-2 justify-content-start justify-content-md-end align-items-center">
+
+                    <!-- Filtro Unidad -->
+                    <div class="col-auto" style="display: none;">
+                        <select class="form-select w-auto" id="filter-unidad">
+                            <option selected value="all">Todas las unidades</option>
+                            <option value="unidad">Unidad</option>
+                            <option value="panal">Panal</option>
+                            <option value="docena">Docena</option>
+                            <option value="medio_panal">Medio Panal</option>
+                        </select>
+                    </div>
+
+                    <!-- Exportar -->
+                    <div class="col-auto" style="display: none;">
+                        <button class="btn btn-outline-secondary" id="export-csv-btn">
+                            Exportar CSV
+                        </button>
+                    </div>
+
+                    <!-- Botón Crear -->
+                    <div class="col-auto">
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#create-stock-modal" style="color: rgb(12, 12, 12);">
+                            <i class="fa fa-plus me-1"></i>Nuevo Stock</button>
+                    </div>
+
                 </div>
-
-                <!-- Exportar -->
-                <div class="col-auto">
-                    <button class="btn app-btn-secondary" id="export-csv-btn">
-                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-download me-1" fill="currentColor"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd"
-                                d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path fill-rule="evenodd"
-                                d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                        </svg>
-                        Exportar CSV
-                    </button>
-                </div>
-
-                <!-- Botón Crear -->
-                <div class="col-auto">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#create-stock-modal">
-                        + Nuevo Registro
-                    </button>
-                </div>
-
             </div>
         </div>
     </div>
-</div>
 
-<!-- Tabla -->
-<div class="app-card app-card-orders-table shadow-sm mb-5">
-    <div class="app-card-body">
-        <div class="table-responsive mt-4">
-            <table class="table table-striped table-hover table-sm mb-0 text-nowrap align-middle">
-                <thead>
-                    <tr>
-                        <th scope="col" class="fw-semibold">ID Producto</th>
-                        <th scope="col" class="fw-semibold">Unidad</th>
-                        <th scope="col" class="fw-semibold">Producción</th>
-                        <th scope="col" class="fw-semibold">Cantidad Disponible</th>
-                        <th scope="col" class="fw-semibold text-end">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="stock-table-body">
-                </tbody>
-            </table>
+    <!-- =========================================== -->
+    <!--                GRÁFICA                      -->
+    <!-- =========================================== -->
+    <div class="app-card shadow-sm mb-4">
+        <div class="app-card-body">
+            <div id="chart" style="max-width:100%;"></div>
         </div>
     </div>
-</div>
+    <div class="card mt-3 p-3">
+        <h5 class="fw-bold">Resumen de inventario</h5>
+        <p id="productoMayor">Cargando...</p>
+        <p id="productoMenor">Cargando...</p>
+    </div>
+    
 
-<!-- Paginación -->
-<nav class="app-pagination" id="pagination-container">
-    <ul class="pagination justify-content-center" id="pagination-list"></ul>
-</nav>
+    <!-- =========================================== -->
+    <!--                  TABLA                      -->
+    <!-- =========================================== -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <div class="table-responsive mt-4">
+                <table class="table table-striped table-hover table-sm mb-0 text-nowrap align-middle">
+                    <thead>
+                        <tr>
+                            <th class="fw-semibold">ID Producto</th>
+                            <th class="fw-semibold">Unidad</th>
+                            <th class="fw-semibold">Producción</th>
+                            <th class="fw-semibold">Cantidad Disponible</th>
+                            <th class="fw-semibold text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
 
-<!-- Modal Crear -->
+    <!-- Paginación -->
+    <nav class="app-pagination" id="pagination-container">
+        <ul class="pagination justify-content-center" id="pagination-list"></ul>
+    </nav>
+
+</div> <!-- container -->
+
+<!-- =========================================== -->
+<!--               MODAL CREAR                   -->
+<!-- =========================================== -->
 <div class="modal fade" id="create-stock-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -85,10 +119,10 @@
 
                     <div class="mb-3">
                         <label class="form-label">Unidad de Medida</label>
-                        <select class="form-select form-select-sm rounded border-secondary shadow-sm bg-white" id="create-unidad-medida" required>
+                        <select class="form-select" id="create-unidad-medida" required>
                             <option value="">Seleccione unidad…</option>
                             <option value="unidad">Unidad</option>
-                            <option value="panal">Panál</option>
+                            <option value="panal">Panal</option>
                             <option value="docena">Docena</option>
                             <option value="medio_panal">Medio Panal</option>
                         </select>
@@ -96,17 +130,17 @@
 
                     <div class="mb-3">
                         <label class="form-label">ID Producción</label>
-                        <input type="number" class="form-control rounded border-secondary shadow-sm bg-white" id="create-id-produccion" required>
+                        <input type="number" class="form-control" id="create-id-produccion" required>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Cantidad Disponible</label>
-                        <input type="number" class="form-control rounded border-secondary shadow-sm bg-white" id="create-cantidad-disponible" required>
+                        <input type="number" class="form-control" id="create-cantidad-disponible" required>
                     </div>
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Registrar</button>
+                        <button type="submit" class="btn btn-success" style="color: rgb(12, 12, 12);">Registrar</button>
                     </div>
 
                 </form>
@@ -116,7 +150,9 @@
     </div>
 </div>
 
-<!-- Modal Editar -->
+<!-- =========================================== -->
+<!--               MODAL EDITAR                  -->
+<!-- =========================================== -->
 <div class="modal fade" id="edit-stock-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -128,17 +164,13 @@
 
             <div class="modal-body">
                 <form id="edit-stock-form">
-                    <div class="mb-3">
-                        <label for="edit-id-producto" class="form-label">Id producto</label>
-                        <input type="number" id="edit-id-producto" class="form-control">
-                    </div>
-                    
+                    <input type="hidden" id="edit-id_producto">
 
                     <div class="mb-3">
                         <label class="form-label">Unidad de Medida</label>
-                        <select class="form-select" id="edit-unidad-medida" required>
+                        <select class="form-select" id="edit-unidad_medida" required>
                             <option value="unidad">Unidad</option>
-                            <option value="panal">Panál</option>
+                            <option value="panal">Panal</option>
                             <option value="docena">Docena</option>
                             <option value="medio_panal">Medio Panal</option>
                         </select>
@@ -146,18 +178,17 @@
 
                     <div class="mb-3">
                         <label class="form-label">ID Producción</label>
-                        <input type="number" class="form-control" id="edit-id-produccion" required>
+                        <input type="number" class="form-control" id="edit-id_produccion" required>
                     </div>
-                    
 
                     <div class="mb-3">
                         <label class="form-label">Cantidad Disponible</label>
-                        <input type="number" class="form-control" id="edit-cantidad-disponible" required>
+                        <input type="number" class="form-control" id="edit-cantidad_disponible" required>
                     </div>
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        <button type="submit" class="btn btn-success" style="color: rgb(12, 12, 12);">Guardar Cambios</button>
                     </div>
 
                 </form>
@@ -166,3 +197,7 @@
         </div>
     </div>
 </div>
+
+<script src="/js/pages/stock.js"></script>
+</body>
+</html>
