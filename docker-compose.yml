@@ -1,0 +1,17 @@
+services:
+
+  backend:
+    build: ./BACKEND
+    container_name: avisena-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./BACKEND:/app
+    restart: always
+
+  frontend:
+    build: ./FRONTEND
+    container_name: avisena-frontend
+    ports:
+      - "8080:80"
+    restart: always
