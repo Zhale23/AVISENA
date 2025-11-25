@@ -84,6 +84,36 @@ class DashboardService {
       throw error;
     }
   }
+
+  async getProduccionRango(dias = 7) {
+    try {
+      console.log(
+        `[getProduccionRango] Solicitando datos para ${dias} días...`
+      );
+      const response = await fetch(
+        `${API_BASE_URL}/dashboard/produccion-rango?dias=${dias}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
+      console.log(`[getProduccionRango] Status:`, response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[getProduccionRango] Error:`, errorText);
+        throw new Error(`Error al obtener producción por rango: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log(`[getProduccionRango] Datos recibidos:`, data);
+      return data;
+    } catch (error) {
+      console.error("Error en getProduccionRango:", error);
+      throw error;
+    }
+  }
 }
 
 const dashboardService = new DashboardService();
@@ -125,8 +155,10 @@ async function cargarDatosDashboard() {
     // Actualizar métricas principales
     actualizarMetricas(data.metricas);
 
-    // Cargar gráficos
-    cargarGraficoProduccion(data.produccion_semanal);
+    // Cargar gráfico de producción con rango inicial (7 días)
+    await cargarGraficoProduccion(7);
+
+    // Cargar otros gráficos
     cargarGraficoTipoGallina(data.distribucion_tipos);
     cargarGraficoGalpones(data.ocupacion_galpones);
 
@@ -207,63 +239,133 @@ function actualizarMetricas(metricas) {
     metricas.produccion_trend;
 }
 
-// Cargar Producción Semanal como tarjetas
-function cargarGraficoProduccion(data) {
-  const container = document.getElementById("produccion-semanal-cards");
-  if (!container) {
-    console.error("Contenedor produccion-semanal-cards no encontrado");
-    return;
+// Cargar Gráfica de Producción
+async function cargarGraficoProduccion(dias = 7) {
+  try {
+    console.log(
+      `[cargarGraficoProduccion] Iniciando carga para ${dias} días...`
+    );
+    const data = await dashboardService.getProduccionRango(dias);
+    console.log(`[cargarGraficoProduccion] Datos recibidos:`, data);
+
+    const ctx = document.getElementById("produccionChart");
+
+    if (!ctx) {
+      console.error("Canvas produccionChart no encontrado");
+      return;
+    }
+
+    // Validar que los datos existan
+    if (!data || !data.labels || !data.data) {
+      console.error("Datos inválidos recibidos:", data);
+      return;
+    }
+
+    // Destruir gráfica anterior si existe
+    if (produccionChart) {
+      produccionChart.destroy();
+    }
+
+    // Actualizar estadísticas
+    const total = data.total || 0;
+    const promedio = data.promedio || 0;
+    const maximo =
+      data.data && data.data.length > 0 ? Math.max(...data.data) : 0;
+
+    console.log(
+      `[cargarGraficoProduccion] Estadísticas - Total: ${total}, Promedio: ${promedio}, Máximo: ${maximo}`
+    );
+
+    document.getElementById("total-periodo").textContent =
+      total.toLocaleString();
+    document.getElementById("promedio-diario").textContent =
+      promedio.toLocaleString();
+    document.getElementById("maximo-dia").textContent = maximo.toLocaleString();
+
+    // Crear nueva gráfica
+    produccionChart = new Chart(ctx.getContext("2d"), {
+      type: "line",
+      data: {
+        labels: data.labels,
+        datasets: [
+          {
+            label: "Producción de Huevos",
+            data: data.data,
+            borderColor: chartColors.success,
+            backgroundColor: function (context) {
+              const ctx = context.chart.ctx;
+              const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+              gradient.addColorStop(0, "rgba(117, 193, 129, 0.3)");
+              gradient.addColorStop(1, "rgba(117, 193, 129, 0.01)");
+              return gradient;
+            },
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: "#fff",
+            pointBorderColor: chartColors.success,
+            pointBorderWidth: 2,
+            pointHoverBackgroundColor: chartColors.success,
+            pointHoverBorderColor: "#fff",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: "index",
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            padding: 12,
+            titleColor: "#fff",
+            titleFont: {
+              size: 13,
+              weight: "bold",
+            },
+            bodyColor: "#fff",
+            bodyFont: {
+              size: 13,
+            },
+            displayColors: false,
+            callbacks: {
+              label: function (context) {
+                return `Producción: ${context.parsed.y.toLocaleString()} huevos`;
+              },
+            },
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function (value) {
+                return value.toLocaleString();
+              },
+            },
+            grid: {
+              color: "rgba(0, 0, 0, 0.05)",
+            },
+          },
+          x: {
+            grid: {
+              display: false,
+            },
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error cargando gráfica de producción:", error);
   }
-
-  // Calcular totales
-  const totalActual = data.data_actual.reduce((sum, val) => sum + val, 0);
-  const promedioDiario = Math.round(totalActual / 7);
-
-  // Actualizar totales
-  document.getElementById("total-semana-actual").textContent =
-    totalActual.toLocaleString();
-  document.getElementById("promedio-diario").textContent =
-    promedioDiario.toLocaleString();
-
-  // Crear tarjetas para cada día
-  container.innerHTML = data.labels
-    .map((dia, index) => {
-      const valorActual = data.data_actual[index];
-      const valorAnterior = data.data_anterior[index];
-      const diferencia = valorActual - valorAnterior;
-      const porcentaje =
-        valorAnterior > 0 ? ((diferencia / valorAnterior) * 100).toFixed(1) : 0;
-      const tendencia = diferencia >= 0 ? "up" : "down";
-      const colorTendencia = diferencia >= 0 ? "success" : "danger";
-      const iconoTendencia = diferencia >= 0 ? "arrow-up" : "arrow-down";
-
-      return `
-      <div class="col-6 col-md-4 col-lg-3">
-        <div class="card border-0 bg-light h-100">
-          <div class="card-body p-3">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <small class="text-muted fw-bold">${dia}</small>
-              ${
-                valorActual > 0
-                  ? `<i class="fas fa-${iconoTendencia} text-${colorTendencia} small"></i>`
-                  : ""
-              }
-            </div>
-            <h4 class="mb-1">${valorActual.toLocaleString()}</h4>
-            <small class="text-muted">vs ${valorAnterior.toLocaleString()}</small>
-            ${
-              Math.abs(diferencia) > 0
-                ? `<div class="mt-1"><span class="badge bg-${colorTendencia}-subtle text-${colorTendencia} small">${
-                    diferencia >= 0 ? "+" : ""
-                  }${diferencia}</span></div>`
-                : ""
-            }
-          </div>
-        </div>
-      </div>
-    `;
-    })
-    .join("");
 }
 
 // Gráfico de Distribución por Tipo de Gallina
@@ -472,4 +574,15 @@ export function init() {
   setTimeout(() => {
     cargarDatosDashboard();
   }, 100);
+
+  // Event listeners para filtros de producción
+  document
+    .querySelectorAll('input[name="rangoProduccion"]')
+    .forEach((radio) => {
+      radio.addEventListener("change", async (e) => {
+        const dias = parseInt(e.target.value);
+        console.log(`Cambiando rango de producción a ${dias} días`);
+        await cargarGraficoProduccion(dias);
+      });
+    });
 }

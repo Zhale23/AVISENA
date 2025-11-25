@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+import logging
 
 from core.database import get_db
 from app.schemas.dashboard import (
@@ -13,6 +14,8 @@ from app.schemas.dashboard import (
     SensorData,
     ActividadReciente
 )
+
+logger = logging.getLogger(__name__)
 from app.schemas.users import UserOut
 from app.router.dependencies import get_current_user
 from app.crud import dashboard as crud_dashboard
@@ -63,6 +66,35 @@ def get_produccion_semanal(
         return ProduccionSemanal(**data)
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=f"Error en la base de datos: {str(e)}")
+
+@router.get("/produccion-rango")
+def get_produccion_rango(
+    dias: int = 7,
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    """
+    Obtiene los datos de producción de huevos para un rango específico de días
+    Parámetros:
+    - dias: número de días (7, 30, 90, 180)
+    """
+    try:
+        # Validar rango
+        if dias not in [7, 30, 90, 180]:
+            raise HTTPException(status_code=400, detail="Rango inválido. Usa 7, 30, 90 o 180 días")
+        
+        logger.info(f"Solicitando producción para {dias} días")
+        data = crud_dashboard.get_produccion_por_rango(db, dias)
+        logger.info(f"Datos obtenidos: {data}")
+        return data
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        logger.error(f"Error de base de datos: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error en la base de datos: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error inesperado: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
 
 @router.get("/distribucion-tipos", response_model=List[TipoGallinaDistribucion])
 def get_distribucion_tipos(

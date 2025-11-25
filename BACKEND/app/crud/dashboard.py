@@ -65,65 +65,79 @@ def get_alertas_activas(db: Session) -> int:
 
 def get_produccion_semanal(db: Session) -> Dict:
     """Obtiene la producción de los últimos 7 días"""
+    return get_produccion_por_rango(db, 7)
+
+def get_produccion_por_rango(db: Session, dias: int = 7) -> Dict:
+    """Obtiene la producción de huevos para un rango de días específico"""
     try:
         hoy = date.today()
-        hace_7_dias = hoy - timedelta(days=6)
-        hace_14_dias = hoy - timedelta(days=13)
+        inicio = hoy - timedelta(days=dias - 1)
         
-        # Semana actual
-        query_actual = text("""
+        query = text("""
             SELECT fecha, COALESCE(SUM(cantidad), 0) as total
             FROM produccion_huevos
             WHERE fecha BETWEEN :inicio AND :fin
             GROUP BY fecha
             ORDER BY fecha
         """)
-        resultados_actual = db.execute(query_actual, {
-            "inicio": hace_7_dias,
+        
+        resultados = db.execute(query, {
+            "inicio": inicio,
             "fin": hoy
         }).mappings().all()
         
-        # Semana anterior
-        query_anterior = text("""
-            SELECT fecha, COALESCE(SUM(cantidad), 0) as total
-            FROM produccion_huevos
-            WHERE fecha BETWEEN :inicio AND :fin
-            GROUP BY fecha
-            ORDER BY fecha
-        """)
-        resultados_anterior = db.execute(query_anterior, {
-            "inicio": hace_14_dias,
-            "fin": hace_7_dias - timedelta(days=1)
-        }).mappings().all()
+        # Crear diccionario con todas las fechas
+        fechas_dict = {}
+        for i in range(dias):
+            fecha = inicio + timedelta(days=i)
+            fechas_dict[fecha] = 0
         
-        # Crear labels y datos
-        dias_semana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-        data_actual = [0] * 7
-        data_anterior = [0] * 7
+        # Llenar con datos reales
+        for row in resultados:
+            fechas_dict[row['fecha']] = row['total']
         
-        # Llenar datos actuales
-        for row in resultados_actual:
-            dia_index = (row['fecha'] - hace_7_dias).days
-            if 0 <= dia_index < 7:
-                data_actual[dia_index] = row['total']
+        # Generar labels según el rango
+        labels = []
+        datos = []
         
-        # Llenar datos anteriores
-        for row in resultados_anterior:
-            dia_index = (row['fecha'] - hace_14_dias).days
-            if 0 <= dia_index < 7:
-                data_anterior[dia_index] = row['total']
+        for i in range(dias):
+            fecha = inicio + timedelta(days=i)
+            # Convertir Decimal a int para serialización JSON
+            valor = int(fechas_dict[fecha]) if fechas_dict[fecha] else 0
+            datos.append(valor)
+            
+            # Formato de label según rango
+            if dias <= 7:
+                # Última semana: mostrar día de semana
+                dias_semana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+                labels.append(dias_semana[fecha.weekday()])
+            elif dias <= 31:
+                # Último mes: mostrar día del mes
+                labels.append(f"{fecha.day}/{fecha.month}")
+            else:
+                # 3 o 6 meses: mostrar día/mes
+                labels.append(f"{fecha.day}/{fecha.month}")
+        
+        total = sum(datos)
+        promedio = round(total / dias, 1) if dias > 0 else 0
         
         return {
-            "labels": dias_semana,
-            "data_actual": data_actual,
-            "data_anterior": data_anterior
+            "labels": labels,
+            "data": datos,
+            "inicio": inicio.isoformat(),
+            "fin": hoy.isoformat(),
+            "total": total,
+            "promedio": promedio
         }
     except SQLAlchemyError as e:
-        logger.error(f"Error al obtener producción semanal: {e}")
+        logger.error(f"Error al obtener producción por rango: {e}")
         return {
-            "labels": ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-            "data_actual": [0, 0, 0, 0, 0, 0, 0],
-            "data_anterior": [0, 0, 0, 0, 0, 0, 0]
+            "labels": [],
+            "data": [],
+            "inicio": None,
+            "fin": None,
+            "total": 0,
+            "promedio": 0
         }
 
 def get_distribucion_tipos(db: Session) -> List[Dict]:
