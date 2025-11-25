@@ -21,14 +21,13 @@ function createLandRow(land) {
             <td class="cell">
                 <div class="form-check form-switch d-inline-block">
                     <input class="form-check-input land-status-switch" type="checkbox" role="switch"
-                           id="switch-${land.id_finca}" data-land-id="${land.id_finca
-    }"
-                           ${land.estado ? "checked" : ""}>
+                           id="switch-${land.id_finca}" data-land-id="${land.id_finca}" ${land.estado ? "checked" : ""}> 
+                           ${land.estado ? "Activa" : "Inactiva"}
                 </div>
             </td>
             <td class="cell text-end">
-                <button class="btn btn-sm btn-success btn-edit-land" data-land-id="${land.id_finca
-    }">
+                <button class="btn btn-sm btn-success btn-edit-land" data-land-id="${land.id_finca}">
+    
                     <i class="fa-regular fa-pen-to-square"></i>
                 </button>
             </td>
