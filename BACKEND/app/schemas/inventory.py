@@ -18,6 +18,7 @@ class InventoryUpdate(BaseModel):
     unidad_medida: Optional[str] = Field(default=None, min_length=1, max_length=50)
     descripcion: Optional[str] = Field(default=None, max_length=255)
     id_categoria: Optional[int] = Field(default=None, gt=0)
+    id_finca: Optional[int] = Field(default=None, gt=0)
 
 class InventoryOut(InventoryBase):
     id_inventario: int
