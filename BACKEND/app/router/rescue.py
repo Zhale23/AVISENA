@@ -97,8 +97,8 @@ def delete_rescue(
         # Verificar permisos
         id_rol = user_token.id_rol
         
-        if not verify_permissions(db, id_rol, modulo, 'Borrar'):
-            raise HTTPException(status_code=401, detail="EUsuario no autorizada")
+        if not verify_permissions(db, id_rol, modulo, 'borrar'):
+            raise HTTPException(status_code=401, detail="Usuario no autorizada")
         
         # Verificar si existe antes de eliminar
         existing_rescue = crud_rescue.get_rescue_by_id(db, id_salvamento)
