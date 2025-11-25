@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Roles</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold">Gestión de Roles</h4>
+    <button class="btn btn-primario" data-bs-toggle="modal" data-bs-target="#create-rol-modal">
+      <i class="fa-solid fa-plus"></i> Nuevo Rol
+    </button>
+  </div>
+
+  <!-- TABLA -->
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Nombre del Rol</th>
+        <th>Descripción</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody id="roles-table-body">
+      <tr>
+        <td colspan="5" class="text-center text-muted">Cargando...</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- MODAL CREAR -->
+<div class="modal fade" id="create-rol-modal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="create-rol-form" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nuevo Rol</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Nombre del Rol</label>
+          <input type="text" id="create-nombre-rol" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Descripción</label>
+          <textarea id="create-descripcion" class="form-control" rows="3" required></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Registrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+  .btn-primario{
+    background-color: #15a362; 
+    color: white;
+  }
+</style>
+
+</body>
+</html>
+
