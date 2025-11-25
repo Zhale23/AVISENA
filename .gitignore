@@ -1,2 +1,6 @@
 /avisena-backend-copy/.env
 /avisena-backend-copy/db.sql
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
