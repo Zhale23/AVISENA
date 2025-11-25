@@ -1,6 +1,6 @@
 // pages/tareas.js
 // Importamos lo que se comunica con la API
-import { tareaService } from "../js/api/tareas.service.js";
+import { tareaService } from "../api/tareas.service.js";
 
 // Instancias de modales
 let createModalInst = null;
@@ -47,15 +47,15 @@ function formatDateDisplay(value) {
 function createTareaRow(t) {
   return `
     <tr data-id_tarea="${t.id_tarea}">
-      <td class="px-0">${t.id_tarea}</td>
-      <td class="px-0">${t.id_usuario}</td>
-      <td class="px-0">${t.descripcion}</td>
-      <td class="px-0">${formatDateDisplay(t.fecha_hora_init)}</td>
-      <td class="px-0">${t.fecha_hora_fin ? formatDateDisplay(t.fecha_hora_fin) : "-"}</td>
-      <td class="px-0">
+      <td class="cell">${t.id_tarea}</td>
+      <td class="cell">${t.id_usuario}</td>
+      <td class="cell">${t.descripcion}</td>
+      <td class="cell">${formatDateDisplay(t.fecha_hora_init)}</td>
+      <td class="cell">${t.fecha_hora_fin ? formatDateDisplay(t.fecha_hora_fin) : "-"}</td>
+      <td class="cell">
         <span class="app-badge app-badge-secondary">${t.estado}</span>
       </td>
-      <td class="px-0 text-end">
+      <td class="cell text-end">
         <button 
           class="btn btn-success btn-sm btn-edit"
           data-id="${t.id_tarea}"
@@ -172,31 +172,57 @@ async function loadPage(page = 1) {
 /* ---------------------------------------------------
    PAGINACIÓN (clases ya son las correctas)
 --------------------------------------------------- */
-function renderPagination(page, pages) {
-  const list = document.getElementById("pagination-list");
-  if (!list) return;
+function renderPagination(currentPage, totalPages) {
+    const list = document.getElementById("pagination-list");
+    if (!list) return;
 
-  list.innerHTML = "";
+    list.innerHTML = "";
 
-  const createPageItem = (p, text = null, active = false, disabled = false) => {
-    return `
-      <li class="page-item ${active ? "active" : ""} ${disabled ? "disabled" : ""}">
-        <a class="page-link" href="#" data-page="${p}">${text ?? p}</a>
-      </li>
-    `;
-  };
+    // Crear <li>
+    const createLi = (content, disabled = false) => {
+        const li = document.createElement("li");
+        li.className = `page-item ${disabled ? "disabled" : ""}`;
+        li.innerHTML = content;
+        return li;
+    };
 
-  list.insertAdjacentHTML("beforeend", createPageItem(Math.max(1, page - 1), "«", false, page <= 1));
+    // Botón ANTERIOR
+    const prevDisabled = currentPage === 1;
+    const prevLi = createLi(`
+        <a class="page-link text-success" href="#" data-page="${currentPage - 1}">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+    `, prevDisabled);
 
-  const start = Math.max(1, page - 2);
-  const end = Math.min(pages, page + 2);
+    list.appendChild(prevLi);
 
-  for (let p = start; p <= end; p++) {
-    list.insertAdjacentHTML("beforeend", createPageItem(p, null, p === page));
-  }
+    // Botones numéricos
+    for (let i = 1; i <= totalPages; i++) {
+        const isActive = i === currentPage;
 
-  list.insertAdjacentHTML("beforeend", createPageItem(Math.min(pages, page + 1), "»", false, page >= pages));
+        const pageLi = createLi(`
+            <a class="page-link ${
+                isActive ? "bg-success border-success text-white" : "text-success"
+            }" 
+            href="#" data-page="${i}">
+                ${i}
+            </a>
+        `);
+
+        list.appendChild(pageLi);
+    }
+
+    // Botón SIGUIENTE
+    const nextDisabled = currentPage === totalPages;
+    const nextLi = createLi(`
+        <a class="page-link text-success" href="#" data-page="${currentPage + 1}">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    `, nextDisabled);
+
+    list.appendChild(nextLi);
 }
+
 
 /* ---------------------------------------------------
    PERMISOS UI
