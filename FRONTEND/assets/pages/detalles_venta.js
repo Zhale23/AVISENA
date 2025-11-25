@@ -1,5 +1,5 @@
-//import { loadContent } from "../js/main.js";
-import { detalleVentaService } from '../js/api/detalle_venta.service.js';
+import { loadContent } from "../main.js";
+import { detalleVentaService } from '../api/detalle_venta.service.js';
 
 let modalInstance = null; // Guardará la instancia del modal de Bootstrap
 let createModalInstance = null;
@@ -65,7 +65,7 @@ function mostrarInformacionVenta(ventaData) {
             <label class="form-label fw-semibold mb-1">Acciones</label>
             <button class="btn btn-primary btn-edit-venta-detalles" 
                     data-venta-id="${ventaData.id_venta}">
-                <i class="fa-regular fa-pen-to-square me-1"></i>
+                <i class="fa-regular fa-pen-to-square"></i></i>
                 Editar
             </button>
         </div>
@@ -134,10 +134,9 @@ function createDetalles() {
             document.getElementById('precio_unitario').value = "";
         } catch (error) {
             console.error("Error:", error);
-            alert('Error al agregar el producto: ' + error.message);
             await swalWithBootstrapButtonsCreateDetalle.fire({
-                title: "Error",
-                text: error,
+                title: ('Error al agregar el producto'),
+                text:  error.message,
                 icon: "error"
             });
 
@@ -149,6 +148,7 @@ function createDetalles() {
 }
 
 async function imprimirDetalles(){
+    const tableBody = document.getElementById('detalles-table-body');
     tableBody.innerHTML = '';
 
     let detalles = await detalleVentaService.getDettallesVenta(idVentaReciente);
@@ -178,13 +178,13 @@ async function imprimirDetalles(){
         botonEdit.setAttribute('data-id-producto', element.id_producto);
         botonEdit.setAttribute('data-tipo-producto', element.tipo);
         botonEdit.setAttribute('data-detalle-id', element.id_detalle);
-        botonEdit.innerHTML = '<i class="fa fa-pen me-0"></i>';
+        botonEdit.innerHTML = '<i class="fa-regular fa-pen-to-square"></i>';
 
         const botonDelete = document.createElement('button');
         botonDelete.classList.add('btn', 'btn-secondary', 'btn-sm', 'ms-2', 'btn-delete-detalle');
         botonDelete.setAttribute('data-tipo-producto', element.tipo);
         botonDelete.setAttribute('data-detalle-id', element.id_detalle);
-        botonDelete.innerHTML = '<i class="fa fa-trash me-0">';
+        botonDelete.innerHTML = '<i class="fa-regular fa-trash-can"></i>';
 
         colAcciones.appendChild(botonEdit);
         colAcciones.appendChild(botonDelete);
@@ -235,14 +235,32 @@ async function handleTableClick(event) {
         let tipo_producto_delete = deleteButton.dataset.tipoProducto;
         let id_detalle_delete = deleteButton.dataset.detalleId;
 
-        if (confirm(`¿Estás seguro de que deseas eliminar este detalle?`)) {
+        const confirmacion = await Swal.fire({
+            title: "¿Eliminar este detalle?",
+            text: "Esta acción no se puede deshacer.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "No, cancelar",
+            reverseButtons: true
+        });
+
+        if (confirmacion.isConfirmed) {
             try {
                 await detalleVentaService.deleteDetalle(id_detalle_delete, tipo_producto_delete);
-                alert(`Detalle eliminado correctamente`);
+                Swal.fire({
+                    icon: 'success',
+                    title: "Exito",
+                    text: "Detalle eliminado correctamente",
+                });
                 imprimirDetalles()
             } catch (error) {
                 console.error(`Error al eliminar el detalle ${id_detalle_delete}:`, error);
-                alert(`No se pudo eliminar el detalle.`);
+                Swal.fire({
+                    icon: "error",
+                    title: 'Ups...',
+                    text: "No se pudo eliminar el detalle.",
+                });
                 // Revertir el switch si hay error
             }
         }
@@ -250,7 +268,7 @@ async function handleTableClick(event) {
 }
 
 async function openEditModal(id, tipo_product, id_producto) {
-  const modalElement = document.getElementById('edit-detalle-modal');
+    const modalElement = document.getElementById('edit-detalle-modal');
     if (!modalInstance) {
         modalInstance = new bootstrap.Modal(modalElement);
     }
@@ -294,8 +312,12 @@ async function openEditModal(id, tipo_product, id_producto) {
         console.log("aqui: ", detalle)
         modalInstance.show();
     } catch (error) {
-        console.error(`Error al obtener datos del usuario ${id}:`, error);
-        alert('No se pudieron cargar los datos del usuario.');
+        console.error(`Error al obtener datos del detalle ${detalle.id_detalle}`, error);
+        Swal.fire({
+            icon: "error",
+            title: 'Ups...',
+            text: "Error al obtener datos del detalle",
+        });
     }
 }
 
@@ -317,10 +339,19 @@ async function handleUpdateSubmit(event) {
   try {
     await detalleVentaService.updateDetalle(detalleId, updatedData, tipoProducto);
     modalInstance.hide();
+    Swal.fire({
+      icon: 'success',
+      title: "Exito",
+      text: "Detalle actualizado exitosamente.",
+    });
     await imprimirDetalles(); // Recargamos la tabla para ver los cambios
   } catch (error) {
-    console.error(`Error al actualizar el usuario ${detalleId}:`, error);
-    alert('No se pudo actualizar el usuario.');
+    console.error(`Error al actualizar detalle ${detalleId}:`, error);
+    Swal.fire({
+        icon: "error",
+        title: 'Ups...',
+        text: "Error al actualizar detalle",
+    });
   }
 }
 
@@ -341,7 +372,11 @@ export const init = () => {
 
     } else {
         console.log("No se encontró data de venta");
-        alert("Error: No se encontró información de la venta");
+        Swal.fire({
+            icon: "error",
+            title: 'Ups...',
+            text: "No se encontró data de venta",
+        });
     }
 
     const selectDetalle = document.getElementById('tipo_producto');
