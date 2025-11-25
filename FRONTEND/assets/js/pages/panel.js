@@ -65,6 +65,25 @@ class DashboardService {
       throw error;
     }
   }
+
+  async getActividadReciente() {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/dashboard/actividad-reciente`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Error al obtener actividad reciente");
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error en getActividadReciente:", error);
+      throw error;
+    }
+  }
 }
 
 const dashboardService = new DashboardService();
@@ -129,6 +148,16 @@ async function cargarDatosDashboard() {
         console.error("Error actualizando sensores:", error);
       }
     }, 30000);
+
+    // Actualizar actividad reciente cada 60 segundos para refrescar tiempos
+    setInterval(async () => {
+      try {
+        const actividades = await dashboardService.getActividadReciente();
+        cargarActividadReciente(actividades);
+      } catch (error) {
+        console.error("Error actualizando actividad reciente:", error);
+      }
+    }, 60000);
   } catch (error) {
     console.error("Error cargando datos del dashboard:", error);
 

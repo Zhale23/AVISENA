@@ -171,3 +171,14 @@ if (logoutButton) {
     window.location.href = "/login.html";
   });
 }
+
+// Delegación global para accesos directos del panel
+document.addEventListener("click", (e) => {
+  const shortcut = e.target.closest(".shortcut-link[data-page]");
+  if (shortcut) {
+    e.preventDefault();
+    const page = shortcut.dataset.page;
+    console.log(`[Shortcut] Cargando página dinámica: ${page}`);
+    loadContent(page);
+  }
+});
