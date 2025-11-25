@@ -193,3 +193,5 @@ document.addEventListener("click", (e) => {
     loadContent(page);
   }
 });
+// para  llamar pagnas dentro de paginas
+window.loadContent = loadContent;
