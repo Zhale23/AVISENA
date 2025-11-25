@@ -93,8 +93,19 @@ const loadContent = async (page) => {
     if (page === "produccion_huevos") {
       import("../pages/produccionHuevos.js").then((module) => module.init());
     }
+
+    if (page === "roles") {
+      import("../pages/roles.js").then((module) => module.init());
+    }
+    
     if (page === "stock") {
-      import("../pages/stock.js").then((module) => module.init());
+      import("../pages/stock.js").then(async module => {
+          await module.init();
+
+          requestAnimationFrame( ()=> {
+            module.renderChart();
+          });
+        });
     }
 
     if (page === "users") {
