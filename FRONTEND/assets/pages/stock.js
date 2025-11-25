@@ -1,3 +1,4 @@
+import ApexCharts from 'https://cdn.jsdelivr.net/npm/apexcharts@3.35.3/dist/apexcharts.esm.js';
 import { stockService } from "../js/api/stock.service.js";
 
 let modalEditInstance = null;
