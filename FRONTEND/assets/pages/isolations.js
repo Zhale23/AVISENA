@@ -252,10 +252,6 @@ async function handleTableClick(event) {
 }
 
 // --- MANEJADORES DE EVENTOS ---
-const exampleModalEl = document.getElementById('exampleModal');
-const exampleModalInstance = bootstrap.Modal.getOrCreateInstance(exampleModalEl);
-
-
 async function handleUpdateSubmit(event) {
   event.preventDefault();
   const isolationId = document.getElementById('edit-isolation-id').value;
