@@ -92,6 +92,7 @@ const loadContent = async (page) => {
 
     if (page === "produccion_huevos") {
       import("../pages/produccionHuevos.js").then((module) => module.init());
+      import("../pages/tipoHuevos.js").then((module) => module.init());
     }
 
     if (page === "roles") {
@@ -141,10 +142,12 @@ const loadContent = async (page) => {
         infoVentaModule.init()
       );
     }
+
   } catch (error) {
     console.error("¡ERROR! Algo falló dentro de loadContent:", error);
     mainContent.innerHTML = `<h3 class="text-center text-danger p-5">No se pudo cargar el contenido. Revisa la consola (F12).</h3>`;
   }
+
 };
 
 navLinks.addEventListener("click", (event) => {
