@@ -189,58 +189,6 @@ document.getElementById("btn-apply-date-filter").addEventListener("click", () =>
 
 //_____________selects para que cargen los nombres de la tabla galpon del create y edit_______________
 
-
-async function loadGalponesSelectCreate() {
-  const select = document.getElementById('create_id_galpon');
-
-  try {
-    // Obtener galpones desde el service
-    const galpones = await isolationService.getGalponesAll();
-
-    // Limpia y agrega opción por defecto
-    select.innerHTML = '<option value="">Selecciona un galpón</option>';
-
-    galpones.forEach(g => {
-      const option = document.createElement('option');
-      option.value = g.id_galpon;
-      option.textContent = g.nombre;
-      select.appendChild(option);
-    });
-
-    // Inicializar Select2
-    if (window.$ && $(select).select2) {
-      $(select).select2({
-        dropdownParent: $('#exampleModal'), // tu modal
-        width: '100%',
-        placeholder: 'Selecciona un galpón',
-        allowClear: true,
-        dropdownCssClass: 'select2-scroll',
-
-        // Buscador personalizado
-        matcher: function(params, data) {
-          if ($.trim(params.term) === '') return data;
-
-          const term = params.term.toLowerCase();
-          const text = (data.text || '').toLowerCase();
-          const id = (data.id || '').toLowerCase();
-
-          if (text.includes(term) || id.includes(term)) {
-            return data;
-          }
-          return null;
-        }
-      });
-    }
-
-  } catch (error) {
-    console.error("Error al cargar galpones:", error);
-    select.innerHTML = '<option value="">Error al cargar galpones</option>';
-  }
-}
-
-const createModal = document.getElementById('exampleModal');
-createModal.addEventListener('show.bs.modal', loadGalponesSelectCreate);
-
 async function loadGalponesSelectEdit(select, selectedId = null) {
     try {
         // Llamamos directamente al servicio
@@ -331,56 +279,6 @@ async function handleUpdateSubmit(event) {
   }
 }
 
-async function handleCreateSubmit(event) {
-  event.preventDefault();
-
-  const fechaLocal = new Date();
-  const pad = (n) => n.toString().padStart(2, '0');
-  const fechaPC = `${fechaLocal.getFullYear()}-${pad(fechaLocal.getMonth() + 1)}-${pad(fechaLocal.getDate())} ${pad(fechaLocal.getHours())}:${pad(fechaLocal.getMinutes())}:${pad(fechaLocal.getSeconds())}`;
-
-  const newIsolationData = {
-    id_incidente_gallina: document.getElementById('create-id_incident_gallina').value,
-    id_galpon: document.getElementById('create_id_galpon').value,
-    fecha_hora: fechaPC,
-  };
-
-  try {
-    await isolationService.createIsolation(newIsolationData);
-
-    // Cerrar modal ANTES, pero sin mostrar SweetAlert todavía
-    exampleModalInstance.hide();
-
-    // Esperar a que Bootstrap termine de cerrar el modal
-    exampleModalEl.addEventListener('hidden.bs.modal', function handler() {
-      // remover el listener (muy importante para evitar ejecuciones duplicadas)
-      exampleModalEl.removeEventListener('hidden.bs.modal', handler);
-
-      // resetear formulario
-      document.getElementById('create-isolation-form').reset();
-
-      // mostrar alerta
-      Swal.fire({
-        icon: 'success',
-        title: '¡Guardado!',
-        text: 'Aislamiento creado correctamente.',
-        confirmButtonColor: '#28a745'
-      });
-
-      // recargar datos
-      init();
-    });
-
-  } catch (error) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Error al crear el aislamiento',
-      confirmButtonColor: '#d33'
-    });
-  }
-}
-
-
 //____________________________________buscador inteligente____________________________________
 const BuscarAislamiento = document.getElementById('search-isolation');
 
@@ -453,13 +351,10 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
     renderPagination(data.total_pages || 1, page);
 
     const editForm = document.getElementById('edit-isolation-form');
-    const createForm = document.getElementById('create-isolation-form');
     tableBody.removeEventListener('click', handleTableClick);
     tableBody.addEventListener('click', handleTableClick);
     editForm.removeEventListener('submit', handleUpdateSubmit);
     editForm.addEventListener('submit', handleUpdateSubmit);
-    createForm.removeEventListener('submit', handleCreateSubmit);
-    createForm.addEventListener('submit', handleCreateSubmit);
 
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>`;
