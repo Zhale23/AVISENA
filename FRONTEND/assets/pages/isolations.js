@@ -278,22 +278,22 @@ async function handleUpdateSubmit(event) {
 //____________________________________buscador inteligente____________________________________
 const BuscarAislamiento = document.getElementById('search-isolation');
 
-BuscarAislamiento.addEventListener('input', () => {
-  const filter = BuscarAislamiento.value.toLowerCase();
-  const tableBody = document.getElementById('isolations-table-body');
-  const rows = tableBody.querySelectorAll('tr');
+if (BuscarAislamiento) {
+  BuscarAislamiento.addEventListener('input', () => {
+    const filter = BuscarAislamiento.value.toLowerCase();
+    const tableBody = document.getElementById('isolations-table-body');
+    if (!tableBody) return;
 
-  rows.forEach(row => {
-    // Obtener celdas relevantes: ID, fecha, galpón
-    const idCell = row.cells[0]?.textContent.toLowerCase() || '';
-    const fechaCell = row.cells[1]?.textContent.toLowerCase() || '';
-    const galponCell = row.cells[2]?.textContent.toLowerCase() || '';
-
-    // Mostrar si alguna celda contiene el texto buscado
-    const match = idCell.includes(filter) || fechaCell.includes(filter) || galponCell.includes(filter);
-    row.style.display = match ? '' : 'none';
+    const rows = tableBody.querySelectorAll('tr');
+    rows.forEach(row => {
+      const idCell = row.cells[0]?.textContent.toLowerCase() || '';
+      const fechaCell = row.cells[1]?.textContent.toLowerCase() || '';
+      const galponCell = row.cells[2]?.textContent.toLowerCase() || '';
+      row.style.display = idCell.includes(filter) || fechaCell.includes(filter) || galponCell.includes(filter) ? '' : 'none';
+    });
   });
-});
+}
+
 //______________________________________________________________________________________________
 
 //_______________________________ limpiador de filtros__________________________________________
