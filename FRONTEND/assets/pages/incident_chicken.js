@@ -58,6 +58,47 @@ function formatDateForAPI(dateStr) {
 }
 
 //___________________________________ función isolations________________________________
+async function renderIncidentes() {
+    try {
+        // Traemos todos los incidentes y todos los aislamientos
+        const [incidentes, isolations] = await Promise.all([
+            incident_chickenService.getChickenIncidents(), // tu método existente
+            isolationService.getIsolations()               // tu método existente
+        ]);
+
+        // Creamos un Set con los IDs de incidentes que ya están aislados
+        const aislados = new Set(isolations.map(i => i.id_incidente_gallina));
+
+        // Recorremos los incidentes y deshabilitamos el botón si ya está aislado
+        incidentes.forEach(inc => {
+            const btn = document.querySelector(`[data-id-inc-gallina="${inc.id_inc_gallina}"]`);
+            if (!btn) return;
+
+            if (aislados.has(inc.id_inc_gallina)) {
+                btn.disabled = true;
+                btn.classList.add('disabled');
+            }
+        });
+    } catch (error) {
+        console.error("Error al renderizar incidentes:", error);
+    }
+}
+
+
+const observer = new MutationObserver(() => {
+  const botones = document.querySelectorAll('.btn-aislar');
+  if (botones.length > 0) {
+    renderIncidentes();
+  }
+});
+
+
+observer.observe(document.getElementById('main-content'), {
+  childList: true,
+  subtree: true
+});
+
+
 
 
 function obtenerFecha() {
