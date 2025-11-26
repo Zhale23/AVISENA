@@ -37,6 +37,9 @@ function createIncidentRow(incident) {
         <button class="btn btn-sm btn-success btn-edit-incident" data-incident-id="${incidentId}" aria-label="Editar">
           <i class="fa-regular fa-pen-to-square me-0"></i>
         </button>
+        <button class="btn btn-sm btn-success btn-aislar" data-id-inc-gallina="${incidentId}" data-id-galpon="${incident.galpon_origen}" aria-label="Aislar">
+          <i class="fa-solid fa-kit-medical me-0"></i>
+        </button>
       </td>
     </tr>
   `;
@@ -51,6 +54,80 @@ function formatDateForAPI(dateStr) {
   const dd = String(date.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
+
+//___________________________________ función isolations________________________________
+
+
+function obtenerFecha() {
+  const fechaLocal = new Date();
+  const pad = (n) => n.toString().padStart(2, '0');
+  const fechaPC = `${fechaLocal.getFullYear()}-${pad(fechaLocal.getMonth() + 1)}-${pad(fechaLocal.getDate())} ${pad(fechaLocal.getHours())}:${pad(fechaLocal.getMinutes())}:${pad(fechaLocal.getSeconds())}`;
+
+  return fechaPC;
+}
+
+// --- Escuchar clicks en la tabla ---
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn-aislar');
+  if (!btn) return;
+
+  const id_inc_gallina = btn.dataset.idIncGallina;
+  const id_galpon = btn.dataset.idGalpon;
+
+  if (!id_inc_gallina || !id_galpon) return;
+
+  aislarGallina(id_inc_gallina, id_galpon, btn);
+});
+
+
+async function aislarGallina(id_incidente_gallina, galpon_origen, btn) { 
+  try {
+    const newIsolationData = {
+      id_incidente_gallina: id_incidente_gallina,
+      id_galpon: galpon_origen,
+      fecha_hora: obtenerFecha()
+    };
+
+    await isolationService.createIsolation(newIsolationData);
+
+    btn.disabled = true;
+
+    Swal.fire({
+      icon: 'success',
+      title: '¡Gallina enviada a aislamiento!',
+      text: 'El aislamiento se registró correctamente.',
+      confirmButtonColor: '#28a745'
+    });
+    initIsolations(); 
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Ocurrió un error al registrar el aislamiento.',
+      confirmButtonColor: '#d33'
+    });
+  }
+}
+
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('#isolations');
+  if (!btn) return;  
+  
+  try {
+
+    const response = await fetch('pages/aislamientos.html');
+    const html = await response.text();
+
+    document.getElementById('main-content').innerHTML = html;
+
+    initIsolations();
+  } catch (error) {
+    console.error('Error al cargar aislamientos:', error);
+  }
+});
+
+//____________________________________________________________________________________
+
 
 //______________________________paginación para todos los datos y filtrados_____________
 async function fetchIncidents(page = 1, page_size = 10, fechaInicio = "", fechaFin = "") {
