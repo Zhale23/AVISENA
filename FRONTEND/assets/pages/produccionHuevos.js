@@ -9,7 +9,6 @@ let limit = 10;
 let fechaInicioGlobal = null;
 let fechaFinGlobal = null;
 
-
 // --- FUNCIONES AUXILIARES ---
 
 function createProduccionRow(produccion) {
@@ -239,20 +238,25 @@ async function init(page = 1) {
   editForm.removeEventListener('submit', handleUpdateSubmit);
   editForm.addEventListener('submit', handleUpdateSubmit);
   const createForm = document.getElementById('create-produccion-form');
-  createForm.removeEventListener('submit', handleCreateSubmit);
-  createForm.addEventListener('submit', handleCreateSubmit);
+  if(createForm){
+    createForm.removeEventListener('submit', handleCreateSubmit);
+    createForm.addEventListener('submit', handleCreateSubmit);
+  
+  }
 }
 
 function renderPaginationControls() {
   const paginationDiv = document.getElementById("pagination-controls");
   if (!paginationDiv) return;
 
-  paginationDiv.innerHTML = `
-    <button id="btn-prev" class="btn btn-secondary me-2"><</button>
-    <span>${currentPage}</span>
-    <button id="btn-next" class="btn btn-secondary ms-2">></button>
-  `;
 
+  paginationDiv.innerHTML = `
+    <button id="btn-prev" class="btn btn-light text-success"><svg class="svg-inline--fa fa-chevron-left" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-left" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l192 192c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 246.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-192 192z"></path></svg></button>
+    <span class='px-3 bg-success align-content-center text-white'>${currentPage}</span>
+    <button id="btn-next" class="btn btn-light text-success"><svg class="svg-inline--fa fa-chevron-right" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"></path></svg></button>
+  `;
+  const botonPrev = document.getElementById("btn-prev").style.backgroundColor = '#f2f2f2'
+  const botonSig = document.getElementById("btn-next").style.backgroundColor = '#f2f2f2'
   document.getElementById("btn-prev").onclick = () => {
     if (currentPage > 1) init(currentPage - 1);
   };
@@ -266,6 +270,7 @@ function renderPaginationControls() {
 
 function setupFilterListeners() {
   const btnFiltrar = document.getElementById('btn-filtrar');
+  const btnLimpiar = document.getElementById('btn-limpiar');
   const inputFechaInicio = document.getElementById('filtro-fecha-inicio');
   const inputFechaFin = document.getElementById('filtro-fecha-fin');
 
@@ -279,7 +284,21 @@ function setupFilterListeners() {
     // Reiniciar a la primera página al filtrar
     init(1);
   });
+
+  btnLimpiar.addEventListener('click', () => {
+    // Limpiar variables globales
+    fechaInicioGlobal = null;
+    fechaFinGlobal = null;
+
+    // Limpiar inputs visuales
+    inputFechaInicio.value = "";
+    inputFechaFin.value = "";
+
+    // Recargar la tabla sin filtros
+    init(1);
+});
 }
+
 
 async function eliminarProduccion(produccionId) {
  try {
@@ -293,7 +312,7 @@ async function eliminarProduccion(produccionId) {
       cancelButtonText: "No, cancelar",
       reverseButtons: true,
       customClass: {
-        confirmButton: "btn btn-danger",
+        confirmButton: "btn btn-success",
         cancelButton: "btn btn-secondary"
       },
       buttonsStyling: false
