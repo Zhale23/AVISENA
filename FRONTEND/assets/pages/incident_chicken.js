@@ -1,4 +1,6 @@
 import { incident_chickenService } from '../js/incident_chicken.service.js';
+import { isolationService } from '../js/isolations.service.js';
+import { init as initIsolations } from '../pages/isolations.js';
 
 let modalInstance = null;
 let createModalInstance = null;
