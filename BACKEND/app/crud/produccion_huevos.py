@@ -30,6 +30,8 @@ def get_produccion_huevos_by_id(db: Session, produccion_id: int):
         query = text("""
             SELECT 
                 ph.id_produccion,
+                ph.id_galpon,
+                ph.id_tipo_huevo,
                 g.nombre AS nombre_galpon,
                 ph.cantidad,
                 ph.fecha,
