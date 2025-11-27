@@ -1,22 +1,51 @@
+// chickens.js - Versión Completamente Corregida
 import { chickenService } from '../js/chickens.service.js';
+import { shedsService } from '../js/sheeds.service.js';
+import { rescueService } from '../js/rescue.service.js';
 
-// VARIABLES GLOBALES
-
+// =======================
+// CONFIG & STATE
+// =======================
+const RECENT_PAGE_SIZE = 100; // max allowed by backend
 let modalInstance = null;
-
 let cacheGalpones = null;
 let cacheTipos = null;
 
 let allChickens = [];
 let filteredChickens = [];
 
-// FUNCION DE CREACIÓN DE FILAS
+let currentSelectedGalponId = null;
+let isVerMasMode = false; // when true, filters & pagination are active for "ver todos los registros"
 
+// =======================
+// HELPERS
+// =======================
+function formatDateDDMMYYYY(dateStr) {
+    if (!dateStr) return '';
+    return dateStr.split('-').reverse().join('/');
+}
+
+function uniqueJoin(arr) {
+    return [...new Set(arr.filter(Boolean))].join(', ');
+}
+
+function setBtnVerTodosTextAndStyle() {
+    const btn = document.getElementById('btn-ver-mas');
+    if (!btn) return;
+    btn.textContent = 'Ver todos los registros';
+    btn.className = 'btn btn-success btn-sm'; // green as requested
+}
+
+// =======================
+// ROW TEMPLATE
+// =======================
 function createChickenRow(chicken) {
     const chickenId = chicken.id_ingreso;
 
     const idRol = JSON.parse(localStorage.getItem('user'))?.id_rol;
-    const fechaFormateada = chicken.fecha.split('-').reverse().join('/');
+    const fechaFormateada = formatDateDDMMYYYY(chicken.fecha);
+
+    const mostrarBotonEspecial = !isVerMasMode && currentSelectedGalponId;
 
     const tabla = `
         <tr>
@@ -26,6 +55,11 @@ function createChickenRow(chicken) {
             <td class="px-0">${chicken.cantidad_gallinas} gallinas</td>
             <td class="text-end">
                 <div class="d-flex justify-content-end gap-2">
+                    ${mostrarBotonEspecial ? `
+                        <button class="btn btn-sm btn-success btn-rescue-chicken" aria-label="Salvamento" title="Salvamento" data-chicken-id="${chickenId}">
+                            <i class="fa-solid fa-drumstick-bite"></i>
+                        </button>
+                    ` : ''}
                     <button class="btn btn-sm btn-success btn-edit-chicken" aria-label="Editar" title="Editar" data-chicken-id="${chickenId}">
                         <i class="fa-regular fa-pen-to-square me-0"></i>
                     </button>
@@ -42,9 +76,10 @@ function createChickenRow(chicken) {
     return tabla;
 }
 
-// FUNCIONES DE CARGA DE SELECTS
-
-async function cargarSelectGalpones(force = false) {
+// =======================
+// CARGA DE SELECTS Y TYPES - CORREGIDO
+// =======================
+async function cargarSelectGalponesModals(force = false) {
     const selectCreate = document.getElementById('create-id_galpon');
     const selectEdit = document.getElementById('edit-id_galpon');
 
@@ -53,21 +88,30 @@ async function cargarSelectGalpones(force = false) {
             cacheGalpones = await chickenService.getGalpones();
         }
 
+        const galponesActivos = cacheGalpones.filter(g => g.estado === true);
+
         if (selectCreate) {
             selectCreate.innerHTML =
                 `<option value="" disabled selected>Seleccione un galpón</option>` +
-                cacheGalpones.map(g => {
+                galponesActivos.map(g => {
                     const disponible = g.capacidad - g.cant_actual;
                     return `<option value="${g.id_galpon}">
                                 ${g.nombre} (${disponible} disponibles)
                             </option>`;
                 }).join('');
+            // If there's a selected galpón in the page, lock the create select accordingly
+            if (currentSelectedGalponId) {
+                selectCreate.value = String(currentSelectedGalponId);
+                selectCreate.disabled = true;
+            } else {
+                selectCreate.disabled = false;
+            }
         }
 
         if (selectEdit) {
             selectEdit.innerHTML =
                 `<option value="" disabled selected>Seleccione un galpón</option>` +
-                cacheGalpones.map(g => {
+                galponesActivos.map(g => {
                     const disponible = g.capacidad - g.cant_actual;
                     return `<option value="${g.id_galpon}">
                                 ${g.nombre} (${disponible} disponibles)
@@ -86,7 +130,7 @@ async function cargarSelectGalpones(force = false) {
     }
 }
 
-async function cargarSelectTypeChickens(force = false) {
+async function cargarSelectTypeChickensModals(force = false) {
     const selectCreate = document.getElementById('create-id_tipo_gallina');
     const selectEdit = document.getElementById('edit-id_tipo_gallina');
 
@@ -118,6 +162,9 @@ async function cargarSelectTypeChickens(force = false) {
     }
 }
 
+// =======================
+// SELECT FILTRO GALPONES (independiente)
+// =======================
 async function cargarSelectFilterGalpones() {
     const selectFilter = document.getElementById('filter-galpon');
 
@@ -126,54 +173,328 @@ async function cargarSelectFilterGalpones() {
             cacheGalpones = await chickenService.getGalpones();
         }
 
-        const options = cacheGalpones.map(g => `
+        const galponesActivos = cacheGalpones.filter(g => g.estado === true);
+
+        const options = galponesActivos.map(g => `
             <option value="${g.id_galpon}">
                 ${g.nombre}
             </option>
         `).join('');
 
         if (selectFilter) {
-            selectFilter.innerHTML = `<option value="" selected>Todos</option>${options}`;
+            selectFilter.innerHTML = `<option value="">Seleccione un Galpón</option>${options}`;
+            // Assign listener
+            selectFilter.removeEventListener('change', onGalponChange);
+            selectFilter.addEventListener('change', onGalponChange);
+            // ensure button style/text
+            setBtnVerTodosTextAndStyle();
         }
 
     } catch (error) {
         if (selectFilter) {
             selectFilter.innerHTML = `<option>Error al cargar por filtros</option>`;
         }
+        console.error("Error en cargarSelectFilterGalpones:", error);
     }
 }
 
+// =======================
+// OBTENER REGISTROS RECIENTES (APLICA REGLA)
+// =======================
+function seleccionarRegistrosRecientes(registrosOrdenadosDesc, cantActual) {
+    const resultado = [];
+    let suma = 0;
 
-// FUNCIONES DE MODAL
+    for (const r of registrosOrdenadosDesc) {
+        if (resultado.length === 0 && r.cantidad_gallinas >= cantActual) {
+            resultado.push(r);
+            suma = r.cantidad_gallinas;
+            break;
+        }
 
-async function openEditModal(chickenId) {
-    const modalElement = document.getElementById('editChickenModal');
-    if (!modalInstance) {
-        modalInstance = new bootstrap.Modal(modalElement);
+        if (suma + r.cantidad_gallinas <= cantActual) {
+            resultado.push(r);
+            suma += r.cantidad_gallinas;
+        }
+
+        if (suma === cantActual) break;
     }
 
+    return resultado;
+}
+
+// =======================
+// MOSTRAR DATOS DEL GALPÓN (TARJETA) - MODIFICADO
+// =======================
+function mostrarDatosDelGalpon(galpon, registrosRecientes) {
+    const el = document.getElementById('galpon-info');
+    if (!el) return;
+
+    // Build card style content
+    const nombre = galpon?.nombre || '-';
+    const capacidad = galpon?.capacidad ?? '-';
+    const actual = galpon?.cant_actual ?? '-';
+    const razas = (registrosRecientes?.map(r => r.raza) || []).filter(Boolean);
+    // MODIFICACIÓN: Mostrar "Sin tipo" cuando no hay razas
+    const tiposText = razas.length ? uniqueJoin(razas) : 'Sin tipo';
+
+    el.innerHTML = `
+        <div class="card border-success mb-3">
+            <div class="card-body p-2">
+                <h6 class="text-success fw-bold mb-2">Información del Galpón</h6>
+                <p class="mb-1"><strong>Nombre:</strong> ${nombre}</p>
+                <p class="mb-1"><strong>Capacidad:</strong> ${capacidad}</p>
+                <p class="mb-1"><strong>Cantidad actual:</strong> ${actual}</p>
+                <p class="mb-0"><strong>Tipo(s):</strong> ${tiposText}</p>
+            </div>
+        </div>
+    `;
+    el.classList.remove('d-none');
+}
+
+// =======================
+// RENDER TABLA
+// =======================
+function renderTabla(registros) {
+    const tbody = document.getElementById('chicken-table-body');
+    if (!tbody) return;
+
+    if (!registros || registros.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No hay registros para este galpón.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = registros.map(createChickenRow).join('');
+}
+
+// =======================
+// MODO: RECENT vs VER TODOS
+// =======================
+function entrarModoReciente() {
+    isVerMasMode = false;
+    const dateFilters = document.getElementById('date-filters');
+    const paginationContainer = document.getElementById('pagination-container');
+    const btnVerMas = document.getElementById('btn-ver-mas');
+    if (dateFilters) dateFilters.classList.add('d-none');
+    if (paginationContainer) paginationContainer.classList.add('d-none');
+    // MODIFICACIÓN: El botón "Ver todos" siempre se muestra en modo reciente
+    if (btnVerMas) btnVerMas.classList.remove('d-none');
+    setBtnVerTodosTextAndStyle();
+
+    if (filteredChickens.length > 0 && currentSelectedGalponId) {
+        renderTabla(filteredChickens);
+    }
+}
+
+function entrarModoVerTodos() {
+    isVerMasMode = true;
+    const dateFilters = document.getElementById('date-filters');
+    const paginationContainer = document.getElementById('pagination-container');
+    const btnVerMas = document.getElementById('btn-ver-mas');
+    if (dateFilters) dateFilters.classList.remove('d-none');
+    if (paginationContainer) paginationContainer.classList.remove('d-none');
+    // MODIFICACIÓN: El botón "Ver todos" se oculta solo cuando se presiona
+    if (btnVerMas) btnVerMas.classList.add('d-none');
+
+    if (filteredChickens.length > 0) {
+        renderTabla(filteredChickens);
+    }
+}
+
+// =======================
+// RESET AFTER CLEAR SELECTION - NUEVA FUNCIÓN
+// =======================
+function resetAfterClearSelection() {
+    const galponInfo = document.getElementById('galpon-info');
+    if (galponInfo) galponInfo.classList.add('d-none');
+    
+    const tbody = document.getElementById('chicken-table-body');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Seleccione un galpón para ver los registros.</td></tr>';
+    }
+    
+    // Resetear a modo reciente
+    entrarModoReciente();
+    currentSelectedGalponId = null;
+    isVerMasMode = false;
+}
+
+// =======================
+// CARGAR REGISTROS RECIENTES AL SELECCIONAR GALPÓN - MODIFICADO
+// =======================
+async function onGalponChange(e) {
+    const galponId = e.target.value;
+    currentSelectedGalponId = galponId || null;
+
+    // Ensure button styled
+    setBtnVerTodosTextAndStyle();
+
+    if (!galponId) {
+        resetAfterClearSelection();
+        return;
+    }
+
+    let galpon = null;
+    try {
+        galpon = await shedsService.getShedById(galponId);
+    } catch (err) {
+        console.error("Error obteniendo galpón desde API, usando cache si existe:", err);
+        if (!cacheGalpones) {
+            cacheGalpones = await chickenService.getGalpones();
+        }
+        galpon = cacheGalpones.find(g => String(g.id_galpon) === String(galponId)) || null;
+    }
+
+    // Enter recent mode
+    entrarModoReciente();
+
+    // Show loading message
+    const tbody = document.getElementById('chicken-table-body');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Cargando registros recientes...</td></tr>';
+
+    try {
+        // Fetch recent page of records (desc expected)
+        const data = await chickenService.getChickensByGalpon(galponId, 1, RECENT_PAGE_SIZE);
+        let registros = data.record_chickens || [];
+
+        // MODIFICACIÓN: Mostrar información del galpón incluso si no hay registros
+        if ((!registros || registros.length === 0) && galpon) {
+            mostrarDatosDelGalpon(galpon, []); // Pasar array vacío para mostrar "Sin tipo"
+            renderTabla([]); // will show "No hay registros para este galpón."
+            filteredChickens = [];
+            allChickens = [];
+            
+            // MODIFICACIÓN: El botón "Ver todos" se mantiene visible incluso sin registros
+            const btnVerMas = document.getElementById('btn-ver-mas');
+            if (btnVerMas) {
+                btnVerMas.classList.remove('d-none');
+            }
+            return;
+        }
+
+        // Order by fecha desc, then id_ingreso desc
+        registros.sort((a, b) => {
+            if (a.fecha === b.fecha) return b.id_ingreso - a.id_ingreso;
+            return new Date(b.fecha) - new Date(a.fecha);
+        });
+
+        // Select recent records using the rule
+        const registrosRecientes = seleccionarRegistrosRecientes(registros, galpon?.cant_actual ?? 0);
+
+        // Render recent records
+        renderTabla(registrosRecientes);
+
+        // Show galpon info (uses tipos from registrosRecientes o "Sin tipo")
+        mostrarDatosDelGalpon(galpon || {}, registrosRecientes);
+
+        filteredChickens = registrosRecientes;
+        allChickens = registros;
+
+        // MODIFICACIÓN: El botón "Ver todos" siempre se muestra cuando hay un galpón seleccionado
+        const btnVerMas = document.getElementById('btn-ver-mas');
+        if (btnVerMas) {
+            btnVerMas.classList.remove('d-none');
+        }
+
+    } catch (error) {
+        console.error('Error al cargar registros recientes:', error);
+        const tbody = document.getElementById('chicken-table-body');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No se encontraron registros.</td></tr>';
+        
+        // MODIFICACIÓN: Mostrar info del galpón incluso en caso de error
+        if (galpon) {
+            mostrarDatosDelGalpon(galpon, []);
+        }
+    }
+}
+
+// =======================
+// BOTÓN "VER TODOS LOS REGISTROS" - MODIFICADO
+// =======================
+function setupVerMasButton() {
+    const btnVerMas = document.getElementById('btn-ver-mas');
+    if (btnVerMas) {
+        btnVerMas.removeEventListener('click', handleVerMasClick);
+        btnVerMas.addEventListener('click', handleVerMasClick);
+    }
+}
+
+async function handleVerMasClick(e) {
+    e.preventDefault();
+    
+    // NUEVO: Ocultar card de información del galpón
+    const galponInfo = document.getElementById('galpon-info');
+    if (galponInfo) galponInfo.classList.add('d-none');
+
+    // NUEVO: Resetear el select de galpones
+    const selectFilter = document.getElementById('filter-galpon');
+    if (selectFilter) {
+        selectFilter.value = "";
+    }
+
+    // Enter ver todos mode
+    entrarModoVerTodos();
+
+    // MODIFICACIÓN: Siempre cargar todos los registros sin filtrar por galpón
+    await cargarTodosRegistrosGalponPaginados(null, 1, document.getElementById('pageSize').value);
+}
+
+// =======================
+// CARGAR TODOS LOS REGISTROS DEL GALPÓN (PAGINADO / para Ver todos)
+// =======================
+async function cargarTodosRegistrosGalponPaginados(galponId, page = 1, page_size = 10) {
+    const tbody = document.getElementById('chicken-table-body');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Cargando registros...</td></tr>';
+
+    try {
+        let data;
+        if (galponId) {
+            data = await chickenService.getChickensByGalpon(galponId, page, page_size);
+        } else {
+            data = await chickenService.getChickens(page, page_size);
+        }
+        const registros = data.record_chickens || [];
+        filteredChickens = registros;
+        allChickens = registros; // current page
+
+        renderTabla(registros);
+        renderPagination(data.total_pages || 1, data.page || page);
+    } catch (error) {
+        console.error('Error cargando registros paginados del galpón:', error);
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error al cargar registros.</td></tr>';
+    }
+}
+
+// =======================
+// MODALES - COMPLETAMENTE CORREGIDOS
+// =======================
+async function openEditModal(chickenId) {
     try {
         const chicken = await chickenService.getChickenById(chickenId);
         
-        await cargarSelectGalpones();
-        await cargarSelectTypeChickens();
+        // Cargar selects antes de mostrar el modal
+        await cargarSelectGalponesModals();
+        await cargarSelectTypeChickensModals();
         
+        // Llenar el formulario
         document.getElementById('edit-chicken-id').value = chicken.id_ingreso;
         document.getElementById('edit-id_galpon').value = chicken.id_galpon;
         document.getElementById('edit-id_tipo_gallina').value = chicken.id_tipo_gallina;
         document.getElementById('edit-cantidad_gallinas').value = chicken.cantidad_gallinas;
         
-        modalInstance.show();
+        // Mostrar el modal
+        const modalElement = document.getElementById('editChickenModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
     } catch (error) {
         console.error(`Error al obtener los registros de gallinas ${chickenId}:`, error);
         Swal.fire({
-                    icon: "error",
-                    text: "No se pudieron cargar los datos de los registros.",
-                });
+            icon: "error",
+            text: "No se pudieron cargar los datos de los registros.",
+        });
     }
 }
-
-// --- MANEJADORES DE EVENTOS ---
 
 async function handleUpdateSubmit(event) {
     event.preventDefault();
@@ -186,8 +507,22 @@ async function handleUpdateSubmit(event) {
 
     try {
         await chickenService.updateChicken(chickenId, updatedData);
-        modalInstance.hide();
-        init();
+        
+        // Cerrar modal
+        const modalElement = document.getElementById('editChickenModal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        modal.hide();
+        
+        // Recargar datos
+        if (currentSelectedGalponId && !isVerMasMode) {
+            const select = document.getElementById('filter-galpon');
+            if (select) select.dispatchEvent(new Event('change'));
+        } else if (currentSelectedGalponId && isVerMasMode) {
+            cargarTodosRegistrosGalponPaginados(currentSelectedGalponId, 1, document.getElementById('pageSize').value);
+        } else {
+            init();
+        }
+        
         Swal.fire({
             icon: "success",
             title: "Actualizado",
@@ -208,17 +543,24 @@ async function handleUpdateSubmit(event) {
             Swal.fire({
                 icon: "error",
                 title: "Error",
-                text: "No se pudo crear el registro.",
+                text: "No se pudo actualizar el registro.",
             });
         }
     }
 }
 
 async function handleTableClick(event) {
+    const rescueButton = event.target.closest('.btn-rescue-chicken');
+    if (rescueButton) {
+        const chickenId = rescueButton.dataset.chickenId;
+        await openRescueModal(chickenId);
+        return;
+    }
+
     const editButton = event.target.closest('.btn-edit-chicken');
     if (editButton) {
         const chickenId = editButton.dataset.chickenId;
-        openEditModal(chickenId);
+        await openEditModal(chickenId);
         return;
     }
 
@@ -229,6 +571,175 @@ async function handleTableClick(event) {
         return;
     }
 }
+
+
+// =======================
+// ABRIR MODAL DE SALVAMENTO DESDE CHICKENS
+// =======================
+async function openRescueModal(chickenId) {
+    try {
+        // Obtener los datos del registro de gallinas
+        const chicken = await chickenService.getChickenById(chickenId);
+        const shed = await shedsService.getShedById(chicken.id_galpon);
+        
+        // Llenar los campos del modal
+        document.getElementById('rescue-chicken-id').value = chickenId;
+        document.getElementById('rescue-id-galpon').value = chicken.id_galpon;
+        document.getElementById('rescue-id-tipo-gallina').value = chicken.id_tipo_gallina;
+        document.getElementById('rescue-galpon-display').value = chicken.nombre_galpon || `Galpón ${chicken.id_galpon}`;
+        document.getElementById('rescue-tipo-gallina-display').value = chicken.raza || `Tipo ${chicken.id_tipo_gallina}`;
+        document.getElementById('rescue-cantidad-gallinas').value = '';
+        document.getElementById('rescue-cantidad-gallinas').max = shed.cant_actual;
+        
+        // Establecer fecha actual por defecto
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('rescue-fecha').value = today;
+        
+        // Mostrar el modal
+        const modalElement = document.getElementById('createRescueFromChickenModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+    } catch (error) {
+        console.error(`Error al obtener datos para salvamento ${chickenId}:`, error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "No se pudieron cargar los datos para el salvamento.",
+        });
+    }
+}
+
+// =======================
+// MANEJAR ENVÍO DEL FORMULARIO DE SALVAMENTO
+// =======================
+async function handleRescueSubmit(event) {
+    event.preventDefault();
+    
+    const chickenId = document.getElementById('rescue-chicken-id').value;
+    const rescueData = {
+        id_galpon: parseInt(document.getElementById('rescue-id-galpon').value),
+        id_tipo_gallina: parseInt(document.getElementById('rescue-id-tipo-gallina').value),
+        cantidad_gallinas: parseInt(document.getElementById('rescue-cantidad-gallinas').value),
+        fecha: document.getElementById('rescue-fecha').value
+    };
+
+    // Obtener datos para mostrar en el SweetAlert
+    const galponNombre = document.getElementById('rescue-galpon-display').value;
+    const tipoGallina = document.getElementById('rescue-tipo-gallina-display').value;
+
+    // Validaciones
+    if (!rescueData.cantidad_gallinas || rescueData.cantidad_gallinas <= 0) {
+        Swal.fire({
+            icon: "warning",
+            title: "Cantidad inválida",
+            text: "Por favor ingrese una cantidad válida de gallinas.",
+        });
+        return;
+    }
+
+    try {
+        // Crear el salvamento
+        const createdRescue = await rescueService.createRescue(rescueData);
+        
+        // Cerrar el modal primero
+        const modalElement = document.getElementById('createRescueFromChickenModal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        modal.hide();
+
+        // Mostrar SweetAlert personalizado con la información
+        const result = await Swal.fire({
+            title: '¡Salvamento Creado Exitosamente!',
+            html: `
+                <div class="text-start">
+                    <div class="alert alert-success border-success bg-success bg-opacity-10">
+                        <div class="d-flex align-items-center">
+                            <i class="fa-solid fa-circle-check text-success me-2"></i>
+                            <strong>El salvamento se ha creado exitosamente</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="border rounded p-3 bg-light mt-3">
+                        <h6 class="text-success mb-3">
+                            <i class="fa-solid fa-drumstick-bite me-2"></i>Detalles del Salvamento
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="mb-2"><strong><i class="fa-solid fa-warehouse me-1 text-muted"></i> Galpón:</strong></p>
+                                <p class="mb-2"><strong><i class="fa-solid fa-kiwi-bird me-1 text-muted"></i> Tipo Gallina:</strong></p>
+                                <p class="mb-2"><strong><i class="fa-solid fa-hashtag me-1 text-muted"></i> Cantidad:</strong></p>
+                                <p class="mb-0"><strong><i class="fa-solid fa-calendar me-1 text-muted"></i> Fecha:</strong></p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-2">${galponNombre}</p>
+                                <p class="mb-2">${tipoGallina}</p>
+                                <p class="mb-2">${rescueData.cantidad_gallinas} gallinas</p>
+                                <p class="mb-0">${rescueData.fecha}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="mt-4 text-center text-muted">
+                        <i class="fa-solid fa-arrow-pointer me-1"></i>¿Qué deseas hacer ahora?
+                    </p>
+                </div>
+            `,
+            icon: 'success',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fa-solid fa-list me-2"></i> Ir a Salvamentos',
+            cancelButtonText: '<i class="fa-solid fa-table me-2"></i> Seguir en Gallinas',
+            reverseButtons: true,
+            width: '600px',
+            customClass: {
+                popup: 'border-success',
+                confirmButton: 'btn-success',
+                cancelButton: 'btn-secondary'
+            }
+        });
+
+        if (result.isConfirmed) {
+            // Usar loadContent en lugar de redirección directa
+            if (typeof loadContent === 'function') {
+                loadContent('rescue');
+            } else {
+                // Fallback: intentar encontrar la función global
+                if (window.loadContent) {
+                    window.loadContent('rescue');
+                } else {
+                    console.warn('Función loadContent no encontrada');
+                    // Redirección alternativa si no existe loadContent
+                    window.location.href = '../../pages/rescue.html';
+                }
+            }
+        } else {
+            // Recargar los datos actuales de chickens
+            if (currentSelectedGalponId) {
+                const select = document.getElementById('filter-galpon');
+                if (select) select.dispatchEvent(new Event('change'));
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error al crear el salvamento:', error);
+        Swal.fire({
+            icon: "error",
+            title: "Error al crear salvamento",
+            html: `
+                <div class="text-start">
+                    <p>No se pudo crear el salvamento:</p>
+                    <div class="alert alert-danger mt-2">
+                        <strong>Error:</strong> ${error.message || "Error desconocido"}
+                    </div>
+                </div>
+            `,
+            confirmButtonColor: '#198754'
+        });
+    }
+}
+
 
 async function handleDeleteChicken(chickenId) {
     try {
@@ -251,7 +762,16 @@ async function handleDeleteChicken(chickenId) {
             text: "Registro eliminado exitosamente.",
         });
 
-        init();
+        // If we were viewing this galpon, reload recent view
+        if (currentSelectedGalponId) {
+            const select = document.getElementById('filter-galpon');
+            if (select) {
+                // trigger change to reload
+                select.dispatchEvent(new Event('change'));
+            }
+        } else {
+            init();
+        }
 
     } catch (error) {
         console.error(`Error al eliminar el registro ${chickenId}:`, error);
@@ -263,7 +783,6 @@ async function handleDeleteChicken(chickenId) {
         });
     }
 }
-
 
 async function handleCreateSubmit(event) {
     event.preventDefault();
@@ -293,7 +812,16 @@ async function handleCreateSubmit(event) {
             title: "Creado",
             text: "Registro creado exitosamente.",
         });
-        init(); 
+        // After create, reload either recent view or full view based on mode
+        if (currentSelectedGalponId && !isVerMasMode) {
+            // reload recent for selected galpon
+            const select = document.getElementById('filter-galpon');
+            if (select) select.dispatchEvent(new Event('change'));
+        } else if (currentSelectedGalponId && isVerMasMode) {
+            cargarTodosRegistrosGalponPaginados(currentSelectedGalponId, 1, document.getElementById('pageSize').value);
+        } else {
+            init();
+        }
     } catch (error) {
         console.error('Error al crear el registro:', error);
 
@@ -304,6 +832,7 @@ async function handleCreateSubmit(event) {
                 icon: "warning",
                 title: "Capacidad excedida",
                 text: "La cantidad de gallinas excede la capacidad del galpón.",
+                confirmButtonColor: '#198754',
             });
         } else {
             Swal.fire({
@@ -315,15 +844,15 @@ async function handleCreateSubmit(event) {
     }
 }
 
-// PAGINACIÓN
-
+// =======================
+// PAGINACIÓN (ajustada para modos)
+// =======================
 function renderPagination(total_pages, currentPage = 1) {
     const container = document.querySelector("#pagination");
     if (!container) return;
 
     container.innerHTML = "";
 
-    // Botón Anterior
     const prevItem = document.createElement("li");
     prevItem.classList.add('page-item');
     if (currentPage === 1) prevItem.classList.add('disabled');
@@ -336,14 +865,17 @@ function renderPagination(total_pages, currentPage = 1) {
         e.preventDefault();
         if (currentPage > 1) {
             const prevPage = currentPage - 1;
-            init(prevPage, document.getElementById("pageSize").value);
+            if (isVerMasMode && currentSelectedGalponId) {
+                cargarTodosRegistrosGalponPaginados(currentSelectedGalponId, prevPage, document.getElementById("pageSize").value);
+            } else {
+                init(prevPage, document.getElementById("pageSize").value);
+            }
         }
     });
     
     prevItem.appendChild(prevLink);
     container.appendChild(prevItem);
 
-    // Botones de páginas numeradas
     for (let i = 1; i <= total_pages; i++) {
         const pageItem = document.createElement("li");
         pageItem.classList.add('page-item');
@@ -351,11 +883,9 @@ function renderPagination(total_pages, currentPage = 1) {
         const pageLink = document.createElement("a");
         
         if (i === currentPage) {
-            // Página activa - fondo verde con texto blanco
             pageLink.classList.add('page-link', 'bg-success', 'border-success', 'text-white');
             pageItem.classList.add('active');
         } else {
-            // Páginas inactivas - texto verde
             pageLink.classList.add('page-link', 'text-success');
         }
         
@@ -363,14 +893,17 @@ function renderPagination(total_pages, currentPage = 1) {
         pageLink.textContent = i;
         pageLink.addEventListener("click", (e) => {
             e.preventDefault();
-            init(i, document.getElementById("pageSize").value);
+            if (isVerMasMode && currentSelectedGalponId) {
+                cargarTodosRegistrosGalponPaginados(currentSelectedGalponId, i, document.getElementById("pageSize").value);
+            } else {
+                init(i, document.getElementById("pageSize").value);
+            }
         });
         
         pageItem.appendChild(pageLink);
         container.appendChild(pageItem);
     }
 
-    // Botón Siguiente
     const nextItem = document.createElement("li");
     nextItem.classList.add('page-item');
     if (currentPage === total_pages) nextItem.classList.add('disabled');
@@ -383,7 +916,11 @@ function renderPagination(total_pages, currentPage = 1) {
         e.preventDefault();
         if (currentPage < total_pages) {
             const nextPage = currentPage + 1;
-            init(nextPage, document.getElementById("pageSize").value);
+            if (isVerMasMode && currentSelectedGalponId) {
+                cargarTodosRegistrosGalponPaginados(currentSelectedGalponId, nextPage, document.getElementById("pageSize").value);
+            } else {
+                init(nextPage, document.getElementById("pageSize").value);
+            }
         }
     });
     
@@ -391,18 +928,19 @@ function renderPagination(total_pages, currentPage = 1) {
     container.appendChild(nextItem);
 }
 
-// FILTROS
-
-async function filtrarChickens(page = 1, pageSize = 10) {
-    
-    const galponId = document.getElementById('filter-galpon').value;
-    let startDate = document.getElementById('filter-start-date').value;
-    let endDate = document.getElementById('filter-end-date').value;
+// =======================
+// FILTROS - COMPLETAMENTE CORREGIDOS
+// =======================
+async function filtrarChickens() {
+    const galponId = document.getElementById('filter-galpon')?.value;
+    let startDate = document.getElementById('filter-start-date')?.value;
+    let endDate = document.getElementById('filter-end-date')?.value;
 
     const tableBody = document.getElementById('chicken-table-body');
+    if (!tableBody) return;
+    
     tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Cargando registros...</td></tr>';
 
-    // Fechas por defecto
     if (!endDate) {
         const now = new Date();
         const pad = n => n.toString().padStart(2, '0');
@@ -413,21 +951,24 @@ async function filtrarChickens(page = 1, pageSize = 10) {
     try {
         let data;
 
-        if (galponId && !startDate && !endDate) {
-            data = await chickenService.getChickensByGalpon(galponId, page, pageSize);
+        if (galponId && (!startDate || !endDate)) {
+            data = await chickenService.getChickensByGalpon(galponId, 1, document.getElementById("pageSize").value);
         } else if (!galponId && startDate && endDate) {
-            data = await chickenService.getChickensByRangeDate(startDate, endDate, page, pageSize);
+            data = await chickenService.getChickensByRangeDate(startDate, endDate, 1, document.getElementById("pageSize").value);
         } else if (galponId && startDate && endDate) {
-            const galponData = await chickenService.getChickensByGalpon(galponId, page, pageSize);
+            // Combinar filtros
+            const galponData = await chickenService.getChickensByGalpon(galponId, 1, RECENT_PAGE_SIZE);
             const filtered = galponData.record_chickens.filter(c => c.fecha >= startDate && c.fecha <= endDate);
-            data = { record_chickens: filtered, total_pages: 1 };
+            data = { 
+                record_chickens: filtered, 
+                total_pages: 1,
+                page: 1
+            };
         } else {
-            data = await chickenService.getChickens(page, pageSize);
+            data = await chickenService.getChickens(1, document.getElementById("pageSize").value);
         }
 
         const chickens = data.record_chickens || [];
-
-
         filteredChickens = chickens;
 
         tableBody.innerHTML = chickens.length > 0 ? chickens.map(createChickenRow).join('') :
@@ -436,57 +977,79 @@ async function filtrarChickens(page = 1, pageSize = 10) {
 
     } catch (error) {
         console.error('Error al filtrar registros:', error);
-
-        const msg = error?.message?.toLowerCase() || "";
-
-        const noDataErrors = [
-            "registro no encontrado",
-            "no hay registros",
-            "no hay registros en ese rango de fechas"
-        ];
-
-        if (noDataErrors.some(e => msg.includes(e))) {
-            tableBody.innerHTML =
-                '<tr><td colspan="5" class="text-center">No se encontraron registros.</td></tr>';
-            return;
-        }
-
         tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error al cargar los datos.</td></tr>';
     }
-};
-
-function limpiarFiltros() {
-    document.getElementById("filter-galpon").value = "";
-    document.getElementById("filter-start-date").value = "";
-    document.getElementById("filter-end-date").value = "";
-
-    filteredChickens = [];
-
-    init(1, document.getElementById("pageSize").value);
 }
 
-// EXPORTACIÓN
+// =======================
+// LIMPIAR FILTROS - CORREGIDO
+// =======================
+function limpiarFiltros() {
+    // Solo limpiar los filtros de fecha
+    const startDate = document.getElementById("filter-start-date");
+    const endDate = document.getElementById("filter-end-date");
+    
+    if (startDate) startDate.value = "";
+    if (endDate) endDate.value = "";
 
+    // Aplicar filtros actuales (solo sin fechas)
+    if (isVerMasMode) {
+        filtrarChickens();
+    }
+}
+
+// =======================
+// EXPORTACIÓN - CORREGIDA
+// =======================
 function handleExportClick(event) {
     const item = event.target.closest(".export-format");
     if (!item) return;
     event.preventDefault();
+    event.stopPropagation();
+
+    // PREVENIR MÚLTIPLES DESCARGAS
+    if (item.classList.contains('exporting')) return;
+    item.classList.add('exporting');
 
     const fmt = item.dataset.format;
     const dateTag = new Date().toISOString().slice(0, 10);
-    const data = filteredChickens && filteredChickens.length ? filteredChickens : allChickens;
+    
+    // Usar filteredChickens si está disponible, sino allChickens
+    let dataToExport = [];
+    if (filteredChickens && filteredChickens.length > 0) {
+        dataToExport = filteredChickens;
+    } else if (allChickens && allChickens.length > 0) {
+        dataToExport = allChickens;
+    }
 
-    if (!data || data.length === 0) {
-        Swal.fire({ title: "No hay datos para exportar.", icon: "info" });
+    if (!dataToExport || dataToExport.length === 0) {
+        Swal.fire({ 
+            title: "No hay datos para exportar.", 
+            icon: "info" 
+        });
+        item.classList.remove('exporting');
         return;
     }
 
-    if (fmt === "csv") {
-        exportToCSV(data, `Gallinas_${dateTag}.csv`);
-    } else if (fmt === "excel") {
-        exportToExcel(data, `Gallinas_${dateTag}.xls`);
-    } else if (fmt === "pdf") {
-        exportToPDF(data, `Gallinas_${dateTag}.pdf`);
+    try {
+        if (fmt === "csv") {
+            exportToCSV(dataToExport, `Gallinas_${dateTag}.csv`);
+        } else if (fmt === "excel") {
+            exportToExcel(dataToExport, `Gallinas_${dateTag}.xlsx`);
+        } else if (fmt === "pdf") {
+            exportToPDF(dataToExport, `Gallinas_${dateTag}.pdf`);
+        }
+        
+        item.classList.remove('exporting');
+        
+    } catch (error) {
+        console.error('Error en exportación:', error);
+        Swal.fire({
+            title: "Error",
+            text: "No se pudo generar el archivo de exportación.",
+            icon: "error"
+        });
+        item.classList.remove('exporting');
     }
 }
 
@@ -494,10 +1057,11 @@ function convertToCSV(rows, columns) {
     const escapeCell = (val) => {
         if (val === null || val === undefined) return "";
         const s = String(val);
-
-        return `${s.replace(/"/g, '""')}`;
+        if (s.includes(',') || s.includes('\n') || s.includes('"')) {
+            return `"${s.replace(/"/g, '""')}"`;
+        }
+        return s;
     };
-
     const header = columns.map((c) => escapeCell(c.header)).join(",");
     const body = rows
         .map((row) =>
@@ -520,7 +1084,7 @@ function downloadBlob(content, mimeType, filename) {
     a.download = filename;
     document.body.appendChild(a);
     a.click();
-    a.remove();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
 
@@ -529,11 +1093,11 @@ function exportToCSV(data, filename = "Gallinas.csv") {
         { header: "ID", key: "id_ingreso" },
         { header: "Galpon", key: "nombre_galpon" },
         { header: "Fecha", key: "fecha" },
-        { header: "Tipo_allina", key: "raza" },
-        { header: "Cantidad_gallinas", key: "cantidad_gallinas" },
+        { header: "Tipo Gallina", key: "raza" },
+        { header: "Cantidad Gallinas", key: "cantidad_gallinas" },
     ];
     const csv = convertToCSV(data, columns);
-    downloadBlob(csv, "text/csv;charset=utf-8;", filename);
+    downloadBlob('\uFEFF' + csv, "text/csv;charset=utf-8;", filename);
 }
 
 async function exportToExcel(data, filename = "Gallinas.xlsx") {
@@ -652,86 +1216,147 @@ function loadScript(src) {
     });
 }
 
-// ASIGANCIÓN DE EVENTOS
-
-document.getElementById('btn-filter').addEventListener('click', () => filtrarChickens(1, document.getElementById("pageSize").value));
-
-document.addEventListener("click", async (e) => {
-    if (e.target.matches('[data-bs-target="#createChickenModal"]')) {
-        console.log("Abriendo modal -> cargando selects");
-
-        await cargarSelectGalpones(true);
-        await cargarSelectTypeChickens(true);
-    }
-});
-
-
-const selectPage = document.getElementById("pageSize");
-selectPage.addEventListener("change", () => init(1, selectPage.value));
-
-document.addEventListener("click", function(event) {
-    const exportBtn = event.target.closest(".export-format");
-    if (!exportBtn) return;
-    event.preventDefault();
-    handleExportClick(event);
-});
-
-const btnClear = document.getElementById('btn_clear_filters');
-btnClear.addEventListener('click', limpiarFiltros);
-
-// --- FUNCIÓN PRINCIPAL DE INICIALIZACIÓN ---
-
-async function init(page = 1, page_size = 10) {
-
-    await cargarSelectFilterGalpones();
-
-    const tableBody = document.getElementById('chicken-table-body');
-    if (!tableBody) {
-        console.error('No se encontró el elemento con id "chicken-table-body"');
-        return;
+// =======================
+// INICIALIZACIÓN - COMPLETAMENTE CORREGIDA
+// =======================
+function setupEventListeners() {
+    console.log('Configurando event listeners...');
+    
+    // Botón Filtrar
+    const btnFilter = document.getElementById('btn-filter');
+    if (btnFilter) {
+        btnFilter.removeEventListener('click', filtrarChickens);
+        btnFilter.addEventListener('click', filtrarChickens);
+        console.log('Event listener de filtrar configurado');
     }
 
-    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Cargando registros de gallinas...</td></tr>'; 
-
-    try {
-        const data = await chickenService.getChickens(page, page_size);
-        console.log('Registos obtenidos:', data);
-        
-        const chickens = data.record_chickens || [];
-
-        allChickens = chickens;
-        filteredChickens = [...chickens];
-
-        if (chickens && chickens.length > 0) {
-            tableBody.innerHTML = chickens.map(createChickenRow).join('');
-        } else {
-            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No se encontraron registros.</td></tr>'; 
-        }
-
-        renderPagination(data.total_pages || 1, page);
-    } catch (error) {
-        console.error('Error al obtener los registros:', error);
-        tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error al cargar los datos.</td></tr>'; 
+    // Botón Limpiar Filtros
+    const btnClear = document.getElementById('btn_clear_filters');
+    if (btnClear) {
+        btnClear.removeEventListener('click', limpiarFiltros);
+        btnClear.addEventListener('click', limpiarFiltros);
+        console.log('Event listener de limpiar filtros configurado');
     }
 
+    // Select de página
+    const selectPage = document.getElementById("pageSize");
+    if (selectPage) {
+        selectPage.removeEventListener("change", handlePageSizeChange);
+        selectPage.addEventListener("change", handlePageSizeChange);
+    }
+
+    // Formularios de modales
     const editForm = document.getElementById('edit-chicken-form');
-    const createForm = document.getElementById('create-chicken-form');
-    
-    tableBody.removeEventListener('click', handleTableClick);
-    tableBody.addEventListener('click', handleTableClick);
-    
     if (editForm) {
         editForm.removeEventListener('submit', handleUpdateSubmit);
         editForm.addEventListener('submit', handleUpdateSubmit);
+        console.log('Event listener de editar configurado');
     }
-    
+
+    const createForm = document.getElementById('create-chicken-form');
     if (createForm) {
         createForm.removeEventListener('submit', handleCreateSubmit);
         createForm.addEventListener('submit', handleCreateSubmit);
+        console.log('Event listener de crear configurado');
     }
 
+    // Evento para abrir modal de crear
+    const createButton = document.querySelector('[data-bs-target="#createChickenModal"]');
+    if (createButton) {
+        createButton.removeEventListener('click', handleCreateModalOpen);
+        createButton.addEventListener('click', handleCreateModalOpen);
+    }
+
+    // Exportación
+    const exportItems = document.querySelectorAll('.export-format');
+    exportItems.forEach(item => {
+        item.removeEventListener('click', handleExportClick);
+        item.addEventListener('click', handleExportClick);
+    });
+
+    // Botón Ver Más
+    setupVerMasButton();
+
+    // Eventos de la tabla (delegados)
+    const tableBody = document.getElementById('chicken-table-body');
+    if (tableBody) {
+        tableBody.removeEventListener('click', handleTableClick);
+        tableBody.addEventListener('click', handleTableClick);
+    }
+
+    const rescueForm = document.getElementById('create-rescue-from-chicken-form');
+    if (rescueForm) {
+        rescueForm.removeEventListener('submit', handleRescueSubmit);
+        rescueForm.addEventListener('submit', handleRescueSubmit);
+        console.log('Event listener de salvamento configurado');
+    }
 }
 
-init(1, selectPage.value);
+async function handleCreateModalOpen(e) {
+    e.preventDefault();
+    await cargarSelectGalponesModals(true);
+    await cargarSelectTypeChickensModals(true);
+    
+    const selectCreate = document.getElementById('create-id_galpon');
+    if (selectCreate) {
+        if (currentSelectedGalponId && !isVerMasMode) {
+            selectCreate.value = String(currentSelectedGalponId);
+            selectCreate.disabled = true;
+        } else {
+            selectCreate.disabled = false;
+        }
+    }
+}
+
+function handlePageSizeChange() {
+    const selectPage = document.getElementById("pageSize");
+    if (isVerMasMode && currentSelectedGalponId) {
+        cargarTodosRegistrosGalponPaginados(currentSelectedGalponId, 1, selectPage.value);
+    } else {
+        init(1, selectPage.value);
+    }
+}
+
+// =======================
+// INIT
+// =======================
+async function init(page = 1, page_size = 10) {
+    console.log('Inicializando módulo de gallinas...');
+    
+    await cargarSelectFilterGalpones();
+
+    // initial UI state: show table empty message asking to select a galpón
+    entrarModoReciente();
+    currentSelectedGalponId = null;
+    isVerMasMode = false;
+
+    const tbody = document.getElementById('chicken-table-body');
+    if (!tbody) {
+        console.error('No se encontró el elemento con id "chicken-table-body"');
+        return;
+    }
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Seleccione un galpón para ver los registros.</td></tr>';
+
+    // hide galpon info
+    const galponInfo = document.getElementById('galpon-info');
+    if (galponInfo) galponInfo.classList.add('d-none');
+
+    // Configurar event listeners
+    setupEventListeners();
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, inicializando gallinas...');
+    init(1, document.getElementById("pageSize") ? document.getElementById("pageSize").value : 10);
+});
+
+// También inicializar si el DOM ya está listo
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    console.log('DOM ya está listo, inicializando gallinas...');
+    setTimeout(() => {
+        init(1, document.getElementById("pageSize") ? document.getElementById("pageSize").value : 10);
+    }, 100);
+}
 
 export { init };
