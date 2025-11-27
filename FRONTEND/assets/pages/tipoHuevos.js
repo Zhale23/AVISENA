@@ -17,22 +17,45 @@ console.log("tipoHuevos");
     try {
         const tiposHuevos = await TipoHuevosService.GetTipoHuevosAll();
         const sheds = await shedService.getSheds();
+
         const select = document.getElementById('create-id-tipo-huevo');
         const selectGalpon = document.getElementById('create-id-galpon');
+
+        const selectTipo = document.getElementById('edit-tamaño');
+        const selectEditGalpon = document.querySelector('select#edit-produccion-nombre');
         
         tiposHuevos.forEach(huevo => {
             const option = document.createElement('option');
-            option.value = huevo.Tamaño;
+            const optionEdit = document.createElement('option');
+
+            option.value = huevo.id_tipo_huevo;
             option.textContent = `${huevo.Tamaño}`;
-            select.appendChild(option);
+
+            optionEdit.value = huevo.id_tipo_huevo;
+            optionEdit.textContent = `${huevo.Tamaño}`;
+
+            select.appendChild(option);  
+            selectTipo.appendChild(optionEdit);
+
             console.log(option)
         });
+        select.selectedIndex = 0;
+        selectTipo.selectedIndex = 0;
 
         sheds.forEach(item => {
+
             const option = document.createElement('option');
-            option.value = item.nombre;
+            const optionEditG = document.createElement('option');
+
+            option.value = item.id_galpon;
             option.textContent = `${item.nombre}`;
+
+            optionEditG.value = item.id_galpon;
+            optionEditG.textContent = `${item.nombre}`;
+
+
             selectGalpon.appendChild(option);
+            selectEditGalpon.appendChild(optionEditG);
             console.log(option)
         });
         
