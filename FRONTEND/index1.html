@@ -515,17 +515,17 @@
 
 			// Definir qué módulos puede ver cada rol
 			const permisos = {
-				superadmin: ['users', 'roles', 'tareas', 'lands', 'galpones', 'incidentes', 'inventario', 'sensors', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'aislamientos', 'produccion_huevos', 'stock', 'ventas'],
+				superadmin: ['users', 'tareas', 'galpones', 'incidentes', 'inventario', 'sensors', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
 
-				administrador: ['users', 'roles', 'tareas', 'lands', 'galpones', 'incidentes', 'inventario', 'sensors', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'aislamientos', 'produccion_huevos', 'stock', 'ventas'],
+				administrador: ['users', 'tareas', 'galpones', 'incidentes', 'inventario', 'sensors', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
 
-				supervisor: ['tareas', 'incidentes', 'inventario', 'sensors', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'aislamientos', 'produccion_huevos', 'stock'],
+				supervisor: ['tareas', 'incidentes', 'inventario', 'sensors', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock'],
 
-				operario: ['tareas', 'galpones', 'incidentes', 'inventario', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'aislamientos', 'produccion_huevos', 'stock']
+				operario: ['tareas', 'galpones', 'incidentes', 'inventario', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock']
 			};
 
 			// Si no hay rol válido, ocultar todo
-			if (!rol || !permisos[rol]) {
+			if (!rol || !permisos[rol]) { 	
 				console.warn('Rol no válido o no encontrado');
 				return;
 			}
