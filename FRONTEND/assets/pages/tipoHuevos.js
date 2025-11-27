@@ -3,12 +3,9 @@ import { shedService } from '../js/api/shed.service.js';
 
 const tipoHuevos = TipoHuevosService.GetTipoHuevosAll();
 
-console.log(tipoHuevos);
 
-async function init(page = 1) {
 
-console.log("tipoHuevos");
- 
+async function init(page = 1) { 
  
  }
   export async function cargarTipoHuevos() {
@@ -37,7 +34,6 @@ console.log("tipoHuevos");
             select.appendChild(option);  
             selectTipo.appendChild(optionEdit);
 
-            console.log(option)
         });
         select.selectedIndex = 0;
         selectTipo.selectedIndex = 0;
@@ -56,7 +52,7 @@ console.log("tipoHuevos");
 
             selectGalpon.appendChild(option);
             selectEditGalpon.appendChild(optionEditG);
-            console.log(option)
+
         });
         
     } catch {
