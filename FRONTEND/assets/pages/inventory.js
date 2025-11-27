@@ -461,14 +461,27 @@ async function init() {
   // Si existe un select de filtro por finca, usarlo para cargar inventario filtrado
   const filterSelect = document.getElementById('filter-fin-inv') || document.getElementById('filter-land');
   if (filterSelect) {
-    // Si tiene un valor inicial, cargar por esa finca
-    const current = filterSelect.value;
-    if (current) await loadInventoryByLand(current);
-    else tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Selecciona una finca para ver su inventario.</td></tr>';
+    // Ocultar el select de finca porque solo existe una finca en este despliegue
+    try {
+      const container = filterSelect.closest('.input-group') || filterSelect.parentNode;
+      if (container) container.style.display = 'none';
+      else filterSelect.style.display = 'none';
+    } catch (err) {
+      // ignorar si no se puede ocultar
+    }
 
-    // Escuchar cambios para recargar
-    filterSelect.removeEventListener('change', onFilterChange);
-    filterSelect.addEventListener('change', onFilterChange);
+    // Cargar inventario sin filtrar (mostrar todas las filas)
+    try {
+      const inventory = await inventoryService.getInventory();
+      if (inventory && inventory.length > 0) {
+        tableBody.innerHTML = inventory.map(createInvRow).join('');
+      } else {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron Items en el inventario.</td></tr>';
+      }
+    } catch (error) {
+      console.error('Error al obtener los Inventario:', error);
+      tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>`;
+    }
   } else {
     try {
       const inventory = await inventoryService.getInventory();

@@ -52,9 +52,9 @@ async function openEditModal(produccionId) {
     const inputFecha = document.getElementById('edit-fecha');
 
     document.getElementById('edit-produccion-id').value = produccion.id_produccion;
-    document.getElementById('edit-produccion-nombre').value = produccion.nombre_galpon;
+     document.querySelector('.optionAnteriorG').textContent = produccion.nombre_galpon;
     document.getElementById('edit-cantidad').value = produccion.cantidad;
-    document.getElementById('edit-tamaño').value = produccion.tamaño;
+    document.querySelector('.optionAnteriorT').textContent = produccion.tamaño;
 
     // --- VALIDACIÓN DE FECHA ---
     inputFecha.value = produccion.fecha;
@@ -98,8 +98,8 @@ async function handleUpdateSubmit(event) {
   const updatedData = {
     fecha: document.getElementById('edit-fecha').value,
     cantidad: parseInt(document.getElementById('edit-cantidad').value),
-    id_tipo: document.getElementById('edit-tamaño').value,
-    galpon: document.getElementById('edit-produccion-nombre').value
+    // id_tipo: document.getElementById('edit-tamaño').value,
+    // galpon: document.getElementById('edit-produccion-nombre').value
   };
 
   try {
