@@ -61,7 +61,7 @@ def get_aislamiento_by_date_range(db: Session, fecha_inicio: str, fecha_fin: str
             FROM aislamiento
             INNER JOIN galpones ON galpones.id_galpon = aislamiento.id_galpon
             WHERE DATE(fecha_hora) BETWEEN :fecha_inicio AND :fecha_fin
-            ORDER BY fecha_hora ASC
+            ORDER BY fecha_hora DESC
         """)
         result = db.execute(query, {
             "fecha_inicio": fecha_inicio,
