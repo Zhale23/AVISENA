@@ -92,6 +92,14 @@ def update_chicken(
 
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        
+        created = crud_type_chicken.update_type_chicken_by_id(db, id_ingreso, type_chicken)
+
+        if created is False:
+            raise HTTPException(
+                status_code=400,
+                detail="El tipo de gallina con esa raza y descripción ya existe."
+            )
 
         success = crud_type_chicken.update_type_chicken_by_id(db, id_ingreso, type_chicken)
         if not success:
