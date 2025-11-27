@@ -19,6 +19,8 @@ class ProduccionHuevosUpdate(BaseModel):
 
 class ProduccionHuevosOut(BaseModel):
     id_produccion: int
+    id_galpon : int
+    id_tipo_huevo : int
     nombre_galpon: str
     cantidad: int
     fecha: date
