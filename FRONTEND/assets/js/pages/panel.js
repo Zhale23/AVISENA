@@ -2,7 +2,7 @@
 console.log("panel.js cargado");
 
 // Servicio de Dashboard integrado
-const API_BASE_URL = "https://avisena-back.onrender.com";
+const API_BASE_URL = "https://api.avisena.store";
 
 class DashboardService {
   constructor() {
