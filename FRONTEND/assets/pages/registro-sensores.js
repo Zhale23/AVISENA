@@ -17,7 +17,7 @@ function createRegistroRow(registro) {
         <small>${new Date(registro.fecha_hora).toLocaleString('es-ES')}</small>
       </td>
       <td class="px-0 text-end">
-        <button class="btn btn-sm btn-outline-info btn-view-registro" data-registro-id="${registro.id_registro}">
+        <button class="btn btn-sm btn-outline-success btn-view-registro" data-registro-id="${registro.id_registro}">
           <i class="fa-regular fa-eye"></i>
         </button>
       </td>
