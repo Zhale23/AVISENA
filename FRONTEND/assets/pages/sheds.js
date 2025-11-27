@@ -234,75 +234,47 @@ async function loadAllSheds() {
   }
 }
 
-// Cargar galpones por finca seleccionada
-async function loadShedsByLand(landId) {
-  try {
-    const sheds = await shedService.getShedsByLand(landId);
-    renderShedsTable(sheds);
-  } catch (error) {
-    console.error("Error filtrando galpones:", error);
-  }
-}
-
 // Cargar fincas activas en el filtro de galpones
-async function loadLandsFilter() {
-  const select = document.getElementById('filtro-finca');
-  if (!select) return;
-  select.innerHTML = '<option value="all">Todas las fincas</option>';
-  try {
-    const lands = await shedService.getLandsActive();
-    lands.forEach(land => {
-      const option = document.createElement('option');
-      option.value = land.id_finca;
-      option.textContent = land.nombre;
-      select.appendChild(option);
-    });
-  } catch (error) {
-    console.error('Error al cargar fincas en filtro:', error);
-    select.innerHTML = '<option value="all">Todas las fincas</option>';
-  }
-}
-
-// Manejador para el filtro de finca
-async function handleLandFilterChange() {
-  const select = document.getElementById('filtro-finca');
-  const value = select ? select.value : 'all';
+async function loadShedsFilter() {
+  const selectElement = document.getElementById('filtro-galpones');
+  const select = selectElement ? selectElement.value : 'all';
   const tableBody = document.getElementById('sheds-table-body');
   if (!tableBody) return;
-  tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando galpones ... </td></tr>';
+
   try {
-    let sheds;
-    if (value === 'all') {
-      sheds = await shedService.getSheds();
-    } else {
-      sheds = await shedService.getShedsByLand(value);
+    // Obtener todos los galpones y luego aplicar el filtro seleccionado
+    const sheds = await shedService.getSheds();
+    let filtro = sheds || [];
+
+    if (select === 'active') {
+      filtro = filtro.filter(g => g.estado === 1 || g.estado === true);
+    } else if (select === 'inactive') {
+      filtro = filtro.filter(g => g.estado === 0 || g.estado === false);
     }
-    if (sheds && sheds.length > 0) {
-      tableBody.innerHTML = sheds.map(createShedRow).join('');
+
+    if (filtro.length > 0) {
+      tableBody.innerHTML = filtro.map(createShedRow).join('');
     } else {
-      tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron galpones.</td></tr>';
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center">No hay galpones con ese filtro.</td>
+        </tr>
+      `;
     }
   } catch (error) {
     console.error('Error al filtrar galpones:', error);
-    tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">No tienes permiso para ver este modulo.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error cargando galpones.</td></tr>`;
   }
 }
 
 // Modificar init para cargar filtro y listeners
 async function init() {
-  await loadLandsFilter();
-  const landFilter = document.getElementById('filtro-finca');
-  if (landFilter) {
-    landFilter.removeEventListener('change', handleLandFilterChange);
-    landFilter.addEventListener('change', handleLandFilterChange);
-  }
-  // Al iniciar, mostrar todos los galpones
-  await handleLandFilterChange();
-
   const tableBody = document.getElementById('sheds-table-body');
   if (!tableBody) return;
 
   tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando galpones ... </td></tr>';
+
+  await loadShedsFilter();
 
   try {
     const sheds = (await shedService.getSheds());
@@ -321,6 +293,13 @@ async function init() {
     createModal.addEventListener('show.bs.modal', () => {
       loadLandsSelect('create-nombre_finca');
     });
+  }
+
+  // Registrar listener para el select de filtro de galpones
+  const filtroGalpones = document.getElementById('filtro-galpones');
+  if (filtroGalpones) {
+    filtroGalpones.removeEventListener('change', loadShedsFilter);
+    filtroGalpones.addEventListener('change', loadShedsFilter);
   }
 
   // Aplicamos el patrón remove/add para evitar listeners duplicados
