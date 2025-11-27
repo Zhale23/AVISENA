@@ -67,6 +67,20 @@ def update_type_chicken_by_id(db: Session, id_tipo_gallinas: int, type_chicken: 
         type_chicken_data = type_chicken.model_dump(exclude_unset=True)
         if not type_chicken_data:
             return False  # nada que actualizar
+        
+        check_query = text("""
+            SELECT COUNT(*) AS total
+            FROM tipo_gallinas
+            WHERE raza = :raza AND descripcion = :descripcion
+        """)
+
+        result = db.execute(check_query, {
+            "raza": type_chicken.raza,
+            "descripcion": type_chicken.descripcion
+        }).scalar()
+
+        if result > 0:
+            return False  # Ya existe, no crear
 
         # Construir dinámicamente la sentencia UPDATE
         set_clauses = ", ".join([f"{key} = :{key}" for key in type_chicken_data.keys()])
