@@ -283,7 +283,7 @@
 
 								<li class="nav-item">
 									<a class="nav-link" href="#" data-page="lands">
-										
+
 										<span class="nav-link-text">Fincas</span>
 									</a>
 								</li>
@@ -291,7 +291,7 @@
 								<li class="nav-item">
 									<!--//Bootstrap Icons: https://icons.getbootstrap.com/ -->
 									<a data-page="galpones" class="nav-link" href="#">
-										
+
 										<span class="nav-link-text">Galpones</span>
 									</a><!--//nav-link-->
 								</li><!--//nav-item-->
@@ -299,21 +299,21 @@
 								<li class="nav-item">
 									<!--//Bootstrap Icons: https://icons.getbootstrap.com/ -->
 									<a data-page="incidentes" class="nav-link" href="#">
-										
+
 										<span class="nav-link-text">Incidentes</span>
 									</a><!--//nav-link-->
 								</li><!--//nav-item-->
 
 								<li class="nav-item">
 									<a class="nav-link" href="#" data-page="inventario">
-										
+
 										<span class="nav-link-text">Inventario Finca</span>
 									</a>
 								</li>
 
 								<li class="nav-item">
 									<a class="nav-link" href="#" data-page="sensors">
-										
+
 										<span class="nav-link-text">Sensores</span>
 									</a>
 								</li>
@@ -346,7 +346,7 @@
 								<li class="nav-item">
 									<!--//Bootstrap Icons: https://icons.getbootstrap.com/ -->
 									<a data-page="incidentes_gallina" class="nav-link" href="#">
-										
+
 										<span class="nav-link-text">Incidente gallina</span>
 									</a><!--//nav-link-->
 								</li><!--//nav-item-->
@@ -354,22 +354,29 @@
 								<li class="nav-item">
 									<!--//Bootstrap Icons: https://icons.getbootstrap.com/ -->
 									<a data-page="chickens" class="nav-link" href="#">
-										
+
 										<span class="nav-link-text">Registro Gallinas</span>
 									</a><!--//nav-link-->
 								</li>
 
 								<li class="nav-item">
 									<a class="nav-link" href="pages/tipos_gallinas.html" data-page="tipos_gallinas">
-										
+
 										<span class="nav-link-text">Tipos de gallinas</span>
 									</a>
 								</li><!--//nav-item-->
 
 								<li class="nav-item">
 									<a class="nav-link" href="pages/rescue.html" data-page="rescue">
-										
+
 										<span class="nav-link-text">Salvamento</span>
+									</a>
+								</li><!--//nav-item-->
+
+								<li class="nav-item">
+									<a class="nav-link" href="#" data-page="aislamientos">
+
+										<span class="nav-link-text">Aislamientos</span>
 									</a>
 								</li><!--//nav-item-->
 							</ul>
@@ -402,14 +409,14 @@
 							<ul class="submenu collapse " id="submenu-producción">
 								<li class="nav-item">
 									<a class="nav-link" href="#" data-page="produccion_huevos">
-									
+
 										<span class="nav-link-text">Produccion Huevos</span>
 									</a>
 								</li>
 
 								<li class="nav-item">
 									<a class="nav-link" href="#" data-page="stock">
-										
+
 										<span class="nav-link-text">Stock</span>
 									</a>
 								</li>
@@ -440,7 +447,7 @@
 							<ul class="submenu collapse " id="submenu-finanzas">
 								<li class="nav-item">
 									<a class="nav-link" href="#" data-page="ventas">
-										
+
 										<span class="nav-link-text">Ventas</span>
 									</a>
 								</li>
@@ -496,7 +503,56 @@
 
 	<!-- Page Specific JS -->
 	<script src="assets/js/app.js"></script>
+	<script src="assets/js/permisos.js"></script>
 	<script src="assets/js/main.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+	<!-- Sistema de permisos simple -->
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			const user = JSON.parse(localStorage.getItem('user') || '{}');
+			const rol = user.nombre_rol ? user.nombre_rol.toLowerCase() : '';
+
+			// Definir qué módulos puede ver cada rol
+			const permisos = {
+				superadmin: ['users', 'roles', 'tareas', 'lands', 'galpones', 'incidentes', 'inventario', 'sensors', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'aislamientos', 'produccion_huevos', 'stock', 'ventas'],
+
+				administrador: ['users', 'roles', 'tareas', 'lands', 'galpones', 'incidentes', 'inventario', 'sensors', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'aislamientos', 'produccion_huevos', 'stock', 'ventas'],
+
+				supervisor: ['tareas', 'incidentes', 'inventario', 'sensors', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'aislamientos', 'produccion_huevos', 'stock'],
+
+				operario: ['tareas', 'galpones', 'incidentes', 'inventario', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'aislamientos', 'produccion_huevos', 'stock']
+			};
+
+			// Si no hay rol válido, ocultar todo
+			if (!rol || !permisos[rol]) {
+				console.warn('Rol no válido o no encontrado');
+				return;
+			}
+
+			// Obtener módulos permitidos para este rol
+			const modulosPermitidos = permisos[rol];
+
+			// Ocultar módulos no permitidos
+			document.querySelectorAll('a[data-page]').forEach(link => {
+				const modulo = link.getAttribute('data-page');
+				if (modulo && !modulosPermitidos.includes(modulo)) {
+					link.closest('li.nav-item').style.display = 'none';
+				}
+			});
+
+			// Ocultar secciones completas si todos sus items están ocultos
+			['submenu-usuario', 'submenu-monitoreo', 'submenu-gallinas', 'submenu-producción', 'submenu-finanzas'].forEach(submenuId => {
+				const submenu = document.getElementById(submenuId);
+				if (submenu) {
+					const itemsVisibles = Array.from(submenu.querySelectorAll('li.nav-item')).filter(li => li.style.display !== 'none');
+					if (itemsVisibles.length === 0) {
+						submenu.closest('li.nav-item.has-submenu').style.display = 'none';
+					}
+				}
+			});
+		});
+	</script>
 </body>
+
 </html>

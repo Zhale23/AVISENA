@@ -22,6 +22,11 @@ const loadContent = async (page) => {
     mainContent.innerHTML = html;
     console.log("Paso 4: El contenido HTML se ha inyectado en #main-content.");
 
+    // Aplicar permisos después de cargar contenido
+    if (typeof window.aplicarPermisos === "function") {
+      setTimeout(() => window.aplicarPermisos(page), 50);
+    }
+
     //  // Actualizar clase active en el menú
     // updateActiveMenuItem(page);
 
@@ -98,15 +103,15 @@ const loadContent = async (page) => {
     if (page === "roles") {
       import("../pages/roles.js").then((module) => module.init());
     }
-    
-    if (page === "stock") {
-      import("../pages/stock.js").then(async module => {
-          await module.init();
 
-          requestAnimationFrame( ()=> {
-            module.renderChart();
-          });
-        });
+    if (page === "stock") {
+      import("../pages/stock.js").then(async (module) => {
+        await module.init();
+
+        requestAnimationFrame(() => {
+          module.renderChart();
+        });
+      });
     }
 
     if (page === "users") {
@@ -142,12 +147,10 @@ const loadContent = async (page) => {
         infoVentaModule.init()
       );
     }
-
   } catch (error) {
     console.error("¡ERROR! Algo falló dentro de loadContent:", error);
     mainContent.innerHTML = `<h3 class="text-center text-danger p-5">No se pudo cargar el contenido. Revisa la consola (F12).</h3>`;
   }
-
 };
 
 navLinks.addEventListener("click", (event) => {
