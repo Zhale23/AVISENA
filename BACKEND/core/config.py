@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # Configuración JWT
     jwt_secret: str = os.getenv("JWT_SECRET", "XLgYz9lCctoQ3GuUuiiMW8diCiTq9dvv8gggsdyWsYG8K2kgPicfsm3g0bRS2JgFF3n9cxkXAHuR4roQQz2f7SS")
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
-    jwt_access_token_expire_minutes: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "1"))
+    jwt_access_token_expire_minutes: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
     class Config:
         env_file = ".env"
