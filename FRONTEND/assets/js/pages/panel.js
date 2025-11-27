@@ -1,5 +1,8 @@
 // Panel de Control - Inicialización y lógica
 console.log("panel.js cargado");
+// Detectar rol del usuario para personalizar el panel
+const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+const currentRole = (currentUser?.nombre_rol || "").toLowerCase();
 
 // Servicio de Dashboard integrado
 const API_BASE_URL = "https://api.avisena.store";
@@ -120,6 +123,8 @@ let galponesChart = null;
 
 // Función principal para cargar todos los datos del dashboard
 async function cargarDatosDashboard() {
+  // Configuración de widgets por rol (qué mostrar primero y qué ocultar)
+  aplicarLayoutPorRol();
   // Mostrar indicadores de carga básicos
   const setSpinner = (id) =>
     (document.getElementById(id).innerHTML =
@@ -218,6 +223,402 @@ async function cargarDatosDashboard() {
       console.error("Error actualizando actividad reciente:", error);
     }
   }, 60000);
+}
+
+// Mostrar/ocultar widgets del panel según el rol
+function aplicarLayoutPorRol() {
+  const role = currentRole;
+  // Elementos: secciones y tarjetas
+  const el = {
+    produccionCard: document
+      .querySelector("#produccion-semanal-cards")
+      ?.closest(".card"),
+    distribucionCard: document
+      .getElementById("tipoGallinaChart")
+      ?.closest(".card"),
+    galponesCard: document.getElementById("galponesChart")?.closest(".card"),
+    incidentesCard: document
+      .getElementById("incidentes-list")
+      ?.closest(".card"),
+    sensoresCard: document
+      .getElementById("sensores-container")
+      ?.closest(".card"),
+    actividadCard: document
+      .getElementById("actividad-reciente")
+      ?.closest(".card"),
+  };
+
+  // Siempre mostrar métricas principales (producción hoy, gallinas, galpones, alertas)
+
+  // Reordenar accesos directos según rol
+  const shortcuts = document.getElementById("panel-shortcuts");
+  if (shortcuts) {
+    const orderByRole = {
+      superadmin: [
+        "produccion_huevos",
+        "incidentes",
+        "sensors",
+        "ventas",
+        "galpones",
+        "chickens",
+      ],
+      administrador: [
+        "produccion_huevos",
+        "incidentes",
+        "sensors",
+        "ventas",
+        "galpones",
+        "chickens",
+      ],
+      supervisor: [
+        "tareas",
+        "incidentes",
+        "chickens",
+        "produccion_huevos",
+        "galpones",
+        "sensors",
+      ],
+      operario: [
+        "tareas",
+        "incidentes",
+        "chickens",
+        "produccion_huevos",
+        "rescue",
+        "sensors",
+      ],
+    };
+    const desired = orderByRole[role] || orderByRole["administrador"];
+    const links = Array.from(shortcuts.querySelectorAll(".shortcut-link"));
+
+    // Mostrar/ocultar shortcuts según rol
+    links.forEach((link) => {
+      const page = link.dataset.page;
+      if (role === "operario") {
+        // Operario: solo mostrar tareas, incidentes, chickens, produccion_huevos, rescue, sensors
+        if (["galpones", "ventas"].includes(page)) {
+          link.style.display = "none";
+        } else {
+          link.style.display = "";
+          link.classList.remove("d-none");
+        }
+      } else if (role === "supervisor") {
+        // Supervisor: ocultar ventas
+        if (page === "ventas") {
+          link.style.display = "none";
+        } else {
+          link.style.display = "";
+          link.classList.remove("d-none");
+        }
+      } else {
+        // Admin/SuperAdmin: mostrar todo
+        link.style.display = "";
+        link.classList.remove("d-none");
+      }
+    });
+
+    links.sort(
+      (a, b) =>
+        desired.indexOf(a.dataset.page) - desired.indexOf(b.dataset.page)
+    );
+    links.forEach((l) => shortcuts.appendChild(l));
+  }
+
+  // Visibilidad de widgets
+  const hide = (node) => {
+    if (node) {
+      node.style.display = "none";
+    }
+  };
+  const show = (node) => {
+    if (node) {
+      node.style.display = "";
+    }
+  };
+
+  switch (role) {
+    case "operario":
+      // Operario: Ocultar gráfica de producción temporal, mostrar distribución y ocupación
+      // Priorizar incidentes y sensores
+      hide(el.produccionCard);
+      hide(el.actividadCard); // Ocultar actividad reciente
+      // Ocultar historial de incidentes del mes (lista grande)
+      const incidentesRow = document.getElementById("incidentes-row");
+      if (incidentesRow) incidentesRow.style.display = "none";
+      show(el.distribucionCard);
+      show(el.galponesCard);
+      show(el.incidentesCard);
+      show(el.sensoresCard);
+
+      // Reducir tamaño de gráficas y moverlas al lado de accesos directos en la misma fila
+      try {
+        const produccionCol = document.querySelector(
+          ".row.g-3.mb-4 > .col-12.col-lg-8"
+        );
+        const shortcutsCol = document.querySelector(
+          ".row.g-3.mb-4 > .col-12.col-lg-4"
+        );
+        const distribucionCard = document
+          .getElementById("tipoGallinaChart")
+          ?.closest(".card");
+        const galponesCard = document
+          .getElementById("galponesChart")
+          ?.closest(".card");
+
+        if (produccionCol && shortcutsCol && distribucionCard && galponesCard) {
+          // Ocultar la columna de producción para operario
+          produccionCol.style.display = "none";
+
+          // Preparar la fila contenedora
+          const firstRow = produccionCol.parentElement;
+          firstRow.classList.add("align-items-stretch");
+
+          // Crear/usar tres columnas de 4 para: izquierda (distribución), medio (galpones), derecha (accesos)
+          let leftCol = document.getElementById("operario-left-col");
+          let middleCol = document.getElementById("operario-middle-col");
+          let rightCol = shortcutsCol; // reutilizamos accesos como derecha
+
+          if (!leftCol) {
+            leftCol = document.createElement("div");
+            leftCol.id = "operario-left-col";
+            leftCol.className = "col-12 col-lg-4";
+            firstRow.insertBefore(leftCol, shortcutsCol);
+          } else {
+            leftCol.className = "col-12 col-lg-4";
+          }
+
+          if (!middleCol) {
+            middleCol = document.createElement("div");
+            middleCol.id = "operario-middle-col";
+            middleCol.className = "col-12 col-lg-4";
+            firstRow.insertBefore(middleCol, shortcutsCol);
+          } else {
+            middleCol.className = "col-12 col-lg-4";
+          }
+
+          // Asegurar que accesos directos sea col-lg-4 (derecha)
+          rightCol.classList.remove("col-lg-3", "col-lg-6", "col-lg-8");
+          rightCol.classList.add("col-lg-4");
+
+          // Reducir alturas de las gráficas
+          const distContainer = distribucionCard.querySelector(
+            'div[style*="position: relative"]'
+          );
+          const galpContainer = galponesCard.querySelector(
+            'div[style*="position: relative"]'
+          );
+          if (distContainer) distContainer.style.height = "200px";
+          if (galpContainer) galpContainer.style.height = "200px";
+
+          // Colocar tarjetas en columnas
+          leftCol.innerHTML = "";
+          middleCol.innerHTML = "";
+          leftCol.appendChild(distribucionCard);
+          middleCol.appendChild(galponesCard);
+        }
+      } catch (e) {
+        console.warn("No se pudo reorganizar las gráficas para operario:", e);
+      }
+
+      // Crear secciones destacadas para Tareas e Incidentes si es operario
+      crearSeccionesOperario();
+      break;
+    case "supervisor":
+      // Mostrar producción pero mantener enfoque operativo
+      show(el.produccionCard);
+      show(el.incidentesCard);
+      show(el.galponesCard);
+      show(el.sensoresCard);
+      show(el.actividadCard);
+      show(el.distribucionCard);
+      break;
+    case "administrador":
+    case "superadmin":
+    default:
+      // Mostrar todo
+      show(el.produccionCard);
+      show(el.distribucionCard);
+      show(el.galponesCard);
+      show(el.incidentesCard);
+      show(el.sensoresCard);
+      show(el.actividadCard);
+      break;
+  }
+}
+
+// Crear secciones destacadas para operarios: Tareas e Incidentes principales
+async function crearSeccionesOperario() {
+  // Buscar el contenedor principal después de las métricas
+  const mainContent = document.querySelector("#main-content");
+  if (!mainContent) return;
+
+  // Verificar si ya existen las secciones
+  if (document.getElementById("operario-tareas-destacadas")) return;
+
+  // Crear HTML para secciones destacadas
+  const seccionesHTML = `
+    <div class="row g-3 mb-4" id="operario-secciones-destacadas">
+      <!-- Tareas Pendientes Destacadas -->
+      <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm h-100 border-start border-warning border-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title mb-0"><i class="fas fa-tasks text-warning me-2"></i>Mis Tareas Pendientes</h5>
+              <a href="#" class="btn btn-sm btn-warning shortcut-link" data-page="tareas">Ver Todas</a>
+            </div>
+            <div id="operario-tareas-destacadas" class="list-group list-group-flush">
+              <div class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+                <p class="text-muted small mt-2">Cargando tareas...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Incidentes Activos Destacados -->
+      <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm h-100 border-start border-danger border-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Incidentes Activos</h5>
+              <a href="#" class="btn btn-sm btn-danger shortcut-link" data-page="incidentes">Ver Todos</a>
+            </div>
+            <div id="operario-incidentes-destacados" class="list-group list-group-flush">
+              <div class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-danger" role="status"></div>
+                <p class="text-muted small mt-2">Cargando incidentes...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Insertar después de las métricas principales
+  const metricasRow = document.querySelector(".row.g-3.mb-4");
+  if (metricasRow) {
+    metricasRow.insertAdjacentHTML("afterend", seccionesHTML);
+
+    // Cargar datos de tareas e incidentes
+    cargarTareasOperario();
+    cargarIncidentesOperario();
+  }
+}
+
+// Cargar tareas pendientes del operario
+async function cargarTareasOperario() {
+  const container = document.getElementById("operario-tareas-destacadas");
+  if (!container) return;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/tareas/mis-tareas?limit=5`, {
+      headers: dashboardService.getHeaders(),
+    });
+
+    if (!response.ok) throw new Error("Error al cargar tareas");
+
+    const tareas = await response.json();
+
+    if (!tareas || tareas.length === 0) {
+      container.innerHTML =
+        '<div class="text-center py-3 text-muted small">No hay tareas pendientes</div>';
+      return;
+    }
+
+    container.innerHTML = tareas
+      .map(
+        (tarea) => `
+      <div class="list-group-item border-0 px-0 py-2">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="flex-grow-1">
+            <h6 class="mb-1">${
+              tarea.nombre || tarea.titulo || "Sin título"
+            }</h6>
+            <p class="mb-1 small text-muted">${
+              tarea.descripcion || "Sin descripción"
+            }</p>
+            <div class="d-flex gap-2 align-items-center">
+              <span class="badge bg-${
+                tarea.prioridad === "alta"
+                  ? "danger"
+                  : tarea.prioridad === "media"
+                  ? "warning"
+                  : "secondary"
+              } text-white">${tarea.prioridad || "Normal"}</span>
+              <small class="text-muted"><i class="far fa-calendar me-1"></i>${
+                tarea.fecha_limite || "Sin fecha"
+              }</small>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-muted"></i>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+  } catch (error) {
+    console.error("Error cargando tareas operario:", error);
+    container.innerHTML =
+      '<div class="text-center py-3 text-danger small">Error al cargar tareas</div>';
+  }
+}
+
+// Cargar incidentes activos para el operario
+async function cargarIncidentesOperario() {
+  const container = document.getElementById("operario-incidentes-destacados");
+  if (!container) return;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/incidentes_generales/?limit=5&estado=activo`,
+      {
+        headers: dashboardService.getHeaders(),
+      }
+    );
+
+    if (!response.ok) throw new Error("Error al cargar incidentes");
+
+    const incidentes = await response.json();
+
+    if (!incidentes || incidentes.length === 0) {
+      container.innerHTML =
+        '<div class="text-center py-3 text-muted small">No hay incidentes activos</div>';
+      return;
+    }
+
+    container.innerHTML = incidentes
+      .map(
+        (inc) => `
+      <div class="list-group-item border-0 px-0 py-2">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="flex-grow-1">
+            <div class="d-flex gap-2 align-items-center mb-1">
+              <span class="badge bg-${
+                inc.severidad === "alta"
+                  ? "danger"
+                  : inc.severidad === "media"
+                  ? "warning"
+                  : "info"
+              }">${inc.tipo || "General"}</span>
+              <small class="text-muted">${inc.fecha || "Hoy"}</small>
+            </div>
+            <p class="mb-0 small">${inc.descripcion || "Sin descripción"}</p>
+            <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>${
+              inc.galpon || inc.ubicacion || "No especificado"
+            }</small>
+          </div>
+          <i class="fas fa-chevron-right text-muted"></i>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+  } catch (error) {
+    console.error("Error cargando incidentes operario:", error);
+    container.innerHTML =
+      '<div class="text-center py-3 text-danger small">Error al cargar incidentes</div>';
+  }
 }
 
 // Actualizar métricas principales
@@ -427,13 +828,14 @@ function cargarGraficoTipoGallina(data) {
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      aspectRatio: 1.5,
+      aspectRatio: 2.2,
       plugins: {
         legend: {
           display: true,
           position: "bottom",
         },
       },
+      layout: { padding: 0 },
     },
   });
 }
@@ -478,7 +880,7 @@ function cargarGraficoGalpones(data) {
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      aspectRatio: 1.5,
+      aspectRatio: 2.2,
       plugins: {
         legend: {
           display: false,

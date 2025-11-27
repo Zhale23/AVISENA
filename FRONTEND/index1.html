@@ -187,8 +187,9 @@
 			<div class="sidepanel-inner d-flex flex-column">
 				<a href="#" id="sidepanel-close" class="sidepanel-close d-xl-none">&times;</a>
 				<div class="app-branding">
-					<a class="app-logo" href="index.html"><img class="logo-icon me-2"
-							src="assets/images/logo-avisena-solo-gallina.png" alt="logo"><span
+					<a class="app-logo" href="#"
+						onclick="event.preventDefault(); if(window.loadContent){ window.loadContent('panel'); }"><img
+							class="logo-icon me-2" src="assets/images/logo-avisena-solo-gallina.png" alt="logo"><span
 							class="logo-text">OPCIONES</span></a>
 
 				</div><!--//app-branding-->
@@ -505,7 +506,7 @@
 			};
 
 			// Si no hay rol válido, ocultar todo
-			if (!rol || !permisos[rol]) { 	
+			if (!rol || !permisos[rol]) {
 				console.warn('Rol no válido o no encontrado');
 				return;
 			}
@@ -516,6 +517,8 @@
 			// Ocultar módulos no permitidos
 			document.querySelectorAll('a[data-page]').forEach(link => {
 				const modulo = link.getAttribute('data-page');
+				// Nunca ocultar el panel
+				if (modulo === 'panel') return;
 				if (modulo && !modulosPermitidos.includes(modulo)) {
 					link.closest('li.nav-item').style.display = 'none';
 				}
