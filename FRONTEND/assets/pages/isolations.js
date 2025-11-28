@@ -37,6 +37,23 @@ function formatDateForAPI(dateStr) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+//______________________boton incidente__________________________
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('#incident_chickens');
+  if (!btn) return;  
+  
+  try {
+    const response = await fetch('pages/incidentes_gallina.html');
+    const html = await response.text();
+    document.getElementById('main-content').innerHTML = html;
+    initIncident_chicken();
+  } catch (error) {
+    console.error('Error al cargar los incidentes de gallinas:', error);
+  }
+});
+
+
+
 //______________________________paginación para todos los datos y filtrados_____________
 
 async function fetchIsolations(page = 1, page_size = 10, fechaInicio = "", fechaFin = "") {
