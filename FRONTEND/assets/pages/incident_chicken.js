@@ -4,10 +4,249 @@ import { init as initIsolations } from '../pages/isolations.js';
 
 let modalInstance = null;
 let createModalInstance = null;
+let cargarGalpones = null;
 let activeFechaInicio = "";
 let activeFechaFin = "";
 
-// --- FUNCIÓN PRINCIPAL DE INICIALIZACIÓN ---
+let cacheGalponesInci = null;
+let currentSelectedGalponInci = null;
+
+// Variables para manejar todos los datos
+let allIncidents = [];
+let filteredIncidents = [];
+let currentPage = 1;
+let currentPageSize = 10;
+
+// =======================
+// FILTRO POR GALPÓN - VERSIÓN CON DEBUG
+// =======================
+async function cargarSelectFilterGalponesInci() {
+    console.log("Iniciando cargarSelectFilterGalponesInci...");
+    const select = document.getElementById("filter-galpon-inci");
+    
+    if (!select) {
+        console.error("No se encontró el select con id 'filter-galpon-inci'");
+        return;
+    }
+    
+    console.log("Select encontrado:", select);
+
+    try {
+        if (!cacheGalponesInci) {
+            console.log("Obteniendo galpones desde API...");
+            cacheGalponesInci = await incident_chickenService.getGalponesAll();
+            console.log("Galpones obtenidos:", cacheGalponesInci);
+        }
+
+        const galponesActivos = cacheGalponesInci.filter(g => g.estado === true);
+        console.log("Galpones activos:", galponesActivos);
+
+        const options = galponesActivos.map(g => 
+            `<option value="${g.id_galpon}">${g.nombre}</option>`
+        ).join("");
+        
+        select.innerHTML = `<option value="">Todos los galpones</option>${options}`;
+        console.log("Opciones agregadas al select");
+
+        // Remover listener anterior si existe
+        select.removeEventListener("change", handleGalponChange);
+        // Agregar nuevo listener
+        select.addEventListener("change", handleGalponChange);
+        console.log("vent listener agregado");
+
+    } catch (e) {
+        console.error("Error cargando filtro galpones:", e);
+        select.innerHTML = `<option value="">Error al cargar</option>`;
+    }
+}
+
+// Handler separado para el cambio de galpón
+function handleGalponChange(e) {
+    currentSelectedGalponInci = e.target.value || null;
+    console.log("Galpón seleccionado:", currentSelectedGalponInci);
+    currentPage = 1;
+    aplicarFiltros();
+}
+
+// =======================
+// APLICAR TODOS LOS FILTROS
+// =======================
+async function aplicarFiltros() {
+    console.log("🔍 Aplicando filtros...");
+    console.log("   - Galpón:", currentSelectedGalponInci);
+    console.log("   - Fecha inicio:", activeFechaInicio);
+    console.log("   - Fecha fin:", activeFechaFin);
+    
+    const tableBody = document.getElementById('incidente-gallina-table-body');
+    if (!tableBody) {
+        console.error("No se encontró incidente-gallina-table-body");
+        return;
+    }
+
+    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Cargando incidentes...</td></tr>';
+
+    try {
+        let data;
+        if (activeFechaInicio && activeFechaFin) {
+            console.log("Filtrando por fechas...");
+            data = await incident_chickenService.getIsolationAllDate(
+                activeFechaInicio, 
+                activeFechaFin, 
+                1, 
+                1000
+            );
+        } else {
+            console.log("Obteniendo todos los incidentes...");
+            data = await incident_chickenService.getIsolationAll(1, 1000);
+        }
+
+        allIncidents = data.incidents || [];
+        console.log("Total incidentes obtenidos:", allIncidents.length);
+
+        if (currentSelectedGalponInci && currentSelectedGalponInci !== "") {
+            filteredIncidents = allIncidents.filter(
+                inc => String(inc.galpon_origen) === String(currentSelectedGalponInci)
+            );
+            console.log("Incidentes después del filtro por galpón:", filteredIncidents.length);
+            console.log("   Filtrando por galpon_origen:", currentSelectedGalponInci);
+        } else {
+            filteredIncidents = [...allIncidents];
+            console.log("ℹSin filtro de galpón, mostrando todos");
+        }
+
+        renderizarResultados();
+
+    } catch (error) {
+        console.error("❌ Error en aplicarFiltros:", error);
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos: ${error.message}</td></tr>`;
+    }
+}
+
+// =======================
+// RENDERIZAR RESULTADOS CON PAGINACIÓN LOCAL
+// =======================
+function renderizarResultados() {
+    console.log("Renderizando resultados...");
+    const tableBody = document.getElementById('incidente-gallina-table-body');
+    if (!tableBody) return;
+
+    if (filteredIncidents.length === 0) {
+        let mensaje = '<tr><td colspan="7" class="text-center">';
+        
+        if (currentSelectedGalponInci && currentSelectedGalponInci !== "") {
+            const galponNombre = cacheGalponesInci?.find(g => 
+                String(g.id_galpon) === String(currentSelectedGalponInci)
+            )?.nombre || "seleccionado";
+            
+            mensaje += `
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No se encontraron incidentes para el galpón: <strong>${galponNombre}</strong>
+                </div>
+            `;
+        } else if (activeFechaInicio && activeFechaFin) {
+            mensaje += `
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No se encontraron incidentes en el rango de fechas:<br>
+                    <strong>${activeFechaInicio} a ${activeFechaFin}</strong>
+                </div>
+            `;
+        } else {
+            mensaje += 'No se encontraron incidentes.';
+        }
+        
+        mensaje += '</td></tr>';
+        tableBody.innerHTML = mensaje;
+        renderPagination(1, 1);
+        return;
+    }
+
+    const startIndex = (currentPage - 1) * currentPageSize;
+    const endIndex = startIndex + currentPageSize;
+    const paginatedIncidents = filteredIncidents.slice(startIndex, endIndex);
+
+    console.log(`Mostrando página ${currentPage}: ${paginatedIncidents.length} incidentes`);
+
+    tableBody.innerHTML = paginatedIncidents.map(createIncidentRow).join('');
+
+    const totalPages = Math.ceil(filteredIncidents.length / currentPageSize) || 1;
+    renderPagination(totalPages, currentPage);
+}
+
+// --- FUNCIÓN UNIFICADA PARA TODOS LOS SELECTS ---
+async function initializeSelects(selectType, selectedValue = null) {
+  try {
+    if (!cargarGalpones) {
+      cargarGalpones = await incident_chickenService.getGalponesAll();
+    }
+
+    const galponesActivos = cargarGalpones.filter(g => g.estado === true);
+
+    switch (selectType) {
+      case 'galpones-create-modal':
+        const selectCreate = document.getElementById('create_id_galpon');
+        if (!selectCreate) return;
+
+        selectCreate.innerHTML = '<option value="">Selecciona un galpón</option>' +
+          galponesActivos.map(g => `<option value="${g.id_galpon}">${g.nombre}</option>`).join('');
+
+        if (window.$ && $(selectCreate).select2) {
+          $(selectCreate).select2({
+            dropdownParent: $('#createIncidenteGallinaModal'),
+            width: '100%',
+            placeholder: 'Selecciona un galpón',
+            allowClear: true
+          });
+        }
+        break;
+
+      case 'galpones-edit-modal':
+        const selectEdit = document.getElementById('edit_id_galpon');
+        if (!selectEdit) return;
+
+        selectEdit.innerHTML = '<option value="">Selecciona un galpón</option>' +
+          galponesActivos.map(g => 
+            `<option value="${g.id_galpon}" ${g.id_galpon == selectedValue ? 'selected' : ''}>${g.nombre}</option>`
+          ).join('');
+        break;
+
+      case 'tipos-incidente-create':
+        const selectTipoCreate = document.getElementById('tipo_incidente_create');
+        if (!selectTipoCreate) return;
+
+        const tiposCreate = [
+          "Enfermedad", "Herida", "Muerte", "Fuga", "Ataque Depredador",
+          "Produccion", "Alimentacion", "Plaga", "Estres termico", "Otro"
+        ];
+
+        selectTipoCreate.innerHTML = '<option value="">Seleccione un tipo</option>' +
+          tiposCreate.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('');
+        break;
+
+      case 'tipos-incidente-edit':
+        const selectTipoEdit = document.getElementById('edit-tipo_incidente');
+        if (!selectTipoEdit) return;
+
+        const tiposEdit = [
+          "Enfermedad", "Herida", "Muerte", "Fuga", "Ataque Depredador",
+          "Produccion", "Alimentacion", "Plaga", "Estres termico", "Otro"
+        ];
+
+        selectTipoEdit.innerHTML = '<option value="">Seleccione un tipo</option>' +
+          tiposEdit.map(tipo => 
+            `<option value="${tipo}" ${tipo === selectedValue ? 'selected' : ''}>${tipo}</option>`
+          ).join('');
+        break;
+
+      default:
+        console.warn('Tipo de select no reconocido:', selectType);
+    }
+  } catch (error) {
+    console.error(`Error al inicializar select ${selectType}:`, error);
+  }
+}
+
 function createIncidentRow(incident) {
   const incidentId = incident.id_inc_gallina;
 
@@ -47,29 +286,17 @@ function createIncidentRow(incident) {
   `;
 }
 
-//____________________formato_para_exportar_por_fechas______________________________
-function formatDateForAPI(dateStr) {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
 
 //___________________________________ función isolations________________________________
 async function renderIncidentes() {
     try {
-        // Traemos todos los incidentes y todos los aislamientos
         const [incidentes, isolations] = await Promise.all([
-            incident_chickenService.getChickenIncidents(), // tu método existente
-            isolationService.getIsolations()               // tu método existente
+            incident_chickenService.getChickenIncidents(),
+            isolationService.getIsolations()
         ]);
 
-        // Creamos un Set con los IDs de incidentes que ya están aislados
         const aislados = new Set(isolations.map(i => i.id_incidente_gallina));
 
-        // Recorremos los incidentes y deshabilitamos el botón si ya está aislado
         incidentes.forEach(inc => {
             const btn = document.querySelector(`[data-id-inc-gallina="${inc.id_inc_gallina}"]`);
             if (!btn) return;
@@ -84,7 +311,6 @@ async function renderIncidentes() {
     }
 }
 
-
 const observer = new MutationObserver(() => {
   const botones = document.querySelectorAll('.btn-aislar');
   if (botones.length > 0) {
@@ -92,20 +318,15 @@ const observer = new MutationObserver(() => {
   }
 });
 
-
 observer.observe(document.getElementById('main-content'), {
   childList: true,
   subtree: true
 });
 
-
-
-
 function obtenerFecha() {
   const fechaLocal = new Date();
   const pad = (n) => n.toString().padStart(2, '0');
   const fechaPC = `${fechaLocal.getFullYear()}-${pad(fechaLocal.getMonth() + 1)}-${pad(fechaLocal.getDate())} ${pad(fechaLocal.getHours())}:${pad(fechaLocal.getMinutes())}:${pad(fechaLocal.getSeconds())}`;
-
   return fechaPC;
 }
 
@@ -122,7 +343,6 @@ document.addEventListener('click', (e) => {
   aislarGallina(id_inc_gallina, id_galpon, btn);
 });
 
-
 async function aislarGallina(id_incidente_gallina, galpon_origen, btn) { 
   try {
     const newIsolationData = {
@@ -132,7 +352,6 @@ async function aislarGallina(id_incidente_gallina, galpon_origen, btn) {
     };
 
     await isolationService.createIsolation(newIsolationData);
-
     btn.disabled = true;
 
     Swal.fire({
@@ -157,133 +376,86 @@ document.addEventListener('click', async (e) => {
   if (!btn) return;  
   
   try {
-
     const response = await fetch('pages/aislamientos.html');
     const html = await response.text();
-
     document.getElementById('main-content').innerHTML = html;
-
     initIsolations();
   } catch (error) {
     console.error('Error al cargar aislamientos:', error);
   }
 });
 
-//____________________________________________________________________________________
-
-
-//______________________________paginación para todos los datos y filtrados_____________
-async function fetchIncidents(page = 1, page_size = 10, fechaInicio = "", fechaFin = "") {
-  try {
-    let response;
-
-    if (fechaInicio && fechaFin) {
-      // Llamamos al service para filtrar por rango de fechas
-      response = await incident_chickenService.getIsolationAllDate(fechaInicio, fechaFin, page, page_size);
-    } else {
-      // Llamamos al isolationService para obtener todos los aislamientos paginados
-      response = await incident_chickenService.getIsolationAll(page, page_size);
-    }
-
-    // Verificamos posibles errores en la respuesta
-    if (!response) throw new Error("No se recibió respuesta del servidor.");
-
-    return response;
-  } catch (error) {
-    console.error("Error al cargar los incidentes de gallinas:", error);
-    throw error;
-  }
-}
-
-// Modificar la función init para que pase correctamente los filtros a la paginación
-function renderPagination(total_pages, currentPage = 1) {
+function renderPagination(total_pages, currentPageNum = 1) {
     const container = document.querySelector("#pagination");
     if (!container) return;
 
     container.innerHTML = "";
 
-    // ---------- BOTÓN ANTERIOR ----------
     const prevLi = document.createElement("li");
-    prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
-    prevLi.innerHTML = `
-        <a class="page-link text-success" href="#" data-page="${currentPage - 1}">
-            <i class="fas fa-chevron-left"></i>
-        </a>
-    `;
-    prevLi.addEventListener("click", () => {
-        if (currentPage !== 1) {
-            const prevPage = currentPage - 1;
-            init(prevPage, 10, activeFechaInicio, activeFechaFin);
+    prevLi.className = `page-item ${currentPageNum === 1 ? "disabled" : ""}`;
+    prevLi.innerHTML = `<a class="page-link text-success" href="#"><i class="fas fa-chevron-left"></i></a>`;
+    prevLi.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (currentPageNum !== 1) {
+            currentPage = currentPageNum - 1;
+            renderizarResultados();
         }
     });
     container.appendChild(prevLi);
 
     const maxVisible = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let startPage = Math.max(1, currentPageNum - Math.floor(maxVisible / 2));
     let endPage = Math.min(total_pages, startPage + maxVisible - 1);
 
     if (endPage - startPage + 1 < maxVisible) {
         startPage = Math.max(1, endPage - maxVisible + 1);
     }
 
-    // ---------- PRIMERA PÁGINA + ... ----------
     if (startPage > 1) {
-        container.appendChild(createPageLi(1, currentPage));
+        container.appendChild(createPageLi(1, currentPageNum));
         if (startPage > 2) container.appendChild(createDotsLi());
     }
 
-    // ---------- NÚMEROS DE PÁGINA ----------
     for (let i = startPage; i <= endPage; i++) {
-        container.appendChild(createPageLi(i, currentPage));
+        container.appendChild(createPageLi(i, currentPageNum));
     }
 
-    // ---------- ... + ÚLTIMA PÁGINA ----------
     if (endPage < total_pages) {
         if (endPage < total_pages - 1) container.appendChild(createDotsLi());
-        container.appendChild(createPageLi(total_pages, currentPage));
+        container.appendChild(createPageLi(total_pages, currentPageNum));
     }
 
-    // ---------- BOTÓN SIGUIENTE ----------
     const nextLi = document.createElement("li");
-    nextLi.className = `page-item ${currentPage === total_pages ? "disabled" : ""}`;
-    nextLi.innerHTML = `
-        <a class="page-link text-success" href="#" data-page="${currentPage + 1}">
-            <i class="fas fa-chevron-right"></i>
-        </a>
-    `;
-    nextLi.addEventListener("click", () => {
-        if (currentPage !== total_pages) {
-            const nextPage = currentPage + 1;
-            init(nextPage, 10, activeFechaInicio, activeFechaFin);
+    nextLi.className = `page-item ${currentPageNum === total_pages ? "disabled" : ""}`;
+    nextLi.innerHTML = `<a class="page-link text-success" href="#"><i class="fas fa-chevron-right"></i></a>`;
+    nextLi.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (currentPageNum !== total_pages) {
+            currentPage = currentPageNum + 1;
+            renderizarResultados();
         }
     });
     container.appendChild(nextLi);
 }
 
-// ========== BOTÓN DE NÚMERO DE PÁGINA ==========
-function createPageLi(page, currentPage) {
+function createPageLi(page, currentPageNum) {
     const li = document.createElement("li");
-
-    const isActive = page === currentPage;
+    const isActive = page === currentPageNum;
 
     li.className = `page-item ${isActive ? 'active' : ''}`;
-    li.innerHTML = `
-        <a class="page-link ${isActive ? "bg-success border-success text-white" : "text-success"}"
-           href="#" data-page="${page}">
-           ${page}
-        </a>
-    `;
+    li.innerHTML = `<a class="page-link ${isActive ? "bg-success border-success text-white" : "text-success"}" href="#">${page}</a>`;
 
-    li.addEventListener("click", () => {
+    li.addEventListener("click", (e) => {
+        e.preventDefault();
         if (!isActive) {
-            init(page, 10, activeFechaInicio, activeFechaFin);
+            currentPage = page;
+            renderizarResultados();
         }
     });
 
     return li;
 }
 
-// ========== PUNTOS SUSPENSIVOS ==========
 function createDotsLi() {
     const li = document.createElement("li");
     li.className = "page-item disabled";
@@ -291,7 +463,6 @@ function createDotsLi() {
     return li;
 }
 
-//______________________ para filtrar por fechas_______________________________________
 function filtrarIncidentes(fechaInicio, fechaFin) {
   if (!fechaInicio || !fechaFin) {
     Swal.fire({
@@ -303,164 +474,26 @@ function filtrarIncidentes(fechaInicio, fechaFin) {
     return;
   }
 
-  // Guardar fechas para usar en fetchIncidents
   activeFechaInicio = fechaInicio;
   activeFechaFin = fechaFin;
-
-  // Recargar la tabla desde la página 1 con el filtro
-  init(1, 10);
+  currentPage = 1;
+  aplicarFiltros();
 }
 
-// Botón para aplicar filtro
-document.getElementById("btn-apply-date-filter").addEventListener("click", () => {
-  const fechaInicio = document.getElementById("fecha-inicio").value;
-  const fechaFin = document.getElementById("fecha-fin").value;
-
-  filtrarIncidentes(fechaInicio, fechaFin);
-});
-
-//_____________selects para que cargen los nombres de la tabla galpon del create y edit_______________
-async function loadGalponesSelectCreate() {
-  const select = document.getElementById('create_id_galpon');
-
-  try {
-    // Obtener galpones desde el service
-    const galpones = await incident_chickenService.getGalponesAll();
-
-    // Limpia y agrega opción por defecto
-    select.innerHTML = '<option value="">Selecciona un galpón</option>';
-
-    galpones.forEach(g => {
-      const option = document.createElement('option');
-      option.value = g.id_galpon;
-      option.textContent = g.nombre;
-      select.appendChild(option);
-    });
-
-    // Inicializar Select2
-    if (window.$ && $(select).select2) {
-      $(select).select2({
-        dropdownParent: $('#exampleModal'), // tu modal
-        width: '100%',
-        placeholder: 'Selecciona un galpón',
-        allowClear: true,
-        dropdownCssClass: 'select2-scroll',
-
-        // Buscador personalizado
-        matcher: function(params, data) {
-          if ($.trim(params.term) === '') return data;
-
-          const term = params.term.toLowerCase();
-          const text = (data.text || '').toLowerCase();
-          const id = (data.id || '').toLowerCase();
-
-          if (text.includes(term) || id.includes(term)) {
-            return data;
-          }
-          return null;
-        }
-      });
-    }
-
-  } catch (error) {
-    console.error("Error al cargar galpones:", error);
-    select.innerHTML = '<option value="">Error al cargar galpones</option>';
-  }
-}
-
-// FUNCIÓN CORREGIDA: Cargar tipos de incidente en creación
-function loadTiposIncidenteCreate() {
-  const select = document.getElementById('tipo_incidente_create');
-  const tipos = [
-    "Enfermedad", "Herida", "Muerte", "Fuga", "Ataque Depredador",
-    "Produccion", "Alimentacion", "Plaga", "Estres termico", "Otro"
-  ];
-
-  select.innerHTML = '<option value="">Seleccione un tipo</option>';
-
-  tipos.forEach(tipo => {
-    const option = document.createElement('option');
-    option.value = tipo;
-    option.textContent = tipo;
-    select.appendChild(option);
-  });
-}
-
-const createModal = document.getElementById('createIncidenteGallinaModal');
-createModal.addEventListener('show.bs.modal', function() {
-  loadGalponesSelectCreate();
-  loadTiposIncidenteCreate();
-});
-
-async function loadGalponesSelectEdit(select, selectedId = null) {
-    try {
-        // Llamamos directamente al servicio
-        const galpones = await incident_chickenService.getGalponesAll();
-
-        // Limpiar y agregar opción por defecto
-        select.innerHTML = '<option value="">Selecciona un galpón</option>';
-
-        // Llenar el select
-        galpones.forEach(g => {
-            const option = document.createElement('option');
-            option.value = g.id_galpon;
-            option.textContent = g.nombre;
-
-            if (g.id_galpon === selectedId) option.selected = true;
-
-            select.appendChild(option);
-        });
-
-    } catch (error) {
-        console.error("Error al cargar galpones:", error);
-    }
-}
-
-
-// Función para cargar tipos de incidente en el select de edición
-function loadTiposIncidenteEdit(selectedTipo) {
-  const select = document.getElementById('edit-tipo_incidente');
-  const tipos = [
-    "Enfermedad", "Herida", "Muerte", "Fuga", "Ataque Depredador",
-    "Produccion", "Alimentacion", "Plaga", "Estres termic", "Otro"
-  ];
-
-  select.innerHTML = '<option value="">Seleccione un tipo</option>';
-
-  tipos.forEach(tipo => {
-    const option = document.createElement('option');
-    option.value = tipo;
-    option.textContent = tipo;
-    if (tipo === selectedTipo) option.selected = true;
-    select.appendChild(option);
-  });
-}
-
-//___________para abrir el modal de edit - CORREGIDO _________________________________________
 async function openEditModal(id_incidente_gallina) {
   const modalElement = document.getElementById('editIncidenteGallinaModal');
-  
-  // Usar getOrCreateInstance en lugar de new bootstrap.Modal
   modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
 
   try {
-    console.log("Abriendo modal para incidente:", id_incidente_gallina);
-    
-    // Obtener datos del incidente - CORREGIDO: usar el método correcto del service
     const incident = await incident_chickenService.getChickenIncidentById(id_incidente_gallina);
-    console.log("Datos del incidente:", incident);
     
-    // Llenar el formulario con los datos
     document.getElementById('edit-id_inc_gallina').value = incident.id_inc_gallina;
     document.getElementById('edit-cantidad').value = incident.cantidad;
     document.getElementById('edit-descripcion').value = incident.descripcion;
     
-    // CORREGIDO: Usar galpon_origen en lugar de id_galpon
-    const selectGalpon = document.getElementById('edit_id_galpon');
-    await loadGalponesSelectEdit(selectGalpon, incident.galpon_origen);
-    loadTiposIncidenteEdit(incident.tipo_incidente);
+    await initializeSelects('galpones-edit-modal', incident.galpon_origen);
+    await initializeSelects('tipos-incidente-edit', incident.tipo_incidente);
     
-    // Mostrar modal
     modalInstance.show();
     
   } catch (error) {
@@ -475,27 +508,18 @@ async function openEditModal(id_incidente_gallina) {
 }
 
 async function handleTableClick(event) {
-  // Manejador para el botón de editar
   const editButton = event.target.closest('.btn-edit-incident');
   if (editButton) {
     const idIncidente = editButton.dataset.incidentId;
-    console.log("Edit button clicked, ID:", idIncidente);
     await openEditModal(idIncidente);
     return;
   }
 }
 
-// --- MANEJADORES DE EVENTOS ---
-const createIncidenteModalEl = document.getElementById('createIncidenteGallinaModal');
-const createIncidenteModalInstance = bootstrap.Modal.getOrCreateInstance(createIncidenteModalEl);
-
-// CORREGIDO: Usar la estructura correcta con galpon_origen
 async function handleUpdateSubmit(event) {
   event.preventDefault();
   
   const incidentId = document.getElementById('edit-id_inc_gallina').value;
-  
-  // CORREGIDO: Usar galpon_origen en lugar de id_galpon
   const updatedData = {
     galpon_origen: parseInt(document.getElementById('edit_id_galpon').value),
     tipo_incidente: document.getElementById('edit-tipo_incidente').value,
@@ -503,17 +527,17 @@ async function handleUpdateSubmit(event) {
     descripcion: document.getElementById('edit-descripcion').value
   };
 
-  console.log("Actualizando incidente:", incidentId, updatedData);
-
   try {
-    // CORREGIDO: Usar el método correcto del service
     await incident_chickenService.updateChickenIncident(incidentId, updatedData);
-    
-    // Cerrar modal
     modalInstance.hide();
+    aplicarFiltros();
     
-    // Recargamos la tabla para ver los cambios
-    init();
+    Swal.fire({
+      icon: 'success',
+      title: '¡Actualizado!',
+      text: 'Incidente actualizado correctamente.',
+      confirmButtonColor: '#28a745'
+    });
     
   } catch (error) {
     console.error("Error al actualizar:", error);
@@ -526,7 +550,6 @@ async function handleUpdateSubmit(event) {
   }
 }
 
-// CORREGIDO: Usar la estructura correcta con galpon_origen para creación
 async function handleCreateSubmit(event) {
   event.preventDefault();
 
@@ -534,9 +557,16 @@ async function handleCreateSubmit(event) {
   const pad = (n) => n.toString().padStart(2, '0');
   const fechaPC = `${fechaLocal.getFullYear()}-${pad(fechaLocal.getMonth() + 1)}-${pad(fechaLocal.getDate())} ${pad(fechaLocal.getHours())}:${pad(fechaLocal.getMinutes())}:${pad(fechaLocal.getSeconds())}`;
 
-  // CORREGIDO: Usar galpon_origen en lugar de id_galpon
+  // Si hay un filtro activo, usar ese galpón (aunque esté disabled, no se envía en el form)
+  let galponSeleccionado;
+  if (currentSelectedGalponInci && currentSelectedGalponInci !== "") {
+    galponSeleccionado = parseInt(currentSelectedGalponInci);
+  } else {
+    galponSeleccionado = parseInt(document.getElementById('create_id_galpon').value);
+  }
+
   const newIncidentData = {
-    galpon_origen: parseInt(document.getElementById('create_id_galpon').value),
+    galpon_origen: galponSeleccionado,
     tipo_incidente: document.getElementById('tipo_incidente_create').value,
     cantidad: parseInt(document.getElementById('cantidad').value),
     descripcion: document.getElementById('description').value,
@@ -544,9 +574,6 @@ async function handleCreateSubmit(event) {
     esta_resuelto: false
   };
 
-  console.log("Creando nuevo incidente:", newIncidentData);
-
-  // Validaciones
   if (!newIncidentData.galpon_origen || newIncidentData.galpon_origen <= 0) {
     Swal.fire({
       icon: 'error',
@@ -580,18 +607,14 @@ async function handleCreateSubmit(event) {
   try {
     await incident_chickenService.createChickenIncident(newIncidentData);
 
-    // Cerrar modal ANTES, pero sin mostrar SweetAlert todavía
+    const createIncidenteModalEl = document.getElementById('createIncidenteGallinaModal');
+    const createIncidenteModalInstance = bootstrap.Modal.getInstance(createIncidenteModalEl);
     createIncidenteModalInstance.hide();
 
-    // Esperar a que Bootstrap termine de cerrar el modal
     createIncidenteModalEl.addEventListener('hidden.bs.modal', function handler() {
-      // remover el listener (muy importante para evitar ejecuciones duplicadas)
       createIncidenteModalEl.removeEventListener('hidden.bs.modal', handler);
-
-      // resetear formulario
       document.getElementById('create-incidente-gallina-form').reset();
 
-      // mostrar alerta
       Swal.fire({
         icon: 'success',
         title: '¡Guardado!',
@@ -599,8 +622,7 @@ async function handleCreateSubmit(event) {
         confirmButtonColor: '#28a745'
       });
 
-      // recargar datos
-      init();
+      aplicarFiltros();
     });
 
   } catch (error) {
@@ -614,7 +636,6 @@ async function handleCreateSubmit(event) {
   }
 }
 
-// Manejar cambio de estado
 async function handleStatusSwitch(event) {
   const switchElement = event.target;
 
@@ -664,334 +685,179 @@ async function handleStatusSwitch(event) {
   }
 }
 
-//____________________________________buscador inteligente____________________________________
-const BuscarIncidente = document.getElementById('search-incidente-gallina');
-
-BuscarIncidente.addEventListener('input', () => {
-  const filter = BuscarIncidente.value.toLowerCase();
-  const tableBody = document.getElementById('incidente-gallina-table-body');
-  const rows = tableBody.querySelectorAll('tr');
-
-  rows.forEach(row => {
-    // Obtener celdas relevantes: galpón, tipo, cantidad, descripción, estado, fecha
-    const galponCell = row.cells[0]?.textContent.toLowerCase() || '';
-    const tipoCell = row.cells[1]?.textContent.toLowerCase() || '';
-    const cantidadCell = row.cells[2]?.textContent.toLowerCase() || '';
-    const descripcionCell = row.cells[3]?.textContent.toLowerCase() || '';
-    const estadoCell = row.cells[4]?.textContent.toLowerCase() || '';
-    const fechaCell = row.cells[5]?.textContent.toLowerCase() || '';
-
-    // Mostrar si alguna celda contiene el texto buscado
-    const match = galponCell.includes(filter) || 
-                  tipoCell.includes(filter) || 
-                  cantidadCell.includes(filter) || 
-                  descripcionCell.includes(filter) || 
-                  estadoCell.includes(filter) || 
-                  fechaCell.includes(filter);
-    row.style.display = match ? '' : 'none';
-  });
-});
-
-//_______________________________ limpiador de filtros__________________________________________
 function limpiarFiltros() {
   activeFechaInicio = "";
   activeFechaFin = "";
+  currentSelectedGalponInci = null;
+  currentPage = 1;
+  
   document.getElementById("fecha-inicio").value = "";
   document.getElementById("fecha-fin").value = "";
   document.getElementById("search-incidente-gallina").value = "";
-  init(1, 10);
+  
+  const galponSelect = document.getElementById('filter-galpon-inci');
+  if (galponSelect) {
+    galponSelect.value = "";
+  }
+  
+  aplicarFiltros();
 }
 
-const btnClear = document.getElementById('btn_clear_filters');
-btnClear.addEventListener('click', limpiarFiltros);
+document.addEventListener('DOMContentLoaded', function() {
+  const BuscarIncidente = document.getElementById('search-incidente-gallina');
+  if (BuscarIncidente) {
+    BuscarIncidente.addEventListener('input', () => {
+      const filter = BuscarIncidente.value.toLowerCase();
+      const tableBody = document.getElementById('incidente-gallina-table-body');
+      if (!tableBody) return;
+      
+      const rows = tableBody.querySelectorAll('tr');
+
+      rows.forEach(row => {
+        const galponCell = row.cells[0]?.textContent.toLowerCase() || '';
+        const tipoCell = row.cells[1]?.textContent.toLowerCase() || '';
+        const cantidadCell = row.cells[2]?.textContent.toLowerCase() || '';
+        const descripcionCell = row.cells[3]?.textContent.toLowerCase() || '';
+        const estadoCell = row.cells[4]?.textContent.toLowerCase() || '';
+        const fechaCell = row.cells[5]?.textContent.toLowerCase() || '';
+
+        const match = galponCell.includes(filter) || 
+                      tipoCell.includes(filter) || 
+                      cantidadCell.includes(filter) || 
+                      descripcionCell.includes(filter) || 
+                      estadoCell.includes(filter) || 
+                      fechaCell.includes(filter);
+        row.style.display = match ? '' : 'none';
+      });
+    });
+  }
+});
 
 async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, fechaFin = activeFechaFin) {
+  console.log("Inicializando módulo de incidentes de gallinas...");
+  
   activeFechaInicio = fechaInicio;
   activeFechaFin = fechaFin;
+  currentPage = page;
+  currentPageSize = page_size;
 
   const tableBody = document.getElementById('incidente-gallina-table-body');
-  if (!tableBody) return;
-
-  tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Cargando incidentes...</td></tr>';
-
-  try {
-    const data = await fetchIncidents(page, page_size, activeFechaInicio, activeFechaFin);
-    const incidentes = data.incidents || [];
-
-    if (incidentes.length > 0) {
-      tableBody.innerHTML = incidentes.map(createIncidentRow).join('');
-    } else {
-      tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron incidentes.</td></tr>';
-    
-      if (activeFechaInicio && activeFechaFin) {
-            tableBody.innerHTML = `
-              <tr>
-                <td colspan="7" class="text-center">
-                  <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle me-2"></i>
-                    No se encontraron incidentes en el rango de fechas:<br>
-                    <strong>${activeFechaInicio} a ${activeFechaFin}</strong>
-                  </div>
-                </td>
-              </tr>
-            `;
-      } else {
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron incidentes.</td></tr>';
-        }
-      }
-
-    renderPagination(data.total_pages || 1, page);
-
-    // Configurar event listeners
-    const editForm = document.getElementById('edit-incidente-gallina-form');
-    const createForm = document.getElementById('create-incidente-gallina-form');
-    
-    // Remover listeners antiguos y agregar nuevos
-    tableBody.removeEventListener('click', handleTableClick);
-    tableBody.addEventListener('click', handleTableClick);
-    
-    tableBody.removeEventListener('change', handleStatusSwitch);
-    tableBody.addEventListener('change', handleStatusSwitch);
-    
-    if (editForm) {
-      editForm.removeEventListener('submit', handleUpdateSubmit);
-      editForm.addEventListener('submit', handleUpdateSubmit);
-    }
-    
-    if (createForm) {
-      createForm.removeEventListener('submit', handleCreateSubmit);
-      createForm.addEventListener('submit', handleCreateSubmit);
-    }
-
-  } catch (error) {
-    console.error("Error en init:", error);
-    tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos: ${error.message}</td></tr>`;
-  }
-}
-
-//_____________________para exportar archivos excel, CSV, pdf_______________________________________
-function convertToCSV(rows, columns) {
-  const escapeCell = (val) => {
-    if (val === null || val === undefined) return "";
-    const s = String(val);
-    // Escape quotes
-    return `"${s.replace(/"/g, '""')}"`;
-};
-
-  const header = columns.map((c) => escapeCell(c.header)).join(",");
-  const body = rows
-    .map((row) =>
-      columns
-        .map((c) => {
-          const v = typeof c.key === "function" ? c.key(row) : row[c.key];
-          return escapeCell(v);
-        })
-        .join(",")
-    )
-    .join("\n");
-  return `${header}\n${body}`;
-}
-
-function downloadBlob(content, mimeType, filename) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-async function exportToPDF(data, filename = "incidentes_gallinas.pdf") {
-  const sanitizedData = data.map(row => ({
-    nombre: row.nombre || "",
-    tipo_incidente: row.tipo_incidente || "",
-    cantidad: row.cantidad || "",
-    descripcion: row.descripcion || "",
-    esta_resuelto: row.esta_resuelto ? "Resuelto" : "Pendiente",
-    fecha_hora: row.fecha_hora || "",
-  }));
-
-  if (!window.jspdf) {
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-  }
-  // Cargar autoTable desde jsDelivr
-  if (!window.jspdfAutoTable) {
-    await loadScript("https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js");
-  }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  // Verificar que autoTable exista
-  if (typeof doc.autoTable !== "function") {
-    console.error("autoTable no se cargó correctamente");
+  if (!tableBody) {
+    console.error("No se encontró incidente-gallina-table-body");
     return;
   }
 
-  doc.setFontSize(16);
-  doc.text("Reporte de Incidentes Gallina", 14, 15);
+  await cargarSelectFilterGalponesInci();
+  await aplicarFiltros();
 
-  const columns = [
-    { header: "Galpón", dataKey: "nombre" },
-    { header: "Tipo Incidente", dataKey: "tipo_incidente" },
-    { header: "Cantidad", dataKey: "cantidad" },
-    { header: "Descripción", dataKey: "descripcion" },
-    { header: "Estado", dataKey: "esta_resuelto" },
-    { header: "Fecha y Hora", dataKey: "fecha_hora" },
-  ];
+  const editForm = document.getElementById('edit-incidente-gallina-form');
+  const createForm = document.getElementById('create-incidente-gallina-form');
+  
+  if (tableBody) {
+    tableBody.removeEventListener('click', handleTableClick);
+    tableBody.removeEventListener('change', handleStatusSwitch);
+    tableBody.addEventListener('click', handleTableClick);
+    tableBody.addEventListener('change', handleStatusSwitch);
+  }
+  
+  if (editForm) {
+    editForm.removeEventListener('submit', handleUpdateSubmit);
+    editForm.addEventListener('submit', handleUpdateSubmit);
+  }
+  
+  if (createForm) {
+    createForm.removeEventListener('submit', handleCreateSubmit);
+    createForm.addEventListener('submit', handleCreateSubmit);
+  }
 
-  doc.autoTable({ columns, body: sanitizedData, startY: 25, styles: { fontSize: 9 } });
-  doc.save(filename);
+  // Configurar evento para abrir modal de crear
+  setupCreateModalHandler();
+  
+  console.log("Inicialización completada");
 }
 
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = src;
-    script.onload = resolve;
-    script.onerror = () => reject(`Error cargando script: ${src}`);
-    document.body.appendChild(script);
+// Nueva función para manejar la apertura del modal de crear
+function setupCreateModalHandler() {
+  const createModalElement = document.getElementById('createIncidenteGallinaModal');
+  if (!createModalElement) {
+    console.warn("No se encontró el modal de crear incidente");
+    return;
+  }
+
+  // Evento cuando se muestra el modal
+  createModalElement.addEventListener('show.bs.modal', async function() {
+    console.log("Cargando selects del modal de crear...");
+    await initializeSelects('galpones-create-modal');
+    await initializeSelects('tipos-incidente-create');
+    
+    // Si hay un galpón filtrado, pre-seleccionarlo y bloquearlo
+    if (currentSelectedGalponInci && currentSelectedGalponInci !== "") {
+      const selectCreate = document.getElementById('create_id_galpon');
+      if (selectCreate) {
+        selectCreate.value = currentSelectedGalponInci;
+        
+        // Deshabilitar el select para que no se pueda cambiar
+        selectCreate.disabled = true;
+        
+        // Si está usando Select2, actualizar y deshabilitar también
+        if (window.$ && $(selectCreate).data('select2')) {
+          $(selectCreate).val(currentSelectedGalponInci).trigger('change');
+          $(selectCreate).prop('disabled', true);
+        }
+        
+        const galponNombre = cacheGalponesInci?.find(g => 
+          String(g.id_galpon) === String(currentSelectedGalponInci)
+        )?.nombre || "";
+        
+        console.log(`Galpón bloqueado: ${galponNombre} (ID: ${currentSelectedGalponInci})`);
+      }
+    } else {
+      // Si NO hay filtro, asegurarse de que el select esté habilitado
+      const selectCreate = document.getElementById('create_id_galpon');
+      if (selectCreate) {
+        selectCreate.disabled = false;
+        if (window.$ && $(selectCreate).data('select2')) {
+          $(selectCreate).prop('disabled', false);
+        }
+      }
+    }
+    
+    console.log("Selects cargados en modal de crear");
+  });
+  
+  // Evento cuando se cierra el modal - limpiar el formulario
+  createModalElement.addEventListener('hidden.bs.modal', function() {
+    const createForm = document.getElementById('create-incidente-gallina-form');
+    if (createForm) {
+      createForm.reset();
+      
+      // Habilitar el select de nuevo si estaba deshabilitado
+      const selectCreate = document.getElementById('create_id_galpon');
+      if (selectCreate) {
+        selectCreate.disabled = false;
+      }
+    }
   });
 }
 
-function exportToCSV(data, filename = "incidentes_gallinas.csv") {
-  const columns = [
-    { header: "Galpón", key: "nombre" },
-    { header: "Tipo Incidente", key: "tipo_incidente" },
-    { header: "Cantidad", key: "cantidad" },
-    { header: "Descripción", key: "descripcion" },
-    { header: "Estado", key: "esta_resuelto" },
-    { header: "Fecha y Hora", key: "fecha_hora" },
-  ];
-  const csv = convertToCSV(data, columns);
-  downloadBlob(csv, "text/csv;charset=utf-8;", filename);
-}
-
-async function exportToExcel(data, filename = "incidentes_gallinas.xlsx") {
-  // Intentar usar SheetJS (XLSX) para crear un .xlsx real en el navegador.
-  // Si no está cargado, lo cargamos dinámicamente desde CDN.
-  const loadSheetJS = () =>
-    new Promise((resolve, reject) => {
-      if (window.XLSX) return resolve(window.XLSX);
-      const script = document.createElement("script");
-      script.src =
-        "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
-      script.onload = () => resolve(window.XLSX);
-      script.onerror = (e) => reject(new Error("No se pudo cargar SheetJS"));
-      document.head.appendChild(script);
-    });
-
-  try {
-    await loadSheetJS();
-  } catch (err) {
-    console.warn(
-      "SheetJS no disponible, se usará exportación CSV en su lugar",
-      err
-    );
-    // Fallback al CSV con extensión xlsx si falla la carga
-    exportToCSV(data, filename.replace(/\.xlsx?$/, ".csv"));
-    return;
-  }
-
-  // Mapear datos a objetos planos para json_to_sheet
-  const rows = data.map((r) => ({
-    "Galpón": r.nombre,
-    "Tipo Incidente": r.tipo_incidente,
-    "Cantidad": r.cantidad,
-    "Descripción": r.descripcion,
-    "Estado": r.esta_resuelto ? "Resuelto" : "Pendiente",
-    "Fecha y Hora": r.fecha_hora,
-  }));
-
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Incidentes Gallina");
-
-  try {
-    XLSX.writeFile(wb, filename);
-  } catch (e) {
-    // Algunos navegadores / entornos pueden requerir otra ruta: crear blob desde write
-    try {
-      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-      const blob = new Blob([wbout], { type: "application/octet-stream" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("No se pudo generar el archivo .xlsx:", err);
-      Swal.fire({
-        title: "Error al generar .xlsx",
-        text: err.message || String(err),
-        icon: "error",
-      });
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("DOM cargado - inicializando incidentes gallina");
+    
+    const btnApplyFilter = document.getElementById("btn-apply-date-filter");
+    if (btnApplyFilter) {
+        btnApplyFilter.addEventListener("click", () => {
+            const fechaInicio = document.getElementById("fecha-inicio").value;
+            const fechaFin = document.getElementById("fecha-fin").value;
+            filtrarIncidentes(fechaInicio, fechaFin);
+        });
     }
-  }
-}
 
-async function handleExportClick(event) {
+    const btnClear = document.getElementById('btn_clear_filters');
+    if (btnClear) {
+        btnClear.addEventListener('click', limpiarFiltros);
+    }
 
-  const item = event.target.closest(".export-format");
-  if (!item) return;
-
-  event.preventDefault();
-
-  const fmt = item.dataset.format;
-  const dateTag = new Date().toISOString().slice(0, 10);
-
-  let response;
-
-  // 👉 Si NO hay filtros, llamar API normal
-  if (!activeFechaInicio || !activeFechaFin) {
-    response = await fetchIncidents(1, 1000);
-  } 
-  // 👉 Si hay filtros, enviarlos formateados
-  else {
-    const fechaInicio = formatDateForAPI(activeFechaInicio);
-    const fechaFin = formatDateForAPI(activeFechaFin);
-    response = await fetchIncidents(1, 1000, fechaInicio, fechaFin);
-  }
-
-  const data = response?.incidents || [];
-
-  if (data.length === 0) {
-    Swal.fire({ title: "No hay datos para exportar.", icon: "info" });
-    return;
-  }
-
-  if (fmt === "csv") {
-    exportToCSV(data, `incidentes_gallinas_${dateTag}.csv`);
-  } else if (fmt === "excel") {
-    exportToExcel(data, `incidentes_gallinas_${dateTag}.xlsx`);
-  } else if (fmt === "pdf") {
-    exportToPDF(data, `incidentes_gallinas_${dateTag}.pdf`);
-  }
-}
-
-document.addEventListener("click", (e) => {
-  const item = e.target.closest(".export-format");
-  if (!item) return;
-  handleExportClick(e);
+    init(1, 10);
 });
-
-// Inicialización de tipos de incidente al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-  loadTiposIncidenteCreate();
-  
-  // Configurar event listener para el formulario de creación
-  const createForm = document.getElementById('create-incidente-gallina-form');
-  if (createForm) {
-    createForm.addEventListener('submit', handleCreateSubmit);
-  }
-});
-
-init(1, 10);
 
 export { init };
