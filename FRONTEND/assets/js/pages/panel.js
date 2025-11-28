@@ -337,86 +337,58 @@ function aplicarLayoutPorRol() {
 
   switch (role) {
     case "operario":
-      // Operario: Ocultar gráfica de producción temporal, mostrar distribución y ocupación
-      // Priorizar incidentes y sensores
+      // Operario: Reorganizar layout
       hide(el.produccionCard);
-      hide(el.actividadCard); // Ocultar actividad reciente
-      // Ocultar historial de incidentes del mes (lista grande)
-      const incidentesRow = document.getElementById("incidentes-row");
-      if (incidentesRow) incidentesRow.style.display = "none";
+      hide(el.actividadCard);
+      hide(el.incidentesCard);
+
       show(el.distribucionCard);
       show(el.galponesCard);
-      show(el.incidentesCard);
       show(el.sensoresCard);
 
-      // Reducir tamaño de gráficas y moverlas al lado de accesos directos en la misma fila
-      try {
-        const produccionCol = document.querySelector(
-          ".row.g-3.mb-4 > .col-12.col-lg-8"
+      // Reorganizar DOM: Sensores al lado de accesos, gráficas abajo
+      const sensoresCard = el.sensoresCard;
+      const distribucionCard = el.distribucionCard;
+      const galponesCard = el.galponesCard;
+      const shortcutsCol = document.querySelector(
+        ".row.g-3.mb-4 > .col-12.col-lg-4"
+      );
+
+      if (sensoresCard && distribucionCard && galponesCard && shortcutsCol) {
+        const produccionRow = shortcutsCol.parentElement;
+
+        // Ocultar producción
+        const produccionCol = produccionRow.querySelector(".col-12.col-lg-8");
+        if (produccionCol) produccionCol.style.display = "none";
+
+        // 1. Mover sensores al lado de accesos directos
+        const sensoresCol = sensoresCard.parentElement;
+        sensoresCol.className = "col-12 col-lg-6";
+
+        // Insertar sensores antes de accesos directos
+        produccionRow.insertBefore(sensoresCol, shortcutsCol);
+
+        // Ajustar accesos directos
+        shortcutsCol.className = "col-12 col-lg-6";
+
+        // 2. Crear nueva fila para distribución y galpones
+        const nuevaFilaGraficas = document.createElement("div");
+        nuevaFilaGraficas.className = "row g-3 mb-4";
+        nuevaFilaGraficas.id = "operario-graficas-row";
+
+        const distribucionCol = distribucionCard.parentElement;
+        const galponesCol = galponesCard.parentElement;
+        distribucionCol.className = "col-12 col-lg-6";
+        galponesCol.className = "col-12 col-lg-6";
+
+        nuevaFilaGraficas.appendChild(distribucionCol);
+        nuevaFilaGraficas.appendChild(galponesCol);
+
+        // Insertar después de la fila de sensores/accesos
+        produccionRow.parentElement.insertBefore(
+          nuevaFilaGraficas,
+          produccionRow.nextSibling
         );
-        const shortcutsCol = document.querySelector(
-          ".row.g-3.mb-4 > .col-12.col-lg-4"
-        );
-        const distribucionCard = document
-          .getElementById("tipoGallinaChart")
-          ?.closest(".card");
-        const galponesCard = document
-          .getElementById("galponesChart")
-          ?.closest(".card");
-
-        if (produccionCol && shortcutsCol && distribucionCard && galponesCard) {
-          // Ocultar la columna de producción para operario
-          produccionCol.style.display = "none";
-
-          // Preparar la fila contenedora
-          const firstRow = produccionCol.parentElement;
-          firstRow.classList.add("align-items-stretch");
-
-          // Crear/usar tres columnas de 4 para: izquierda (distribución), medio (galpones), derecha (accesos)
-          let leftCol = document.getElementById("operario-left-col");
-          let middleCol = document.getElementById("operario-middle-col");
-          let rightCol = shortcutsCol; // reutilizamos accesos como derecha
-
-          if (!leftCol) {
-            leftCol = document.createElement("div");
-            leftCol.id = "operario-left-col";
-            leftCol.className = "col-12 col-lg-4";
-            firstRow.insertBefore(leftCol, shortcutsCol);
-          } else {
-            leftCol.className = "col-12 col-lg-4";
-          }
-
-          if (!middleCol) {
-            middleCol = document.createElement("div");
-            middleCol.id = "operario-middle-col";
-            middleCol.className = "col-12 col-lg-4";
-            firstRow.insertBefore(middleCol, shortcutsCol);
-          } else {
-            middleCol.className = "col-12 col-lg-4";
-          }
-
-          // Asegurar que accesos directos sea col-lg-4 (derecha)
-          rightCol.classList.remove("col-lg-3", "col-lg-6", "col-lg-8");
-          rightCol.classList.add("col-lg-4");
-
-          // Reducir alturas de las gráficas
-          const distContainer = distribucionCard.querySelector(
-            'div[style*="position: relative"]'
-          );
-          const galpContainer = galponesCard.querySelector(
-            'div[style*="position: relative"]'
-          );
-          if (distContainer) distContainer.style.height = "200px";
-          if (galpContainer) galpContainer.style.height = "200px";
-
-          // Colocar tarjetas en columnas
-          leftCol.innerHTML = "";
-          middleCol.innerHTML = "";
-          leftCol.appendChild(distribucionCard);
-          middleCol.appendChild(galponesCard);
-        }
-      } catch (e) {
-        console.warn("No se pudo reorganizar las gráficas para operario:", e);
       }
 
       // Crear secciones destacadas para Tareas e Incidentes si es operario
@@ -512,13 +484,25 @@ async function cargarTareasOperario() {
   if (!container) return;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/tareas/mis-tareas?limit=5`, {
-      headers: dashboardService.getHeaders(),
-    });
+    const idUsuario =
+      currentUser?.id_usuario || currentUser?.id || currentUser?.idUsuario;
+    if (!idUsuario) throw new Error("Usuario no identificado");
+
+    // Backend expone GET /tareas/usuario/{id_usuario}
+    const response = await fetch(
+      `${API_BASE_URL}/tareas/usuario/${idUsuario}`,
+      {
+        headers: dashboardService.getHeaders(),
+      }
+    );
 
     if (!response.ok) throw new Error("Error al cargar tareas");
 
-    const tareas = await response.json();
+    let tareas = await response.json();
+    // Tomar solo las primeras 5 para la vista del panel
+    if (Array.isArray(tareas)) {
+      tareas = tareas.slice(0, 5);
+    }
 
     if (!tareas || tareas.length === 0) {
       container.innerHTML =
@@ -532,22 +516,18 @@ async function cargarTareasOperario() {
       <div class="list-group-item border-0 px-0 py-2">
         <div class="d-flex justify-content-between align-items-start">
           <div class="flex-grow-1">
-            <h6 class="mb-1">${
-              tarea.nombre || tarea.titulo || "Sin título"
-            }</h6>
-            <p class="mb-1 small text-muted">${
-              tarea.descripcion || "Sin descripción"
-            }</p>
+            <p class="mb-1">${tarea.descripcion || "Sin descripción"}</p>
             <div class="d-flex gap-2 align-items-center">
               <span class="badge bg-${
-                tarea.prioridad === "alta"
-                  ? "danger"
-                  : tarea.prioridad === "media"
+                tarea.estado === "activo" || tarea.estado === "pendiente"
                   ? "warning"
+                  : tarea.estado === "completado" ||
+                    tarea.estado === "finalizado"
+                  ? "success"
                   : "secondary"
-              } text-white">${tarea.prioridad || "Normal"}</span>
+              }">${tarea.estado || "Sin estado"}</span>
               <small class="text-muted"><i class="far fa-calendar me-1"></i>${
-                tarea.fecha_limite || "Sin fecha"
+                tarea.fecha_hora_init || tarea.fecha || "Sin fecha"
               }</small>
             </div>
           </div>
@@ -570,16 +550,31 @@ async function cargarIncidentesOperario() {
   if (!container) return;
 
   try {
+    // Backend expone GET /incidentes_generales/by-estado/{esta_resuelta}?skip&limit
+    // Para mostrar incidentes activos usamos esta_resuelta=false
     const response = await fetch(
-      `${API_BASE_URL}/incidentes_generales/?limit=5&estado=activo`,
-      {
-        headers: dashboardService.getHeaders(),
-      }
+      `${API_BASE_URL}/incidentes_generales/by-estado/false?skip=0&limit=5`,
+      { headers: dashboardService.getHeaders() }
     );
 
     if (!response.ok) throw new Error("Error al cargar incidentes");
 
-    const incidentes = await response.json();
+    let incidentes = await response.json();
+
+    // Adaptar según forma de respuesta (array directo o paginado)
+    if (Array.isArray(incidentes)) {
+      incidentes = incidentes.slice(0, 5);
+    } else if (incidentes && Array.isArray(incidentes.items)) {
+      incidentes = incidentes.items.slice(0, 5);
+    } else if (incidentes && Array.isArray(incidentes.results)) {
+      incidentes = incidentes.results.slice(0, 5);
+    } else if (incidentes && Array.isArray(incidentes.data)) {
+      incidentes = incidentes.data.slice(0, 5);
+    } else if (incidentes && Array.isArray(incidentes.incidentes)) {
+      incidentes = incidentes.incidentes.slice(0, 5);
+    } else {
+      incidentes = [];
+    }
 
     if (!incidentes || incidentes.length === 0) {
       container.innerHTML =
@@ -587,33 +582,38 @@ async function cargarIncidentesOperario() {
       return;
     }
 
-    container.innerHTML = incidentes
-      .map(
-        (inc) => `
+    // Mostrar solo el primer incidente y un resumen del resto
+    const primero = incidentes[0];
+    const restantes = incidentes.length - 1;
+
+    const itemHTML = `
       <div class="list-group-item border-0 px-0 py-2">
         <div class="d-flex justify-content-between align-items-start">
           <div class="flex-grow-1">
             <div class="d-flex gap-2 align-items-center mb-1">
               <span class="badge bg-${
-                inc.severidad === "alta"
-                  ? "danger"
-                  : inc.severidad === "media"
+                (primero.estado || "pendiente").toLowerCase() === "pendiente"
                   ? "warning"
-                  : "info"
-              }">${inc.tipo || "General"}</span>
-              <small class="text-muted">${inc.fecha || "Hoy"}</small>
+                  : "success"
+              }">${(primero.estado || "pendiente").toUpperCase()}</span>
+              <small class="text-muted">${primero.fecha || "Hoy"}</small>
             </div>
-            <p class="mb-0 small">${inc.descripcion || "Sin descripción"}</p>
+            <p class="mb-0 small">${
+              primero.descripcion || "Sin descripción"
+            }</p>
             <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>${
-              inc.galpon || inc.ubicacion || "No especificado"
+              primero.galpon || primero.ubicacion || "No especificado"
             }</small>
           </div>
-          <i class="fas fa-chevron-right text-muted"></i>
         </div>
-      </div>
-    `
-      )
-      .join("");
+      </div>`;
+
+    const resumenHTML =
+      restantes > 0
+        ? `<div class="px-0 py-2 small text-muted">+ ${restantes} incidentes pendientes más</div>`
+        : "";
+
+    container.innerHTML = itemHTML + resumenHTML;
   } catch (error) {
     console.error("Error cargando incidentes operario:", error);
     container.innerHTML =
@@ -814,6 +814,9 @@ function cargarGraficoTipoGallina(data) {
     chartColors.danger,
   ];
 
+  // Ajustar aspectRatio según rol
+  const aspectRatioValue = currentRole === "operario" ? 2 : 1.4;
+
   tipoGallinaChart = new Chart(ctx.getContext("2d"), {
     type: "doughnut",
     data: {
@@ -828,7 +831,7 @@ function cargarGraficoTipoGallina(data) {
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      aspectRatio: 2.2,
+      aspectRatio: aspectRatioValue,
       plugins: {
         legend: {
           display: true,
@@ -865,6 +868,9 @@ function cargarGraficoGalpones(data) {
     return chartColors.success;
   });
 
+  // Ajustar aspectRatio según rol
+  const aspectRatioValue = currentRole === "operario" ? 2 : 1.4;
+
   galponesChart = new Chart(ctx.getContext("2d"), {
     type: "bar",
     data: {
@@ -880,7 +886,7 @@ function cargarGraficoGalpones(data) {
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      aspectRatio: 2.2,
+      aspectRatio: aspectRatioValue,
       plugins: {
         legend: {
           display: false,
