@@ -4,14 +4,20 @@
     <div class="card">
       <div class="card-body">
 
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                <div class="d-flex justify-content-between align-items-center flex-nowrap w-100">
+          <h4 class="text-nowrap me-3 mb-0">Incidente Gallina</h4>
 
-          <h4 class="card-title mb-2 mb-md-0">Incidente Gallina</h4>
+          <div class="d-flex align-items-center flex-nowrap gap-2">
+            <select id="filter-galpon-inci"
+              class="form-select form-select-sm rounded border-secondary shadow-sm bg-white" style="min-width:160px;">
+              <option value="" disabled selected>Seleccione el galpon</option>
+            </select>
 
-          <div class="d-flex gap-2 flex-wrap">
-            <a id="isolations" class="btn btn-primary"><i class="fa-solid fa-kit-medical me-0"></i> Ir a ailsamiento</a>
+            <a id="isolations" class="btn btn-success btn-sm text-nowrap"><i class="fa-solid fa-kit-medical me-1"></i>
+              Ir a aislamiento</a>
+
             <div class="btn-group">
-              <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="export-btn"
+              <button class="btn btn-outline-secondary btn-sm dropdown-toggle text-nowrap" type="button" id="export-btn"
                 data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fa fa-file-export me-1"></i> Exportar
               </button>
@@ -22,11 +28,10 @@
               </ul>
             </div>
 
-            <button type="button" class="btn btn-success" data-bs-toggle="modal"
+            <button type="button" class="btn btn-success btn-sm text-nowrap" data-bs-toggle="modal"
               data-bs-target="#createIncidenteGallinaModal">
               <i class="fas fa-plus me-1"></i> Agregar
             </button>
-
           </div>
         </div>
         <div class="row g-3 my-4 align-items-end">
