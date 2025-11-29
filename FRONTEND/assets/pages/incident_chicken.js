@@ -18,42 +18,47 @@ let currentPage = 1;
 let currentPageSize = 10;
 
 // =======================
+// FORMATO DE FECHAS PARA API
+// =======================
+function formatDateForAPI(dateStr) {
+  if (!dateStr) return "";
+  // Si ya viene en formato YYYY-MM-DD, devolverlo tal cual
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+  // Si viene en otro formato, convertirlo
+  const date = new Date(dateStr);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+// =======================
 // FILTRO POR GALPÓN - VERSIÓN CON DEBUG
 // =======================
 async function cargarSelectFilterGalponesInci() {
-    console.log("Iniciando cargarSelectFilterGalponesInci...");
     const select = document.getElementById("filter-galpon-inci");
     
     if (!select) {
         console.error("No se encontró el select con id 'filter-galpon-inci'");
         return;
     }
-    
-    console.log("Select encontrado:", select);
-
-    try {
+   try {
         if (!cacheGalponesInci) {
-            console.log("Obteniendo galpones desde API...");
-            cacheGalponesInci = await incident_chickenService.getGalponesAll();
-            console.log("Galpones obtenidos:", cacheGalponesInci);
+           cacheGalponesInci = await incident_chickenService.getGalponesAll();
         }
 
         const galponesActivos = cacheGalponesInci.filter(g => g.estado === true);
-        console.log("Galpones activos:", galponesActivos);
-
         const options = galponesActivos.map(g => 
             `<option value="${g.id_galpon}">${g.nombre}</option>`
         ).join("");
         
         select.innerHTML = `<option value="">Todos los galpones</option>${options}`;
-        console.log("Opciones agregadas al select");
-
+        
         // Remover listener anterior si existe
         select.removeEventListener("change", handleGalponChange);
         // Agregar nuevo listener
         select.addEventListener("change", handleGalponChange);
-        console.log("vent listener agregado");
-
     } catch (e) {
         console.error("Error cargando filtro galpones:", e);
         select.innerHTML = `<option value="">Error al cargar</option>`;
@@ -63,23 +68,17 @@ async function cargarSelectFilterGalponesInci() {
 // Handler separado para el cambio de galpón
 function handleGalponChange(e) {
     currentSelectedGalponInci = e.target.value || null;
-    console.log("Galpón seleccionado:", currentSelectedGalponInci);
     currentPage = 1;
     aplicarFiltros();
 }
 
 // =======================
-// APLICAR TODOS LOS FILTROS
+// APLICAR TODOS LOS FILTROS - VERSIÓN MEJORADA
 // =======================
-async function aplicarFiltros() {
-    console.log("🔍 Aplicando filtros...");
-    console.log("   - Galpón:", currentSelectedGalponInci);
-    console.log("   - Fecha inicio:", activeFechaInicio);
-    console.log("   - Fecha fin:", activeFechaFin);
-    
+async function aplicarFiltros() {  
     const tableBody = document.getElementById('incidente-gallina-table-body');
     if (!tableBody) {
-        console.error("No se encontró incidente-gallina-table-body");
+        console.error("❌ No se encontró incidente-gallina-table-body");
         return;
     }
 
@@ -88,45 +87,56 @@ async function aplicarFiltros() {
     try {
         let data;
         if (activeFechaInicio && activeFechaFin) {
-            console.log("Filtrando por fechas...");
-            data = await incident_chickenService.getIsolationAllDate(
-                activeFechaInicio, 
-                activeFechaFin, 
-                1, 
-                1000
-            );
+            const fechaInicioFormateada = formatDateForAPI(activeFechaInicio);
+            const fechaFinFormateada = formatDateForAPI(activeFechaFin);
+            try {
+                data = await incident_chickenService.getIsolationAllDate(
+                    fechaInicioFormateada, 
+                    fechaFinFormateada, 
+                );
+            } catch (error) {
+                // ⭐ MANEJAR ERROR 422 O 404 - No hay datos en ese rango
+                if (error.message.includes("No hay incidentes") || 
+                    error.message.includes("422") || 
+                    error.response?.status === 422 ||
+                    error.response?.status === 404) {
+                    
+                    data = { incidents: [] };
+                } else {
+                    throw error; // Re-lanzar otros errores
+                }
+            }
         } else {
-            console.log("Obteniendo todos los incidentes...");
-            data = await incident_chickenService.getIsolationAll(1, 1000);
+          data = await incident_chickenService.getIsolationAll(1, 10);
         }
 
         allIncidents = data.incidents || [];
-        console.log("Total incidentes obtenidos:", allIncidents.length);
-
+        // Aplicar filtro de galpón si existe
         if (currentSelectedGalponInci && currentSelectedGalponInci !== "") {
             filteredIncidents = allIncidents.filter(
                 inc => String(inc.galpon_origen) === String(currentSelectedGalponInci)
             );
-            console.log("Incidentes después del filtro por galpón:", filteredIncidents.length);
-            console.log("   Filtrando por galpon_origen:", currentSelectedGalponInci);
         } else {
             filteredIncidents = [...allIncidents];
-            console.log("ℹSin filtro de galpón, mostrando todos");
         }
 
         renderizarResultados();
 
     } catch (error) {
-        console.error("❌ Error en aplicarFiltros:", error);
-        tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos: ${error.message}</td></tr>`;
+       tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center">
+                    <div class="alert alert-danger mt-3">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Error al cargar los datos: ${error.message || 'Error desconocido'}
+                    </div>
+                </td>
+            </tr>
+        `;
     }
 }
 
-// =======================
-// RENDERIZAR RESULTADOS CON PAGINACIÓN LOCAL
-// =======================
 function renderizarResultados() {
-    console.log("Renderizando resultados...");
     const tableBody = document.getElementById('incidente-gallina-table-body');
     if (!tableBody) return;
 
@@ -165,9 +175,6 @@ function renderizarResultados() {
     const startIndex = (currentPage - 1) * currentPageSize;
     const endIndex = startIndex + currentPageSize;
     const paginatedIncidents = filteredIncidents.slice(startIndex, endIndex);
-
-    console.log(`Mostrando página ${currentPage}: ${paginatedIncidents.length} incidentes`);
-
     tableBody.innerHTML = paginatedIncidents.map(createIncidentRow).join('');
 
     const totalPages = Math.ceil(filteredIncidents.length / currentPageSize) || 1;
@@ -343,8 +350,162 @@ document.addEventListener('click', (e) => {
   aislarGallina(id_inc_gallina, id_galpon, btn);
 });
 
+
+
+// Función para inicializar forzadamente los filtros y buscador de aislamientos
+// Función mejorada para inicializar filtros y buscador de aislamientos
+function initializeAislamientosFilters() { 
+  // Buscador inteligente - probar diferentes IDs posibles
+  const searchInput = document.getElementById('search-aislamiento') || 
+                     document.getElementById('search-isolation') ||
+                     document.querySelector('input[placeholder*="aislamiento" i]') ||
+                     document.querySelector('input[placeholder*="isolation" i]');
+  
+  if (searchInput) {  
+    searchInput.addEventListener('input', function() {
+      const filter = this.value.toLowerCase();  
+      // Buscar la tabla de aislamientos - probar diferentes selectores
+      const table = document.querySelector('#aislamiento-table') || 
+                   document.querySelector('#isolation-table') ||
+                   document.querySelector('.table tbody')?.closest('table') ||
+                   document.querySelector('table');
+      
+      if (!table) {
+        return;
+      }
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+      
+      const rows = tbody.querySelectorAll('tr');
+      let visibleCount = 0;
+      
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const isVisible = text.includes(filter);
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount++;
+      });
+      
+      // Actualizar mensaje si no hay resultados
+      const noResultsRow = tbody.querySelector('.no-results');
+      if (visibleCount === 0 && !noResultsRow) {
+        tbody.innerHTML = `<tr class="no-results"><td colspan="10" class="text-center">No se encontraron resultados para "${filter}"</td></tr>`;
+      } else if (visibleCount > 0 && noResultsRow) {
+        noResultsRow.remove();
+      }
+    });
+  }
+  
+  // Filtros por fecha - probar diferentes IDs
+  const btnApplyFilter = document.getElementById("btn-apply-date-filter-aislamiento") ||
+                        document.getElementById("btn-apply-date-filter-isolation") ||
+                        document.getElementById("btn-apply-filter") ||
+                        document.querySelector('button[onclick*="filtrar" i]');
+  
+  if (btnApplyFilter) {
+ 
+    btnApplyFilter.addEventListener("click", function() {
+      // Buscar inputs de fecha con diferentes IDs
+      const fechaInicio = document.getElementById("fecha-inicio-aislamiento")?.value ||
+                         document.getElementById("fecha-inicio-isolation")?.value ||
+                         document.getElementById("fecha-inicio")?.value;
+      
+      const fechaFin = document.getElementById("fecha-fin-aislamiento")?.value ||
+                      document.getElementById("fecha-fin-isolation")?.value ||
+                      document.getElementById("fecha-fin")?.value;
+      
+       
+      if (fechaInicio && fechaFin) {
+      } else {
+        Swal.fire({
+          icon: 'info',
+          title: 'Fechas requeridas',
+          text: 'Debe seleccionar ambas fechas para filtrar',
+          confirmButtonColor: '#28a745'
+        });
+      }
+    });
+  }
+  
+  // Botón limpiar filtros
+  const btnClear = document.getElementById('btn_clear_filters_aislamiento') ||
+                  document.getElementById('btn_clear_filters_isolation') ||
+                  document.getElementById('btn_clear_filters') ||
+                  document.querySelector('button[onclick*="limpiar" i]') ||
+                  document.querySelector('button[onclick*="clear" i]');
+  
+  if (btnClear) { 
+    btnClear.addEventListener('click', function() {
+      const fechaInicio = document.getElementById("fecha-inicio-aislamiento") ||
+                         document.getElementById("fecha-inicio-isolation") ||
+                         document.getElementById("fecha-inicio");
+      const fechaFin = document.getElementById("fecha-fin-aislamiento") ||
+                      document.getElementById("fecha-fin-isolation") ||
+                      document.getElementById("fecha-fin");
+      const searchInput = document.getElementById('search-aislamiento') ||
+                         document.getElementById('search-isolation');
+      
+      if (fechaInicio) fechaInicio.value = '';
+      if (fechaFin) fechaFin.value = '';
+      if (searchInput) searchInput.value = '';
+    });
+  } 
+  
+  initializeAislamientosSelects();
+}
+
+// Función para inicializar selects de aislamientos
+function initializeAislamientosSelects() {
+ const galponSelect = document.getElementById('filter-galpon-aislamiento') ||
+                      document.getElementById('filter-galpon-isolation') ||
+                      document.getElementById('galpon-filter') ||
+                      document.querySelector('select[name*="galpon" i]');
+  
+  if (galponSelect) {
+    galponSelect.addEventListener('change', function() {
+     });
+  }
+}
+
+// Modificar el event listener del botón de aislamientos con más robustez
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('#isolations');
+  if (!btn) return;  
+  
+ try {
+    const response = await fetch('pages/aislamientos.html');
+    if (!response.ok) throw new Error('Error al cargar el HTML');
+    
+    const html = await response.text();
+    document.getElementById('main-content').innerHTML = html;
+    
+   setTimeout(async () => {
+      try {
+       await initIsolations();
+       // Dar un poco más de tiempo para que se renderice todo
+        setTimeout(() => {
+          initializeAislamientosFilters();  
+        }, 200);
+        
+      } catch (error) {
+        console.error("❌ Error al inicializar aislamientos:", error);
+      }
+    }, 100);
+    
+  } catch (error) {
+    console.error('❌ Error al cargar aislamientos:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo cargar la página de aislamientos',
+      confirmButtonColor: '#d33'
+    });
+  }
+});
+
+// También mejorar la función aislarGallina para mejor debug
 async function aislarGallina(id_incidente_gallina, galpon_origen, btn) { 
-  try {
+  try {  
     const newIsolationData = {
       id_incidente_gallina: id_incidente_gallina,
       id_galpon: galpon_origen,
@@ -353,6 +514,7 @@ async function aislarGallina(id_incidente_gallina, galpon_origen, btn) {
 
     await isolationService.createIsolation(newIsolationData);
     btn.disabled = true;
+    btn.classList.add('disabled');
 
     Swal.fire({
       icon: 'success',
@@ -360,30 +522,23 @@ async function aislarGallina(id_incidente_gallina, galpon_origen, btn) {
       text: 'El aislamiento se registró correctamente.',
       confirmButtonColor: '#28a745'
     });
-    initIsolations(); 
+    await initIsolations();
+    
+    // También inicializar filtros por si acaso
+    setTimeout(() => {
+      initializeAislamientosFilters();
+    }, 300);
+    
   } catch (error) {
+    console.error("❌ Error al registrar aislamiento:", error);
     Swal.fire({
       icon: 'error',
       title: 'Error',
-      text: 'Ocurrió un error al registrar el aislamiento.',
+      text: 'Ocurrió un error al registrar el aislamiento: ' + error.message,
       confirmButtonColor: '#d33'
     });
   }
 }
-
-document.addEventListener('click', async (e) => {
-  const btn = e.target.closest('#isolations');
-  if (!btn) return;  
-  
-  try {
-    const response = await fetch('pages/aislamientos.html');
-    const html = await response.text();
-    document.getElementById('main-content').innerHTML = html;
-    initIsolations();
-  } catch (error) {
-    console.error('Error al cargar aislamientos:', error);
-  }
-});
 
 function renderPagination(total_pages, currentPageNum = 1) {
     const container = document.querySelector("#pagination");
@@ -703,11 +858,19 @@ function limpiarFiltros() {
   aplicarFiltros();
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+// =======================
+// BUSCADOR INTELIGENTE - ENCAPSULADO
+// =======================
+function inicializarBuscador() {
   const BuscarIncidente = document.getElementById('search-incidente-gallina');
+  
   if (BuscarIncidente) {
-    BuscarIncidente.addEventListener('input', () => {
-      const filter = BuscarIncidente.value.toLowerCase();
+    // Remover listener anterior si existe
+    BuscarIncidente.replaceWith(BuscarIncidente.cloneNode(true));
+    const nuevoInput = document.getElementById('search-incidente-gallina');
+    
+    nuevoInput.addEventListener('input', () => {
+      const filter = nuevoInput.value.toLowerCase();
       const tableBody = document.getElementById('incidente-gallina-table-body');
       if (!tableBody) return;
       
@@ -731,10 +894,9 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   }
-});
+}
 
 async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, fechaFin = activeFechaFin) {
-  console.log("Inicializando módulo de incidentes de gallinas...");
   
   activeFechaInicio = fechaInicio;
   activeFechaFin = fechaFin;
@@ -770,10 +932,9 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
     createForm.addEventListener('submit', handleCreateSubmit);
   }
 
-  // Configurar evento para abrir modal de crear
   setupCreateModalHandler();
-  
-  console.log("Inicialización completada");
+  inicializarBuscador();
+  inicializarFiltroFechas();
 }
 
 // Nueva función para manejar la apertura del modal de crear
@@ -786,7 +947,6 @@ function setupCreateModalHandler() {
 
   // Evento cuando se muestra el modal
   createModalElement.addEventListener('show.bs.modal', async function() {
-    console.log("Cargando selects del modal de crear...");
     await initializeSelects('galpones-create-modal');
     await initializeSelects('tipos-incidente-create');
     
@@ -808,8 +968,6 @@ function setupCreateModalHandler() {
         const galponNombre = cacheGalponesInci?.find(g => 
           String(g.id_galpon) === String(currentSelectedGalponInci)
         )?.nombre || "";
-        
-        console.log(`Galpón bloqueado: ${galponNombre} (ID: ${currentSelectedGalponInci})`);
       }
     } else {
       // Si NO hay filtro, asegurarse de que el select esté habilitado
@@ -821,8 +979,6 @@ function setupCreateModalHandler() {
         }
       }
     }
-    
-    console.log("Selects cargados en modal de crear");
   });
   
   // Evento cuando se cierra el modal - limpiar el formulario
@@ -840,24 +996,64 @@ function setupCreateModalHandler() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-    console.log("DOM cargado - inicializando incidentes gallina");
+// =======================
+// FILTRO POR FECHAS - ENCAPSULADO
+// =======================
+function inicializarFiltroFechas() {
+  const btnApplyFilter = document.getElementById("btn-apply-date-filter");
+  const btnClear = document.getElementById('btn_clear_filters');
+  
+  if (btnApplyFilter) {
+    // Remover listeners anteriores
+    btnApplyFilter.replaceWith(btnApplyFilter.cloneNode(true));
+    const nuevoBtn = document.getElementById("btn-apply-date-filter");
     
-    const btnApplyFilter = document.getElementById("btn-apply-date-filter");
-    if (btnApplyFilter) {
-        btnApplyFilter.addEventListener("click", () => {
-            const fechaInicio = document.getElementById("fecha-inicio").value;
-            const fechaFin = document.getElementById("fecha-fin").value;
-            filtrarIncidentes(fechaInicio, fechaFin);
-        });
-    }
+    nuevoBtn.addEventListener("click", () => {
+      const fechaInicio = document.getElementById("fecha-inicio").value;
+      const fechaFin = document.getElementById("fecha-fin").value;
+      filtrarIncidentes(fechaInicio, fechaFin);
+    });
+  }
+  
+  if (btnClear) {
+    btnClear.replaceWith(btnClear.cloneNode(true));
+    const nuevoBtnClear = document.getElementById('btn_clear_filters');
+    
+    nuevoBtnClear.addEventListener('click', limpiarFiltros);
+  }
+}
 
-    const btnClear = document.getElementById('btn_clear_filters');
-    if (btnClear) {
-        btnClear.addEventListener('click', limpiarFiltros);
-    }
-
-    init(1, 10);
+// Llamar al diagnóstico después de cargar aislamientos (modificar el event listener)
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('#isolations');
+  if (!btn) return;  
+ 
+  try {
+    const response = await fetch('pages/aislamientos.html');
+    if (!response.ok) throw new Error('Error al cargar el HTML');
+    
+    const html = await response.text();
+    document.getElementById('main-content').innerHTML = html;
+   setTimeout(async () => {
+      try {
+        await initIsolations();
+        setTimeout(() => {
+          initializeAislamientosFilters();          
+        }, 200);
+        
+      } catch (error) {
+        console.error("❌ Error al inicializar aislamientos:", error);
+      }
+    }, 100);
+    
+  } catch (error) {
+    console.error('❌ Error al cargar aislamientos:', error);
+  }
 });
+
+
+if (document.getElementById('incidente-gallina-table-body')) {
+  init(1, 10);
+}
 
 export { init };
