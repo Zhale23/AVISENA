@@ -90,7 +90,7 @@ def get_all_isolations_pag(db: Session, skip:int = 0, limit = 10):
         data_query = text("""SELECT id_aislamiento, id_incidente_gallina, fecha_hora, aislamiento.id_galpon, galpones.nombre
                     FROM aislamiento
                     LEFT JOIN galpones ON galpones.id_galpon = aislamiento.id_galpon
-                     ORDER BY id_aislamiento
+                     ORDER BY fecha_hora DESC
                      LIMIT :limit OFFSET :skip
         """)
         isolation_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
