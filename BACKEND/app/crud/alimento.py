@@ -26,8 +26,8 @@ def create_type_alimento(db: Session, alimento: AlimentoCreate) -> Optional[bool
 
         # Crear nuevo registro
         insert_query = text("""
-            INSERT INTO alimento (nombre)
-            VALUES (:nombre)
+            INSERT INTO alimento (nombre, cantidad, fecha_ingreso)
+            VALUES (:nombre, :cantidad, :fecha_ingreso)
         """)
 
         db.execute(insert_query, alimento.model_dump())
