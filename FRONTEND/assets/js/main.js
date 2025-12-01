@@ -78,13 +78,17 @@ const loadContent = async (page) => {
     if (page === "sensors") {
       import("../pages/sensors.js").then((sensorsModule) =>
         sensorsModule.init()
-      ),
-        import("../pages/registro-sensores.js").then((registroSensoresModule) =>
-          registroSensoresModule.init()
-        ),
-        import("../pages/sensor_types.js").then((sensorTypesModule) =>
-          sensorTypesModule.init()
-        );
+      ); 
+    }
+
+    if (page === "sensor_types") {
+      import("../pages/sensor_types.js").then((sensorTypesModule) => sensorTypesModule.init()); 
+    }
+
+    if (page === "registro_sensores") {
+      import("../pages/registro-sensores.js").then((registroSensoresModule) =>
+        registroSensoresModule.init()
+      );
     }
 
     if (page === "lands") {
