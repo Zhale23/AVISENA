@@ -12,9 +12,9 @@ def create_consumo(db: Session, consumo: ConsumoCreate) -> Optional[bool]:
     try:
         # Crear nuevo registro
         insert_query = text("""
-            INSERT INTO consumo_gallinas (id_alimento, cantidad_alimento, 
-                                        unidad_medida, id_galpon)
-            VALUES (:id_alimento, :cantidad_alimento, :unidad_medida, :id_galpon)
+            INSERT INTO consumo_gallinas (id_alimento, cantidad_alimento,
+                                         id_galpon, fecha_registro)
+            VALUES (:id_alimento, :cantidad_alimento, :id_galpon, :fecha_registro)
         """)
 
         db.execute(insert_query, consumo.model_dump())
@@ -34,7 +34,7 @@ def get_consumo_by_id(db: Session, id_consumo: int):
                 cg.id_alimento, 
                 a.nombre AS alimento, 
                 cg.cantidad_alimento, 
-                cg.unidad_medida, 
+                cg.fecha_registro, 
                 cg.id_galpon, 
                 g.nombre AS galpon
             FROM consumo_gallinas cg
@@ -60,8 +60,8 @@ def get_all_consumo_pag(db: Session, skip: int = 0, limit: int = 10):
                 cg.id_consumo, 
                 cg.id_alimento, 
                 a.nombre AS alimento, 
-                cg.cantidad_alimento, 
-                cg.unidad_medida, 
+                cg.cantidad_alimento,
+                cg.fecha_registro, 
                 cg.id_galpon, 
                 g.nombre AS galpon
             FROM consumo_gallinas cg
@@ -93,8 +93,8 @@ def get_consumo_by_galpon(db: Session, skip: int = 0, limit: int = 10, id_galpon
                 cg.id_consumo, 
                 cg.id_alimento, 
                 a.nombre AS alimento, 
-                cg.cantidad_alimento, 
-                cg.unidad_medida, 
+                cg.cantidad_alimento,
+                cg.fecha_registro,  
                 cg.id_galpon, 
                 g.nombre AS galpon
             FROM consumo_gallinas cg
