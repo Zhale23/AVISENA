@@ -1,9 +1,42 @@
 import { isolationService } from '../js/isolations.service.js';
+import { init as initIncident_chicken } from '../pages/incident_chicken.js';
 
 let modalInstance = null;
 let createModalInstance = null;
 let activeFechaInicio = "";
 let activeFechaFin = "";
+
+//______________________boton incidente__________________________
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('#incident_chickens');
+  if (!btn) return;  
+
+  try {
+    const response = await fetch('pages/incidentes_gallina.html');
+    if (!response.ok) throw new Error('Error al cargar el HTML');
+    
+    const html = await response.text();
+    document.getElementById('main-content').innerHTML = html;
+
+    setTimeout(async () => {
+      try {
+        await initIncident_chicken();
+      } catch (error) {
+        console.error(" Error al inicializar incidentes:", error);
+      }
+    }, 100);
+    
+  } catch (error) {
+    console.error(' Error al cargar los incidentes de gallinas:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo cargar la página de incidentes',
+      confirmButtonColor: '#d33'
+    });
+  }
+});
+
 
 // --- FUNCIÓN PRINCIPAL DE INICIALIZACIÓN ---
 function createIsolationRow(isolation) {
@@ -28,6 +61,8 @@ function createIsolationRow(isolation) {
 }
 
 //____________________formato_para_exportar_por_fechas______________________________
+
+
 function formatDateForAPI(dateStr) {
   if (!dateStr) return "";
   const date = new Date(dateStr);
@@ -36,22 +71,6 @@ function formatDateForAPI(dateStr) {
   const dd = String(date.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
-
-//______________________boton incidente__________________________
-document.addEventListener('click', async (e) => {
-  const btn = e.target.closest('#incident_chickens');
-  if (!btn) return;  
-  
-  try {
-    const response = await fetch('pages/incidentes_gallina.html');
-    const html = await response.text();
-    document.getElementById('main-content').innerHTML = html;
-    initIncident_chicken();
-  } catch (error) {
-    console.error('Error al cargar los incidentes de gallinas:', error);
-  }
-});
-
 
 
 //______________________________paginación para todos los datos y filtrados_____________
@@ -175,6 +194,30 @@ function createDotsLi() {
 }
 
 //______________________ para filtrar por fechas_______________________________________
+function inicializarFiltroFechas() {
+  const btnApplyFilter = document.getElementById("btn-apply-date-filter");
+  const btnClear = document.getElementById('btn_clear_filters');
+  
+  if (btnApplyFilter) {
+    // Remover listeners anteriores
+    btnApplyFilter.replaceWith(btnApplyFilter.cloneNode(true));
+    const nuevoBtn = document.getElementById("btn-apply-date-filter");
+    
+    nuevoBtn.addEventListener("click", () => {
+      const fechaInicio = document.getElementById("fecha-inicio").value;
+      const fechaFin = document.getElementById("fecha-fin").value;
+      filtrarAislamientos(fechaInicio, fechaFin);
+    });
+  }
+  
+  if (btnClear) {
+    btnClear.replaceWith(btnClear.cloneNode(true));
+    const nuevoBtnClear = document.getElementById('btn_clear_filters');
+    
+    nuevoBtnClear.addEventListener('click', limpiarFiltros);
+  }
+}
+
 function filtrarAislamientos(fechaInicio, fechaFin) {
   if (!fechaInicio || !fechaFin) {
     Swal.fire({
@@ -193,15 +236,6 @@ function filtrarAislamientos(fechaInicio, fechaFin) {
   // Recargar la tabla desde la página 1 con el filtro
   init(1, 10);
 }
-
-// Botón para aplicar filtro
-document.getElementById("btn-apply-date-filter").addEventListener("click", () => {
-  const fechaInicio = document.getElementById("fecha-inicio").value;
-  const fechaFin = document.getElementById("fecha-fin").value;
-
-  filtrarAislamientos(fechaInicio, fechaFin);
-
-});
 
 
 //_____________selects para que cargen los nombres de la tabla galpon del create y edit_______________
@@ -293,22 +327,28 @@ async function handleUpdateSubmit(event) {
 }
 
 //____________________________________buscador inteligente____________________________________
-const BuscarAislamiento = document.getElementById('search-isolation');
+function inicializarBuscador() {
+  const BuscarAislamiento = document.getElementById('search-isolation');
 
-if (BuscarAislamiento) {
-  BuscarAislamiento.addEventListener('input', () => {
-    const filter = BuscarAislamiento.value.toLowerCase();
-    const tableBody = document.getElementById('isolations-table-body');
-    if (!tableBody) return;
+  if (BuscarAislamiento) {
+    // Remover event listener anterior si existe
+    BuscarAislamiento.replaceWith(BuscarAislamiento.cloneNode(true));
+    const nuevoInput = document.getElementById('search-isolation');
+    
+    nuevoInput.addEventListener('input', () => {
+      const filter = nuevoInput.value.toLowerCase();
+      const tableBody = document.getElementById('isolations-table-body');
+      if (!tableBody) return;
 
-    const rows = tableBody.querySelectorAll('tr');
-    rows.forEach(row => {
-      const idCell = row.cells[0]?.textContent.toLowerCase() || '';
-      const fechaCell = row.cells[1]?.textContent.toLowerCase() || '';
-      const galponCell = row.cells[2]?.textContent.toLowerCase() || '';
-      row.style.display = idCell.includes(filter) || fechaCell.includes(filter) || galponCell.includes(filter) ? '' : 'none';
+      const rows = tableBody.querySelectorAll('tr');
+      rows.forEach(row => {
+        const idCell = row.cells[0]?.textContent.toLowerCase() || '';
+        const fechaCell = row.cells[1]?.textContent.toLowerCase() || '';
+        const galponCell = row.cells[2]?.textContent.toLowerCase() || '';
+        row.style.display = idCell.includes(filter) || fechaCell.includes(filter) || galponCell.includes(filter) ? '' : 'none';
+      });
     });
-  });
+  }
 }
 
 //______________________________________________________________________________________________
@@ -319,11 +359,10 @@ function limpiarFiltros() {
   activeFechaFin = "";
   document.getElementById("fecha-inicio").value = "";
   document.getElementById("fecha-fin").value = "";
+  const searchInput = document.getElementById('search-isolation');
+  if (searchInput) searchInput.value = "";
   init(1, 10);
 }
-
-const btnClear = document.getElementById('btn_clear_filters');
-btnClear.addEventListener('click', limpiarFiltros);
 //_____________________________________________________________________________________________
 
 async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, fechaFin = activeFechaFin) {
@@ -331,7 +370,10 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
   activeFechaFin = fechaFin;
 
   const tableBody = document.getElementById('isolations-table-body');
-  if (!tableBody) return;
+  if (!tableBody) {
+    console.error("❌ No se encontró isolations-table-body");
+    return;
+  }
 
   tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Cargando aislamientos...</td></tr>';
 
@@ -363,13 +405,19 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
 
     renderPagination(data.total_pages || 1, page);
 
+    // Inicializar event listeners de la tabla
     const editForm = document.getElementById('edit-isolation-form');
     tableBody.removeEventListener('click', handleTableClick);
     tableBody.addEventListener('click', handleTableClick);
     editForm.removeEventListener('submit', handleUpdateSubmit);
     editForm.addEventListener('submit', handleUpdateSubmit);
 
+    // ⭐ INICIALIZAR FILTROS Y BUSCADOR DESPUÉS DE CARGAR LA TABLA
+    inicializarBuscador();
+    inicializarFiltroFechas();
+
   } catch (error) {
+    console.error("❌ Error al cargar aislamientos:", error);
     tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>`;
   }
 }
@@ -573,13 +621,17 @@ async function handleExportClick(event) {
   }
 }
 
+// Inicializar event listener para exportación
+function inicializarExportacion() {
+  document.addEventListener("click", (e) => {
+    const item = e.target.closest(".export-format");
+    if (!item) return;
+    handleExportClick(e);
+  });
+}
 
-document.addEventListener("click", (e) => {
-  const item = e.target.closest(".export-format");
-  if (!item) return;
-  handleExportClick(e);
-});
-
+// Llamar inicialización de exportación una sola vez
+inicializarExportacion();
 
 init(1, 10);
 
