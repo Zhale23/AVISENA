@@ -145,7 +145,7 @@ def update_consumo(
         if not registro_actual:
             raise HTTPException(status_code=404, detail="El consumo ingresado no existe")
         
-        if consumo.cantidad_alimento <= 0:
+        if consumo.cantidad_alimento is not None and consumo.cantidad_alimento <= 0:
             raise HTTPException(status_code=400, detail="La cantidad debe ser mayor a cero")
 
         id_galpon = consumo.id_galpon or registro_actual["id_galpon"]
