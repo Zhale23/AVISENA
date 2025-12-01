@@ -1,19 +1,20 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import date
 
 class ConsumoBase(BaseModel):
     id_alimento: int
     cantidad_alimento: int
-    unidad_medida: str
+    fecha_registro: date
     id_galpon: Optional[int] = None
-
+    
 class ConsumoCreate(ConsumoBase):
     pass
 
 class ConsumoUpdate(BaseModel):
     id_alimento: Optional[int] = None
     cantidad_alimento: Optional[int] = None
-    unidad_medida: Optional[str] = None
+    fecha_registro: Optional[date] = None
     id_galpon: Optional[int] = None
 
 class ConsumoOut(ConsumoBase):
