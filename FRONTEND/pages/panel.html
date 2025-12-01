@@ -139,32 +139,62 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <h5 class="card-title mb-3">Accesos Directos</h5>
-                <div class="d-grid gap-2" id="panel-shortcuts">
-                    <a href="#" class="btn btn-outline-warning text-start shortcut-link" data-page="tareas">
-                        <i class="fas fa-tasks me-2"></i> Mis Tareas
+                <div class="d-grid gap-3" id="panel-shortcuts">
+                    <a href="#"
+                        class="btn btn-outline-warning rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn"
+                        data-page="tareas">
+                        <i class="fas fa-tasks fa-lg me-3"></i> <span class="flex-grow-1">Mis Tareas</span>
                     </a>
-                    <a href="#" class="btn btn-outline-danger text-start shortcut-link" data-page="incidentes">
-                        <i class="fas fa-exclamation-triangle me-2"></i> Reportar Incidente
+                    <a href="#"
+                        class="btn btn-outline-danger rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn"
+                        data-page="incidentes">
+                        <i class="fas fa-exclamation-triangle fa-lg me-3"></i> <span class="flex-grow-1">Reportar
+                            Incidente</span>
                     </a>
-                    <a href="#" class="btn btn-outline-primary text-start shortcut-link" data-page="chickens">
-                        <i class="fas fa-feather me-2"></i> Registrar Gallinas
+                    <a href="#"
+                        class="btn btn-outline-primary rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn"
+                        data-page="chickens">
+                        <i class="fas fa-feather fa-lg me-3"></i> <span class="flex-grow-1">Registrar Gallinas</span>
                     </a>
-                    <a href="#" class="btn btn-outline-success text-start shortcut-link" data-page="produccion_huevos">
-                        <i class="fas fa-egg me-2"></i> Nueva Producción
+                    <a href="#"
+                        class="btn btn-outline-success rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn"
+                        data-page="produccion_huevos">
+                        <i class="fas fa-egg fa-lg me-3"></i> <span class="flex-grow-1">Nueva Producción</span>
                     </a>
-                    <a href="#" class="btn btn-outline-info text-start shortcut-link" data-page="rescue">
-                        <i class="fas fa-medkit me-2"></i> Salvamento
+                    <a href="#"
+                        class="btn btn-outline-info rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn"
+                        data-page="rescue">
+                        <i class="fas fa-medkit fa-lg me-3"></i> <span class="flex-grow-1">Salvamento</span>
                     </a>
-                    <a href="#" class="btn btn-outline-secondary text-start shortcut-link" data-page="sensors">
-                        <i class="fas fa-thermometer-half me-2"></i> Ver Sensores
+                    <a href="#"
+                        class="btn btn-outline-secondary rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn"
+                        data-page="sensors">
+                        <i class="fas fa-thermometer-half fa-lg me-3"></i> <span class="flex-grow-1">Ver Sensores</span>
                     </a>
-                    <a href="#" class="btn btn-outline-dark text-start shortcut-link d-none" data-page="ventas">
-                        <i class="fas fa-shopping-cart me-2"></i> Registrar Venta
+                    <a href="#"
+                        class="btn btn-outline-dark rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn d-none"
+                        data-page="ventas">
+                        <i class="fas fa-shopping-cart fa-lg me-3"></i> <span class="flex-grow-1">Registrar Venta</span>
                     </a>
-                    <a href="#" class="btn btn-outline-secondary text-start shortcut-link d-none" data-page="galpones">
-                        <i class="fas fa-warehouse me-2"></i> Gestionar Galpones
+                    <a href="#"
+                        class="btn btn-outline-secondary rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn d-none"
+                        data-page="galpones">
+                        <i class="fas fa-warehouse fa-lg me-3"></i> <span class="flex-grow-1">Gestionar Galpones</span>
                     </a>
                 </div>
+                <style>
+                    .shortcut-btn {
+                        transition: box-shadow 0.2s, transform 0.2s;
+                        font-size: 1.05rem;
+                        padding: 0.75rem 1.25rem;
+                    }
+
+                    .shortcut-btn:hover {
+                        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12) !important;
+                        transform: translateY(-2px) scale(1.03);
+                        z-index: 2;
+                    }
+                </style>
             </div>
         </div>
     </div>
