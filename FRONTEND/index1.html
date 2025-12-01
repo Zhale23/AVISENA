@@ -314,9 +314,8 @@
 								</li>
 
 								<li class="nav-item">
-									<a class="nav-link" href="#" data-page="sensors">
-
-										<span class="nav-link-text">Sensores</span>
+									<a class="nav-link" href="#" data-page="registro_sensores">
+										<span class="nav-link-text">Registro Sensores</span>
 									</a>
 								</li>
 							</ul>
@@ -496,13 +495,13 @@
 
 			// Definir qué módulos puede ver cada rol
 			const permisos = {
-				superadmin: ['users', 'tareas', 'galpones', 'incidentes', 'inventario', 'sensors', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
+				superadmin: ['users', 'tareas', 'galpones', 'incidentes', 'inventario','registro_sensores', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
 
-				administrador: ['users', 'tareas', 'galpones', 'incidentes', 'inventario', 'sensors', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
+				administrador: ['users', 'tareas', 'galpones', 'incidentes', 'inventario','registro_sensores', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
 
-				supervisor: ['tareas', 'incidentes', 'inventario', 'sensors', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock'],
+				supervisor: ['tareas', 'incidentes', 'inventario','registro_sensores', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock'],
 
-				operario: ['tareas', 'galpones', 'incidentes', 'inventario', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock']
+				operario: ['tareas', 'galpones', 'incidentes', 'inventario','registro_sensores', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock']
 			};
 
 			// Si no hay rol válido, ocultar todo
