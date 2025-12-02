@@ -72,5 +72,11 @@ export const userService = {
         });
     },
 
+    getUsersExceptSuperadmins: () => {
+        const endpoint = `/users/all-users-except-superadmins`;
+        return request(endpoint);
+    },
+
+
     // Aquí podrías añadir más servicios
 };
