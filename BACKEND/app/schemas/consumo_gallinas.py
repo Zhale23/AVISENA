@@ -21,6 +21,7 @@ class ConsumoOut(ConsumoBase):
     id_consumo: int
     alimento: str
     galpon: str
+    fecha_registro: date
 
 class ConsumoPaginated(BaseModel):
     page: int
@@ -28,5 +29,6 @@ class ConsumoPaginated(BaseModel):
     total_record_consumo: int
     total_pages: int
     record_consumo: List[ConsumoOut]
+
 
 
