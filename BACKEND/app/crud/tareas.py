@@ -38,8 +38,16 @@ def get_tareas_pag(
     """
     try:
         base_query = """
-            SELECT id_tarea, id_usuario, descripcion, fecha_hora_init, estado, fecha_hora_fin
-            FROM tareas
+            SELECT 
+                t.id_tarea,
+                u.documento AS documento ,
+                u.nombre AS nombre_usuario,
+                t.descripcion,
+                t.fecha_hora_init,
+                t.estado,
+                t.fecha_hora_fin
+            FROM tareas t
+            JOIN usuarios u ON t.id_usuario = u.id_usuario   
             WHERE 1=1
         """
         params = {"skip": skip, "limit": limit}
