@@ -26,9 +26,6 @@ class ConsumoOut(ConsumoBase):
 class ConsumoPaginated(BaseModel):
     page: int
     page_size: int
-    total_record_consumo: int
+    total_consumos: int
     total_pages: int
-    record_consumo: List[ConsumoOut]
-
-
-
+    consumos: List[ConsumoOut]
