@@ -50,11 +50,20 @@ def get_type_alimento_by_id(db: Session, id_alimento: int):
         logger.error(f"Error al obtener el tipo de alimento por id: {e}")
         raise Exception("Error de base de datos al obtener el tipo de alimento")
 
-def get_all_type_alimentos(db: Session):
+def get_all_type_alimentos_pag(db: Session, skip:int = 0, limit = 10):
     try:
+        count_query = text("""SELECT COUNT(id_alimento) AS total 
+                     FROM alimento 
+                     """)
+        total_result = db.execute(count_query).scalar()
+        
         query = text("""SELECT * FROM alimento""")
-        result = db.execute(query).mappings().all()
-        return result
+        alimento_list = db.execute(query,{"skip": skip, "limit": limit}).mappings().all()
+        
+        return {
+                "total": total_result or 0,
+                "alimento": alimento_list
+            }
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener los tipos de alimentos: {e}")
         raise Exception("Error de base de datos al obtener los tipos de alimentos")
@@ -106,3 +115,4 @@ def update_type_alimento_by_id(db: Session, id_alimento: int, alimento: Alimento
         logger.error(f"Error al actualizar el tipo de alimento {id_alimento}: {e}")
         raise Exception("Error de base de datos al actualizar el tipo de alimento")
     
+
