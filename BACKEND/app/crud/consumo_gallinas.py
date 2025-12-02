@@ -175,3 +175,45 @@ def get_alimento_info(db: Session, id_alimento: int):
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener la información del alimento: {e}")
         raise Exception("Error de base de datos al obtener la información del alimento")
+
+def get_consumo_by_date_range(db: Session, fecha_inicio: str, fecha_fin: str):
+    """
+    Obtiene las tareas cuya fecha de inicio o fin esté dentro de un rango de fechas.
+    Ignora las horas (usa DATE(fecha_hora_init) y DATE(fecha_hora_fin)).
+    """
+    try:
+        query = text("""
+            SELECT cg.id_consumo, 
+                cg.id_alimento, 
+                a.nombre AS alimento, 
+                cg.cantidad_alimento,
+                cg.fecha_registro,  
+                cg.id_galpon, 
+                g.nombre AS galpon
+            FROM consumo_gallinas cg
+            JOIN alimento a ON cg.id_alimento = a.id_alimento
+            LEFT JOIN galpones g ON cg.id_galpon = g.id_galpon
+            WHERE DATE(fecha_registro) BETWEEN :fecha_inicio AND :fecha_fin
+            ORDER BY fecha_registro DESC
+        """)
+        result = db.execute(query, {
+            "fecha_inicio": fecha_inicio,
+            "fecha_fin": fecha_fin
+        }).mappings().all()
+        
+        return [dict(row) for row in result]
+
+    except SQLAlchemyError as e:
+        raise Exception(f"Error al consultar los consumos por rango de fechas: {e}")
+
+
+def get_cantidad_disponible(db: Session, id_alimento: int) -> int:
+    query = text("""
+        SELECT cantidad 
+        FROM alimento
+        WHERE id_alimento = :id_alimento
+    """)
+
+    result = db.execute(query, {"id_alimento": id_alimento}).scalar()
+
+    return result if result is not None else 0
