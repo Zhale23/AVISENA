@@ -86,9 +86,9 @@ def get_consumos_pag(
         return ConsumoPaginated(
             page=page,
             page_size=page_size,
-            total_record_consumo=data['total'], 
+            total_consumos=data['total'], 
             total_pages=(data['total'] + page_size - 1) // page_size if data['total'] > 0 else 0,
-            record_consumo=data['consumo']  
+            consumos=data['consumo']  
         )
     
     except SQLAlchemyError as e:
@@ -121,9 +121,9 @@ def get_consumo(
         return ConsumoPaginated(
             page=page,
             page_size=page_size,
-            total_record_consumo=data['total'],
+            total_consumos=data['total'],
             total_pages=(data['total'] + page_size -1) // page_size,
-            record_consumo=data['consumo']
+           consumos=data['consumo']
         )
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -162,8 +162,26 @@ def update_consumo(
         
         if not alimento:
             raise HTTPException(status_code=404, detail="El alimento especificado no existe")
+        
+        cantidad_actual = registro_actual["cantidad_alimento"]
+        nueva_cantidad = consumo.cantidad_alimento or cantidad_actual
+
+        incremento = nueva_cantidad - cantidad_actual
+
+        # Si el usuario aumenta la cantidad:
+        if incremento > 0:
+            # Obtener inventario disponible del alimento
+            cantidad_disponible = crud_consumo.get_cantidad_disponible(db, id_alimento)
+
+            if cantidad_disponible < incremento:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"No hay suficiente alimento disponible. "
+                           f"Disponible: {cantidad_disponible}, requerido: {incremento}"
+                )
 
         success = crud_consumo.update_consumo_by_id(db, id_consumo, consumo)
+        
         if not success:
             raise HTTPException(status_code=400, detail="No se pudo actualizar el Registro")
 
@@ -171,6 +189,48 @@ def update_consumo(
 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/rango-fechas", response_model=ConsumoPaginated)
+def obtener_consumos_por_rango_fechas(
+    fecha_inicio: str = Query(..., description="Fecha inicial en formato YYYY-MM-DD"),
+    fecha_fin: str = Query(..., description="Fecha final en formato YYYY-MM-DD"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    """
+    Obtiene todas las tareas que inician o terminan dentro de un rango de fechas.
+    Ignora las horas y devuelve las tareas ordenadas por fecha_hora_init.
+    """
+    try:
+        id_rol = user_token.id_rol
+        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
+            raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        
+        consumos_alimento = crud_consumo.get_consumo_by_date_range(db, fecha_inicio, fecha_fin)
+
+        if not consumos_alimento:
+            raise HTTPException(status_code=404, detail="No hay consumos en ese rango de fechas")
+
+        # Aplicar paginación manualmente a los resultados filtrados
+        total = len(consumos_alimento)
+        skip = (page - 1) * page_size
+        end_index = skip + page_size
+        
+        # Obtener solo la página solicitada
+        consumos_paginados = consumos_alimento[skip:end_index]
+        
+        return ConsumoPaginated(
+            page=page,
+            page_size=page_size,
+            total_consumos=total,
+            total_pages=(total + page_size - 1) // page_size,
+            consumos=consumos_paginados
+        )
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener los consumos de alimento: {e}")
+
 
 @router.delete("/eliminar/{id_consumo}", status_code=status.HTTP_200_OK)
 def delete_consumo(
