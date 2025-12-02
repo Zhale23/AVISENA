@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal
 
 class StockBase(BaseModel):
+    nombre_producto: str 
+    tipo: str 
     unidad_medida: Literal['unidad', 'panal', 'docena', 'medio_panal']
     id_produccion: int = Field(..., gt=0)
     cantidad_disponible: int = Field(..., ge=0)
