@@ -6,7 +6,7 @@ class ConsumoBase(BaseModel):
     id_alimento: int
     cantidad_alimento: int
     fecha_registro: date
-    id_galpon: Optional[int] = None
+    id_galpon: int
     
 class ConsumoCreate(ConsumoBase):
     pass
@@ -28,4 +28,5 @@ class ConsumoPaginated(BaseModel):
     total_record_consumo: int
     total_pages: int
     record_consumo: List[ConsumoOut]
+
 
