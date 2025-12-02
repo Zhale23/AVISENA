@@ -1,14 +1,14 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from core.database import get_db
-from app.schemas.alimento import AlimentoCreate, AlimentoUpdate, AlimentoOut
+from app.schemas.alimento import AlimentoCreate, AlimentoUpdate, AlimentoOut, PaginatedAlimento
 from app.crud import alimento as crud_type_alimento
 from app.schemas.users import UserOut
-
+from datetime import date
 
 router = APIRouter()
 modulo = 28
@@ -99,3 +99,45 @@ def update_alimento(
         return {"message": "Registro actualizado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/rango-fechas", response_model=PaginatedAlimento)
+def obtener_alimento_por_rango_fechas(
+    fecha_inicio: str = Query(..., description="Fecha inicial en formato YYYY-MM-DD"),
+    fecha_fin: str = Query(..., description="Fecha final en formato YYYY-MM-DD"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    """
+    Obtiene todas las tareas que inician o terminan dentro de un rango de fechas.
+    Ignora las horas y devuelve las tareas ordenadas por fecha_hora_init.
+    """
+    try:
+        id_rol = user_token.id_rol
+        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
+            raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        
+        alimentos = crud_type_alimento.get_alimento_by_date_range(db, fecha_inicio, fecha_fin)
+        
+        if not alimentos:
+            raise HTTPException(status_code=404, detail="No hay alimentos en ese rango de fechas")
+            
+
+        total = len(alimentos)
+        skip = (page - 1) * page_size
+        end_index = skip + page_size
+        
+        alimentos_paginados = alimentos[skip:end_index]
+            
+        return PaginatedAlimento(
+            page=page,
+            page_size=page_size,
+            total_alimento=total,
+            total_pages=(total + page_size - 1) // page_size,
+            alimento=alimentos_paginados
+        )
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener las alimentos: {e}")
