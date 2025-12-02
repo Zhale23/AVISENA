@@ -13,7 +13,7 @@ const fincaMap = new Map();
 // Paginación (cliente)
 let cachedInventory = [];
 let currentPage = 1;
-let pageSize = 5;
+let pageSize = 10;
 let totalPages = 1;
 
 function createInvRow(inv) {
