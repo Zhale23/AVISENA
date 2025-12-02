@@ -95,7 +95,7 @@
       tareas: { ver: true, crear: false, editar: true, eliminar: false },
       lands: { ver: false, crear: false, editar: false, eliminar: false },
       galpones: { ver: true, crear: false, editar: false, eliminar: false },
-      incidentes: { ver: true, crear: false, editar: true, eliminar: false },
+      incidentes: { ver: true, crear: true, editar: true, eliminar: false },
       inventario: { ver: false, crear: false, editar: false, eliminar: false },
       sensors: { ver: false, crear: false, editar: false, eliminar: false },
       sensor_types: { ver: false, crear: false, editar: false, eliminar: false },
