@@ -10,6 +10,11 @@ let createModalInstance = null; // Instancia del modal de creación
 // Mapas en memoria para resolver id -> nombre
 const categoryMap = new Map();
 const fincaMap = new Map();
+// Paginación (cliente)
+let cachedInventory = [];
+let currentPage = 1;
+let pageSize = 5;
+let totalPages = 1;
 
 function createInvRow(inv) {
 
@@ -291,6 +296,78 @@ function handleStatusSwitch(e) {
   // Implementar según tus necesidades
 }
 
+/* ---------------------------------
+   PAGINACIÓN (cliente)
+---------------------------------- */
+function renderPagination(page, total) {
+  const list = document.getElementById('pagination-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const createLi = (content, disabled = false) => {
+    const li = document.createElement('li');
+    li.className = `page-item ${disabled ? 'disabled' : ''}`;
+    li.innerHTML = content;
+    return li;
+  };
+
+  // Prev
+  const prevDisabled = page === 1;
+  const prevLi = createLi(`
+    <a class="page-link text-success" href="#" data-page="${page - 1}">
+      <i class="fas fa-chevron-left"></i>
+    </a>
+  `, prevDisabled);
+  list.appendChild(prevLi);
+
+  // Pages
+  for (let i = 1; i <= total; i++) {
+    const isActive = i === page;
+    const li = createLi(`
+      <a class="page-link ${isActive ? 'bg-success border-success text-white' : 'text-success'}" href="#" data-page="${i}">${i}</a>
+    `);
+    list.appendChild(li);
+  }
+
+  // Next
+  const nextDisabled = page === total;
+  const nextLi = createLi(`
+    <a class="page-link text-success" href="#" data-page="${page + 1}">
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  `, nextDisabled);
+  list.appendChild(nextLi);
+}
+
+function handlePaginationClick(e) {
+  e.preventDefault();
+  const a = e.target.closest ? e.target.closest('a[data-page]') : null;
+  if (!a) return;
+  const p = parseInt(a.dataset.page, 10);
+  if (isNaN(p) || p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderInventoryPage();
+}
+
+function renderInventoryPage() {
+  const tableBody = document.getElementById('inv-table-body');
+  if (!tableBody) return;
+
+  if (!cachedInventory || cachedInventory.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron Items en el inventario.</td></tr>';
+    renderPagination(1, 1);
+    return;
+  }
+
+  totalPages = Math.max(1, Math.ceil(cachedInventory.length / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * pageSize;
+  const slice = cachedInventory.slice(start, start + pageSize);
+
+  tableBody.innerHTML = slice.map(createInvRow).join('');
+  renderPagination(currentPage, totalPages);
+}
+
 async function cargarCategorias() {
   try {
     const categorias = await categoryService.getCategories();
@@ -455,45 +532,20 @@ async function init() {
   if (!tableBody) return;
 
   tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Cargando Inventario...</td></tr>'; 
+  tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Cargando Inventario...</td></tr>'; 
 
   await cargarCategorias();
   await cargarFincas();
-  // Si existe un select de filtro por finca, usarlo para cargar inventario filtrado
-  const filterSelect = document.getElementById('filter-fin-inv') || document.getElementById('filter-land');
-  if (filterSelect) {
-    // Ocultar el select de finca porque solo existe una finca en este despliegue
-    try {
-      const container = filterSelect.closest('.input-group') || filterSelect.parentNode;
-      if (container) container.style.display = 'none';
-      else filterSelect.style.display = 'none';
-    } catch (err) {
-      // ignorar si no se puede ocultar
-    }
-
-    // Cargar inventario sin filtrar (mostrar todas las filas)
-    try {
-      const inventory = await inventoryService.getInventory();
-      if (inventory && inventory.length > 0) {
-        tableBody.innerHTML = inventory.map(createInvRow).join('');
-      } else {
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron Items en el inventario.</td></tr>';
-      }
-    } catch (error) {
-      console.error('Error al obtener los Inventario:', error);
-      tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>`;
-    }
-  } else {
-    try {
-      const inventory = await inventoryService.getInventory();
-      if (inventory && inventory.length > 0) {
-        tableBody.innerHTML = inventory.map(createInvRow).join('');
-      } else {
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron Items en el inventario.</td></tr>';
-      }
-    } catch (error) {
-      console.error('Error al obtener los Inventario:', error);
-      tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>`;
-    }
+  // Intentar obtener inventario y almacenar en caché para paginación cliente
+  try {
+    const inventory = await inventoryService.getInventory();
+    cachedInventory = Array.isArray(inventory) ? inventory : [];
+    currentPage = 1;
+    renderInventoryPage();
+  } catch (error) {
+    console.error('Error al obtener los Inventario:', error);
+    tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>`;
+    renderPagination(1, 1);
   }
 
   // Aplicamos el patrón remove/add para evitar listeners duplicados
@@ -507,6 +559,13 @@ async function init() {
   editForm.addEventListener('submit', handleUpdateSubmit);
   createForm.removeEventListener('submit', handleCreateSubmit);
   createForm.addEventListener('submit', handleCreateSubmit);
+
+  // Paginación: vincular listener al UL de paginación
+  const pagList = document.getElementById('pagination-list');
+  if (pagList) {
+    pagList.removeEventListener('click', handlePaginationClick);
+    pagList.addEventListener('click', handlePaginationClick);
+  }
 
   // Delegated handler dentro del módulo Inventario para accesos directos (p. ej. categorias)
   try {
