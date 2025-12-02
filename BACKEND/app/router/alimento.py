@@ -26,13 +26,7 @@ def create_type_alimento(
         if not verify_permissions(db, id_rol, modulo, 'insertar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
 
-        created = crud_type_alimento.create_type_alimento(db, alimento)
-
-        if created is False:
-            raise HTTPException(
-                status_code=400,
-                detail="El tipo de alimento con ese nombre ya existe."
-            )
+        crud_type_alimento.create_type_alimento(db, alimento)
 
         return {"message": "Registro de tipo de alimento creado correctamente"}
 
@@ -152,4 +146,5 @@ def obtener_alimento_por_rango_fechas(
 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener las alimentos: {e}")
+
 
