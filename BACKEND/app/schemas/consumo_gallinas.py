@@ -20,7 +20,7 @@ class ConsumoUpdate(BaseModel):
 class ConsumoOut(ConsumoBase):
     id_consumo: int
     alimento: str
-    galpon: Optional[str] = None
+    galpon: str
 
 class ConsumoPaginated(BaseModel):
     page: int
@@ -28,3 +28,4 @@ class ConsumoPaginated(BaseModel):
     total_record_consumo: int
     total_pages: int
     record_consumo: List[ConsumoOut]
+
