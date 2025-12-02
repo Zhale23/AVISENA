@@ -1,4 +1,4 @@
-import { userService } from '../api/user.service.js';
+import { userService } from '../js/api/user.service.js';
 
 const currentUser = JSON.parse(localStorage.getItem("user")); 
 
