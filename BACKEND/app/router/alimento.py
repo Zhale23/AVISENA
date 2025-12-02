@@ -61,8 +61,10 @@ def get__type_alimento(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/all-type-alimentos", response_model=List[AlimentoOut])
-def get_type_alimentos(
+@router.get("/all-type-alimentos_pag", response_model=PaginatedAlimento)
+def get_all_consumo_pag(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
@@ -72,10 +74,19 @@ def get_type_alimentos(
         if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
-        type_alimento = crud_type_alimento.get_all_type_alimentos(db)
-        if not type_alimento:
-            raise HTTPException(status_code=404, detail="Registro no encontrado")
-        return type_alimento
+        skip = (page - 1) * page_size
+        type_alimento = crud_type_alimento.get_all_type_alimentos_pag(db, skip=skip, limit=page_size)
+        
+        total = type_alimento["total"]
+        tipo_alimento = type_alimento["alimento"]
+        
+        return PaginatedAlimento(
+            page= page,
+            page_size= page_size,
+            total_alimento= total,
+            total_pages= (total + page_size - 1) // page_size,
+            alimento= tipo_alimento
+        )
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -141,3 +152,4 @@ def obtener_alimento_por_rango_fechas(
 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener las alimentos: {e}")
+
