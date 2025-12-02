@@ -13,7 +13,7 @@
                                     <div class="col-auto">
                                         <select id="filter-role" class="form-select w-auto">
                                             <option value="all">Todos los roles</option>
-                <!--                         <option value="superadmin">SuperAdmin</option>
+                                            <!--                         <option value="superadmin">SuperAdmin</option>
                                             <option value="administrador">Admin</option> -->
                                             <option value="supervisor">Supervisor</option>
                                             <option value="operario">Operario</option>
@@ -26,22 +26,30 @@
                                             <option value="inactive">Inactivos</option>
                                         </select>
                                     </div>
-                                    <div class="col-auto">
-                                    <div class="btn-group">
-                                        <button class="btn app-btn-secondary dropdown-toggle" type="button" id="export-btn"
-                                            data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fa fa-file-export me-1"></i> Exportar
+                                    <div class="col">
+                                        <button type="button" class="btn btn-secondary" id="btn_clear_filters">
+                                            <i class="fas fa-times"></i> Limpiar
                                         </button>
-                                        <ul class="dropdown-menu" aria-labelledby="export-btn">
-                                            <li><a class="dropdown-item export-format" href="#" data-format="csv">Exportar CSV</a></li>
-                                            <li><a class="dropdown-item export-format" href="#" data-format="excel">Exportar Excel</a>
-                                            </li>
-                                        </ul>
                                     </div>
-                                </div>
                                     <div class="col-auto">
-                                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#create-user-modal"
-                                        id="btn-open-create-user"><i class="fa fa-plus me-1"></i>Nuevo Usuario</button>
+                                        <div class="btn-group">
+                                            <button class="btn app-btn-secondary dropdown-toggle" type="button"
+                                                id="export-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fa fa-file-export me-1"></i> Exportar
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="export-btn">
+                                                <li><a class="dropdown-item export-format" href="#"
+                                                        data-format="csv">Exportar CSV</a></li>
+                                                <li><a class="dropdown-item export-format" href="#"
+                                                        data-format="excel">Exportar Excel</a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button class="btn btn-success" data-bs-toggle="modal"
+                                            data-bs-target="#create-user-modal" id="btn-open-create-user"><i
+                                                class="fa fa-plus me-1"></i>Nuevo Usuario</button>
                                     </div>
                                 </div>
                             </div>
@@ -114,8 +122,8 @@
 
                     <div class="mb-3">
                         <label for="create-id_rol" class="form-label">ID Rol</label>
-                        <select id="create-id_rol" class="form-select form-select-sm rounded border-secondary shadow-sm bg-white">
-                            <option value="" selected disabled>Seleccione una opción</option>
+                        <select id="create-id_rol"
+                            class="form-select form-select-sm rounded border-secondary shadow-sm bg-white">
                             <option value="1">SuperAdmin</option>
                             <option value="2">Admin</option>
                             <option value="3">Supervisor</option>

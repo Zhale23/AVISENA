@@ -151,6 +151,10 @@ const loadContent = async (page) => {
         infoVentaModule.init()
       );
     }
+    if(page === 'perfil') {
+      import ('./pages/perfil.js')
+        .then(perfilModule => perfilModule.init());
+    }
   } catch (error) {
     console.error("¡ERROR! Algo falló dentro de loadContent:", error);
     mainContent.innerHTML = `<h3 class="text-center text-danger p-5">No se pudo cargar el contenido. Revisa la consola (F12).</h3>`;

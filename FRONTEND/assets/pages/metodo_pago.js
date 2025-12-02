@@ -208,6 +208,15 @@ async function handleUpdateSubmit(event) {
     return;
   }
 
+  if (!updatedData.descripcion || updatedData.descripcion.length < 1) {
+    Swal.fire({
+      icon: "error",
+      title: "Descripción inválida",
+      text: "La descripción no puede estar vacía.",
+    });
+    return;
+  }
+
   try {
     await metodoPagoService.updateMetodoPago(metodoId, updatedData);
     modalInstance.hide();
@@ -259,11 +268,15 @@ async function handleStatusSwitch(event) {
     text: `¿Deseas ${actionText} este método de pago?`,
     icon: "warning",
     showCancelButton: true,
-    confirmButtonColor: "#28a745",
-    cancelButtonColor: "#d33",
     confirmButtonText: `Sí, ${actionText}`,
     cancelButtonText: "Cancelar",
+    customClass: {
+      confirmButton: "btn btn-success",   // clase de Bootstrap success
+      cancelButton: "btn btn-secondary"   // clase de Bootstrap secondary
+    },
+    
   });
+
 
   if (!result.isConfirmed) {
     switchElement.checked = !newStatus; // revertir
@@ -318,6 +331,15 @@ async function handleCreateSubmit(event) {
       icon: "error",
       title: "Nombre inválido",
       text: "El nombre debe tener al menos 3 caracteres válidos.",
+    });
+    return;
+  }
+
+  if (!newMetodoData.descripcion || newMetodoData.descripcion.length < 1) {
+    Swal.fire({
+      icon: "error",
+      title: "Descripción inválida",
+      text: "La descripción no puede estar vacía.",
     });
     return;
   }
@@ -442,3 +464,4 @@ function applyFilter() {
     ? filteredMetodos.map(createMetodoPagoRow).join('')
     : '<tr><td colspan="5" class="text-center">No hay métodos de pago que coincidan.</td></tr>';
 }
+
