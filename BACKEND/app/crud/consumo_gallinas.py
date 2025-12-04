@@ -67,7 +67,7 @@ def get_all_consumo_pag(db: Session, skip: int = 0, limit: int = 10):
             FROM consumo_gallinas cg
             JOIN alimento a ON cg.id_alimento = a.id_alimento
             LEFT JOIN galpones g ON cg.id_galpon = g.id_galpon
-            ORDER BY id_consumo
+            ORDER BY fecha_registro DESC
             LIMIT :limit OFFSET :skip
                 """)
         
@@ -217,3 +217,4 @@ def get_cantidad_disponible(db: Session, id_alimento: int) -> int:
     result = db.execute(query, {"id_alimento": id_alimento}).scalar()
 
     return result if result is not None else 0
+
