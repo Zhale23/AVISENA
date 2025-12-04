@@ -58,7 +58,8 @@ def get_all_type_alimentos_pag(db: Session, skip:int = 0, limit = 10):
         total_result = db.execute(count_query).scalar()
         
         query = text("""SELECT * FROM alimento
-                    ORDER BY fecha_ingreso DESC""")
+                     ORDER BY fecha_ingreso DESC
+                     LIMIT :limit OFFSET :skip""")
         alimento_list = db.execute(query,{"skip": skip, "limit": limit}).mappings().all()
         
         return {
@@ -68,28 +69,6 @@ def get_all_type_alimentos_pag(db: Session, skip:int = 0, limit = 10):
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener los tipos de alimentos: {e}")
         raise Exception("Error de base de datos al obtener los tipos de alimentos")
-
-def get_alimento_by_date_range(db: Session, fecha_inicio: str, fecha_fin: str):
-    """
-    Obtiene las tareas cuya fecha de inicio o fin esté dentro de un rango de fechas.
-    Ignora las horas (usa DATE(fecha_hora_init) y DATE(fecha_hora_fin)).
-    """
-    try:
-        query = text("""
-            SELECT id_alimento, alimento.nombre, cantidad, alimento.fecha_ingreso
-                FROM alimento
-                WHERE DATE(fecha_ingreso) BETWEEN :fecha_inicio AND :fecha_fin
-                ORDER BY fecha_ingreso DESC
-        """)
-        result = db.execute(query, {
-            "fecha_inicio": fecha_inicio,
-            "fecha_fin": fecha_fin
-        }).mappings().all()
-        
-        return [dict(row) for row in result]
-
-    except SQLAlchemyError as e:
-        raise Exception(f"Error al consultar los aislamientos por rango de fechas: {e}")
 
 def update_type_alimento_by_id(db: Session, id_alimento: int, alimento: AlimentoUpdate) -> Optional[bool]:
     try:
@@ -116,5 +95,24 @@ def update_type_alimento_by_id(db: Session, id_alimento: int, alimento: Alimento
         logger.error(f"Error al actualizar el tipo de alimento {id_alimento}: {e}")
         raise Exception("Error de base de datos al actualizar el tipo de alimento")
     
+def get_alimento_by_date_range(db: Session, fecha_inicio: str, fecha_fin: str):
+    """
+    Obtiene las tareas cuya fecha de inicio o fin esté dentro de un rango de fechas.
+    Ignora las horas (usa DATE(fecha_hora_init) y DATE(fecha_hora_fin)).
+    """
+    try:
+        query = text("""
+            SELECT id_alimento, alimento.nombre, cantidad, alimento.fecha_ingreso
+                FROM alimento
+                WHERE DATE(fecha_ingreso) BETWEEN :fecha_inicio AND :fecha_fin
+                ORDER BY fecha_ingreso DESC
+        """)
+        result = db.execute(query, {
+            "fecha_inicio": fecha_inicio,
+            "fecha_fin": fecha_fin
+        }).mappings().all()
+        
+        return [dict(row) for row in result]
 
-
+    except SQLAlchemyError as e:
+        raise Exception(f"Error al consultar los aislamientos por rango de fechas: {e}")
