@@ -155,6 +155,14 @@ const loadContent = async (page) => {
       import ('./pages/perfil.js')
         .then(perfilModule => perfilModule.init());
     }
+
+      if (page === "alimentos") {
+      import("../pages/alimentos.js").then((alimentosModule) => alimentosModule.init());
+    }
+
+     if (page === "consumo_alimentos") {
+      import("../pages/consumos_alimentos.js").then((consumosModule) => consumosModule.init());
+    }
   } catch (error) {
     console.error("¡ERROR! Algo falló dentro de loadContent:", error);
     mainContent.innerHTML = `<h3 class="text-center text-danger p-5">No se pudo cargar el contenido. Revisa la consola (F12).</h3>`;
