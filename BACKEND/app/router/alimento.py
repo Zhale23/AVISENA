@@ -8,7 +8,7 @@ from core.database import get_db
 from app.schemas.alimento import AlimentoCreate, AlimentoUpdate, AlimentoOut, PaginatedAlimento
 from app.crud import alimento as crud_type_alimento
 from app.schemas.users import UserOut
-from datetime import date
+
 
 router = APIRouter()
 modulo = 28
@@ -25,6 +25,7 @@ def create_type_alimento(
 
         if not verify_permissions(db, id_rol, modulo, 'insertar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        
 
         crud_type_alimento.create_type_alimento(db, alimento)
 
@@ -33,6 +34,24 @@ def create_type_alimento(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/all-alimentos", response_model=List[AlimentoOut])
+def get_alimentos(
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    try:
+        id_rol = user_token.id_rol  # El rol del usuario actual
+
+        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
+            raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        
+        alimentos = crud_type_alimento.get_all_alimentos(db)
+        if not alimentos:
+            raise HTTPException(status_code=404, detail="alimentos no encontrados")
+        return alimentos
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/by-id", response_model=AlimentoOut)
@@ -105,7 +124,6 @@ def update_alimento(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/rango-fechas", response_model=PaginatedAlimento)
 def obtener_alimento_por_rango_fechas(
     fecha_inicio: str = Query(..., description="Fecha inicial en formato YYYY-MM-DD"),
@@ -146,5 +164,3 @@ def obtener_alimento_por_rango_fechas(
 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener las alimentos: {e}")
-
-
