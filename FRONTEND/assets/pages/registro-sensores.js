@@ -1,6 +1,6 @@
 import { registroSensoresService } from '../js/api/registro-sensores.service.js';
 
-let currentPage = 0;
+let currentPage = 1; // Cambio: ahora empieza en 1
 const pageSize = 10;
 
 function createRegistroRow(registro) {
@@ -25,71 +25,109 @@ function createRegistroRow(registro) {
   `;
 }
 
-// --- CONFIGURACIÓN DE PAGINACIÓN ---
+// --- CONFIGURACIÓN DE PAGINACIÓN MEJORADA ---
+function renderPagination(total_pages, currentPageNum = 1) {
+    const container = document.querySelector("#pagination");
+    if (!container) return;
 
-function setupPagination(total, limit) {
-    const paginationContainer = document.getElementById('pagination-container');
-    if (!paginationContainer) return;
+    container.innerHTML = "";
 
-    const totalPages = Math.ceil(total / limit);
+    // Botón Anterior
+    const prevItem = document.createElement("li");
+    prevItem.classList.add('page-item');
+    if (currentPageNum === 1) prevItem.classList.add('disabled');
+    
+    const prevLink = document.createElement("a");
+    prevLink.classList.add('page-link', 'text-success');
+    prevLink.href = "#";
+    prevLink.innerHTML = "&lt;";
+    prevLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (currentPageNum > 1) {
+            loadRegistrosPage(currentPageNum - 1);
+        }
+    });
+    
+    prevItem.appendChild(prevLink);
+    container.appendChild(prevItem);
 
-    // Si solo hay una página, no mostrar paginación
-    if (totalPages <= 1) {
-        paginationContainer.innerHTML = '';
-        return;
+    // Números de página
+    for (let i = 1; i <= total_pages; i++) {
+        const pageItem = document.createElement("li");
+        pageItem.classList.add('page-item');
+        
+        const pageLink = document.createElement("a");
+        
+        if (i === currentPageNum) {
+            pageLink.classList.add('page-link', 'bg-success', 'border-success', 'text-white');
+            pageItem.classList.add('active');
+        } else {
+            pageLink.classList.add('page-link', 'text-success');
+        }
+        
+        pageLink.href = "#";
+        pageLink.textContent = i;
+        pageLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            loadRegistrosPage(i);
+        });
+        
+        pageItem.appendChild(pageLink);
+        container.appendChild(pageItem);
     }
 
-    let paginationHTML = `
-    <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-center">
-        <li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
-          <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Anterior</a>
-        </li>
-  `;
-
-    for (let i = 0; i < totalPages; i++) {
-        paginationHTML += `
-      <li class="page-item ${currentPage === i ? 'active' : ''}">
-        <a class="page-link" href="#" onclick="changePage(${i})">${i + 1}</a>
-      </li>
-    `;
-    }
-
-    paginationHTML += `
-        <li class="page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}">
-          <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Siguiente</a>
-        </li>
-      </ul>
-    </nav>
-  `;
-
-    paginationContainer.innerHTML = paginationHTML;
+    // Botón Siguiente
+    const nextItem = document.createElement("li");
+    nextItem.classList.add('page-item');
+    if (currentPageNum === total_pages) nextItem.classList.add('disabled');
+    
+    const nextLink = document.createElement("a");
+    nextLink.classList.add('page-link', 'text-success');
+    nextLink.href = "#";
+    nextLink.innerHTML = "&gt;";
+    nextLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (currentPageNum < total_pages) {
+            loadRegistrosPage(currentPageNum + 1);
+        }
+    });
+    
+    nextItem.appendChild(nextLink);
+    container.appendChild(nextItem);
 }
 
-// Función global para cambiar página
-window.changePage = function (page) {
+// Cargar registros con paginación mejorada
+async function loadRegistrosPage(page = 1) {
     currentPage = page;
-    loadRegistrosPage();
-};
-
-// Cargar registros con paginación
-async function loadRegistrosPage() {
     const tableBody = document.getElementById('registros-table-body');
     if (!tableBody) return;
 
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando registros...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Cargando registros...</td></tr>';
 
     try {
-        const skip = currentPage * pageSize;
+        // Calcular skip basado en página (empieza en 1)
+        const skip = (page - 1) * pageSize;
         const response = await registroSensoresService.getRegistros(skip, pageSize);
 
         if (response.registros && response.registros.length > 0) {
             tableBody.innerHTML = response.registros.map(createRegistroRow).join('');
         } else {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron registros.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No se encontraron registros.</td></tr>';
         }
 
-        setupPagination(response.total, pageSize);
+        // Calcular total de páginas
+        const totalPages = Math.ceil(response.total / pageSize);
+        
+        // Mostrar/ocultar contenedor de paginación
+        const paginationContainer = document.getElementById('pagination-container');
+        if (paginationContainer) {
+            if (totalPages > 1) {
+                paginationContainer.classList.remove('d-none');
+                renderPagination(totalPages, page);
+            } else {
+                paginationContainer.classList.add('d-none');
+            }
+        }
 
     } catch (error) {
         console.error('Error al obtener los registros:', error);
@@ -99,15 +137,15 @@ async function loadRegistrosPage() {
             if (response.registros && response.registros.length > 0) {
                 tableBody.innerHTML = response.registros.map(createRegistroRow).join('');
             } else {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron registros.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No se encontraron registros.</td></tr>';
             }
             // Ocultar paginación si estamos en modo fallback
             const paginationContainer = document.getElementById('pagination-container');
             if (paginationContainer) {
-                paginationContainer.innerHTML = '';
+                paginationContainer.classList.add('d-none');
             }
         } catch (fallbackError) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error al cargar los registros.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error al cargar los registros.</td></tr>';
         }
     }
 }
@@ -155,9 +193,12 @@ async function viewRegistroDetails(registroId) {
     }
 }
 
+// Hacer loadRegistrosPage global para el botón de actualizar
+window.loadRegistrosPage = loadRegistrosPage;
+
 // Inicialización
 async function init() {
-    await loadRegistrosPage();
+    await loadRegistrosPage(1);
 
     const tableBody = document.getElementById('registros-table-body');
 
