@@ -594,8 +594,8 @@ async function init() {
         window.navigateTo('categorias_inventario');
         return;
       }
-      // Fallback: redirigir a index1.html
-      window.location.href = 'index1.html?page=categorias_inventario';
+      // Fallback: redirigir a .html
+      window.location.href = 'index.html?page=categorias_inventario';
     };
 
     pageRoot.addEventListener('click', categoriasHandler);

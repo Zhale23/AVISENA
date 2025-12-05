@@ -275,8 +275,8 @@ async function init() {
         return;
       }
 
-      // Fallback: redirigir a index1.html
-      window.location.href = 'index1.html?page=inventario';
+      // Fallback: redirigir a index.html
+      window.location.href = 'index.html?page=inventario';
     };
 
     pageRoot.addEventListener('click', inventarioHandler);
