@@ -879,20 +879,7 @@ async function fetchWithoutDates(page, size) {
 
 
 function updatePaginationInfo() {
-    const infoElement = document.getElementById('pagination-info');
-    if (!infoElement) {
-        // Crear elemento si no existe
-        const paginationContainer = document.querySelector('.pagination').parentElement;
-        const infoDiv = document.createElement('div');
-        infoDiv.id = 'pagination-info';
-        infoDiv.className = 'text-center text-muted mt-2';
-        paginationContainer.appendChild(infoDiv);
-    }
     
-    const finalInfoElement = document.getElementById('pagination-info');
-    const startItem = (currentPage - 1) * pageSize + 1;
-    const endItem = Math.min(currentPage * pageSize, totalRescues);
-    finalInfoElement.textContent = `Mostrando ${startItem}-${endItem} de ${totalRescues} registros`;
 }
 
 // --- FUNCIÓN PRINCIPAL DE INICIALIZACIÓN ---
