@@ -2,10 +2,10 @@
 // y no necesita token.
 
 export const authService = {
-    logout: () => {
-        console.log('Cerrando sesión...');
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        window.location.href = '/login.html';
-    },
+  logout: () => {
+    console.log("Cerrando sesión...");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+    window.location.href = "/index.html";
+  },
 };

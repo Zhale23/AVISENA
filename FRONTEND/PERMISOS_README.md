@@ -2,7 +2,7 @@
 
 ## Cómo Funciona
 
-### 1. Menú Dinámico (index.html)
+### 1. Menú Dinámico (dashboard.html)
 
 Al cargar la página, un script revisa el rol del usuario y oculta las opciones del menú a las que no tiene acceso.
 
@@ -51,14 +51,14 @@ Cuando se carga una página, el sistema oculta botones de crear/editar/eliminar 
 
 ## Archivos Modificados
 
-1. **index.html** - Script inline al final que oculta opciones del menú
+1. **dashboard.html** - Script inline al final que oculta opciones del menú
 2. **permisos.js** - Función simple que oculta botones según rol
 3. **main.js** - Llama a `aplicarPermisos()` después de cargar cada página
 
 ## Cómo Funciona Internamente
 
 1. Usuario inicia sesión → Se guarda `user` con `nombre_rol` en localStorage
-2. Al cargar index.html → Script lee el rol y oculta items del menú con `display: none`
+2. Al cargar dashboard.html → Script lee el rol y oculta items del menú con `display: none`
 3. Al cargar una página → `main.js` llama a `aplicarPermisos(nombrePagina)`
 4. `aplicarPermisos()` busca botones con data-action o clases específicas y los oculta
 
@@ -72,7 +72,7 @@ supervisor: {
 }
 ```
 
-En el script de index.html, agregar el módulo a los arrays:
+En el script de dashboard.html, agregar el módulo a los arrays:
 
 ```javascript
 const permisos = {

@@ -5,7 +5,6 @@ let originalMail = null;
 let createModalInstance = null; // Instancia del modal de creación
 
 function createCatRow(cat) {
-
   const catId = cat.id_categoria;
 
   return `
@@ -32,84 +31,90 @@ function createCatRow(cat) {
 
 async function handleCreateSubmit(e) {
   e.preventDefault();
-  
-  const nombre = document.getElementById('create-name-cat-inv').value.trim();
-  const descripcion = document.getElementById('create-des-cat-inv').value.trim();
-  
+
+  const nombre = document.getElementById("create-name-cat-inv").value.trim();
+  const descripcion = document
+    .getElementById("create-des-cat-inv")
+    .value.trim();
+
   if (!nombre || !descripcion) {
     Swal.fire({
       title: "Por favor completa todos los campos",
       icon: "warning",
-      draggable: true
+      draggable: true,
     });
     return;
   }
-  
+
   try {
     await categoryService.createCategory({ nombre, descripcion });
-    
+
     // Cerrar el modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
+    const modal = bootstrap.Modal.getInstance(
+      document.getElementById("exampleModal")
+    );
     if (modal) modal.hide();
-    
+
     // Limpiar el formulario
-    document.getElementById('create-cat-inv-form').reset();
-    
+    document.getElementById("create-cat-inv-form").reset();
+
     // Recargar la tabla
     await init();
-    
+
     Swal.fire({
       title: "Categoría creada exitosamente",
       icon: "success",
-      draggable: true
+      draggable: true,
     });
   } catch (error) {
-    console.error('Error al crear categoría:', error);
+    console.error("Error al crear categoría:", error);
     Swal.fire({
       title: "Error al crear la categoría: " + error.message,
       icon: "error",
-      draggable: true
+      draggable: true,
     });
   }
 }
 
 async function handleUpdateSubmit(e) {
   e.preventDefault();
-  
-  const id = document.getElementById('edit-cat-inv-id').value;
-  const nombre = document.getElementById('edit-name-cat-inv').value.trim();
-  const descripcion = document.getElementById('edit-des-cat-inv').value.trim();
-  
+
+  const id = document.getElementById("edit-cat-inv-id").value;
+  const nombre = document.getElementById("edit-name-cat-inv").value.trim();
+  const descripcion = document.getElementById("edit-des-cat-inv").value.trim();
+
   if (!nombre || !descripcion) {
     Swal.fire({
       title: "Por favor completa todos los campos",
-        icon: "warning",
-        draggable: true
+      icon: "warning",
+      draggable: true,
     });
     return;
   }
-  
+
   try {
     await categoryService.updateCategory(id, { nombre, descripcion });
-    
+
     // Cerrar el modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('edit-cat-inv-modal'));
+    const modal = bootstrap.Modal.getInstance(
+      document.getElementById("edit-cat-inv-modal")
+    );
     if (modal) modal.hide();
-    
+
     // Recargar la tabla
     await init();
-    
+
     Swal.fire({
       title: "Categoría actualizada exitosamente",
       icon: "success",
-      draggable: true
+      draggable: true,
     });
   } catch (error) {
-    console.error('Error al actualizar categoría:', error);
+    console.error("Error al actualizar categoría:", error);
     Swal.fire({
       title: "Error al actualizar la categoría: " + error.message,
       icon: "error",
-      draggable: true
+      draggable: true,
     });
   }
 }
@@ -125,91 +130,92 @@ async function handleTableClick(e) {
       const cat = await categoryService.getCategoriesById(catId);
 
       // Rellenar inputs del modal
-      const idInput = document.getElementById('edit-cat-inv-id');
-      const nameInput = document.getElementById('edit-name-cat-inv');
-      const descInput = document.getElementById('edit-des-cat-inv');
+      const idInput = document.getElementById("edit-cat-inv-id");
+      const nameInput = document.getElementById("edit-name-cat-inv");
+      const descInput = document.getElementById("edit-des-cat-inv");
 
       if (idInput) idInput.value = cat.id_categoria || cat.id || catId;
-      if (nameInput) nameInput.value = cat.nombre || cat.name || '';
-      if (descInput) descInput.value = cat.descripcion || cat.description || '';
+      if (nameInput) nameInput.value = cat.nombre || cat.name || "";
+      if (descInput) descInput.value = cat.descripcion || cat.description || "";
 
       // Abrir modal
-      const modalEl = document.getElementById('edit-cat-inv-modal');
+      const modalEl = document.getElementById("edit-cat-inv-modal");
       if (modalEl) {
         const modal = new bootstrap.Modal(modalEl);
         modal.show();
       }
-
     } catch (error) {
-      console.error('Error al obtener la categoría por id:', error);
+      console.error("Error al obtener la categoría por id:", error);
       Swal.fire({
         title: "No se pudo cargar la categoría: " + (error.message || error),
         icon: "error",
-        draggable: true
+        draggable: true,
       });
     }
   }
 
   if (deleteBtn) {
     const catId = deleteBtn.dataset.id;
-    
+
     // Configurar SweetAlert con estilos de Bootstrap
     const swalWithBootstrapButtons = Swal.mixin({
       customClass: {
         confirmButton: "btn btn-success",
-        cancelButton: "btn btn-danger"
+        cancelButton: "btn btn-danger",
       },
-      buttonsStyling: false
+      buttonsStyling: false,
     });
-    
+
     // Mostrar confirmación
-    swalWithBootstrapButtons.fire({
-      title: "¿Estás seguro que deseas eliminar?",
-      text: "¡No podrás revertir esto!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Sí, eliminar!",
-      cancelButtonText: "No, cancelar!",
-      reverseButtons: true
-    }).then(async (result) => {
-      // SOLO si el usuario confirma
-      if (result.isConfirmed) {
-        try {
-          // Llamada a la API para eliminar
-          await categoryService.deleteCategory(catId);
+    swalWithBootstrapButtons
+      .fire({
+        title: "¿Estás seguro que deseas eliminar?",
+        text: "¡No podrás revertir esto!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, eliminar!",
+        cancelButtonText: "No, cancelar!",
+        reverseButtons: true,
+      })
+      .then(async (result) => {
+        // SOLO si el usuario confirma
+        if (result.isConfirmed) {
+          try {
+            // Llamada a la API para eliminar
+            await categoryService.deleteCategory(catId);
 
-          // Recargar la tabla
-          await init();
+            // Recargar la tabla
+            await init();
 
-          // Mostrar mensaje de éxito
+            // Mostrar mensaje de éxito
+            swalWithBootstrapButtons.fire({
+              title: "¡Eliminado!",
+              text: "Categoría eliminada exitosamente.",
+              icon: "success",
+              draggable: true,
+            });
+          } catch (error) {
+            console.error("Error al eliminar categoría:", error);
+
+            // Mostrar mensaje de error
+            swalWithBootstrapButtons.fire({
+              title: "Error",
+              // text: "Error al eliminar la categoría: " + (error.message || error),
+              text: "Error al eliminar la categoría: Puede que esté en uso.",
+              icon: "error",
+              draggable: true,
+            });
+          }
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          // Si el usuario cancela
           swalWithBootstrapButtons.fire({
-            title: "¡Eliminado!",
-            text: "Categoría eliminada exitosamente.",
-            icon: "success",
-            draggable: true
-          });
-        } catch (error) {
-          console.error('Error al eliminar categoría:', error);
-          
-          // Mostrar mensaje de error
-          swalWithBootstrapButtons.fire({
-            title: "Error",
-            // text: "Error al eliminar la categoría: " + (error.message || error),
-            text: "Error al eliminar la categoría: Puede que esté en uso.",
-            icon: "error",
-            draggable: true
+            title: "Cancelado",
+            text: "La categoría está segura",
+            icon: "info",
+            draggable: true,
           });
         }
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        // Si el usuario cancela
-        swalWithBootstrapButtons.fire({
-          title: "Cancelado",
-          text: "La categoría está segura",
-          icon: "info",
-          draggable: true
-        });
-      }
-    });
+      });
   }
 }
 
@@ -218,73 +224,89 @@ function handleStatusSwitch(e) {
 }
 
 async function init() {
-  const tableBody = document.getElementById('cat-inv-table-body');
+  const tableBody = document.getElementById("cat-inv-table-body");
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando Categorias...</td></tr>'; // ✅ CORRECCIÓN: colspan="6"
+  tableBody.innerHTML =
+    '<tr><td colspan="6" class="text-center">Cargando Categorias...</td></tr>'; // ✅ CORRECCIÓN: colspan="6"
 
   try {
     const categories = await categoryService.getCategories();
     if (categories && categories.length > 0) {
-      tableBody.innerHTML = categories.map(createCatRow).join('');
+      tableBody.innerHTML = categories.map(createCatRow).join("");
     } else {
-      tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron Categorias.</td></tr>'; // ✅ CORRECCIÓN: colspan="6"
+      tableBody.innerHTML =
+        '<tr><td colspan="6" class="text-center">No se encontraron Categorias.</td></tr>'; // ✅ CORRECCIÓN: colspan="6"
     }
   } catch (error) {
-    console.error('Error al obtener los categorias:', error);
+    console.error("Error al obtener los categorias:", error);
     tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error al cargar los datos.</td></tr>`; // ✅ CORRECCIÓN: colspan="6"
   }
 
   // Aplicamos el patrón remove/add para evitar listeners duplicados
-  const editForm = document.getElementById('edit-cat-inv-form');
-  const createForm = document.getElementById('create-cat-inv-form');
-  tableBody.removeEventListener('click', handleTableClick);
-  tableBody.addEventListener('click', handleTableClick);
-  tableBody.removeEventListener('change', handleStatusSwitch);
-  tableBody.addEventListener('change', handleStatusSwitch);
-  editForm.removeEventListener('submit', handleUpdateSubmit);
-  editForm.addEventListener('submit', handleUpdateSubmit);
-  createForm.removeEventListener('submit', handleCreateSubmit);
-  createForm.addEventListener('submit', handleCreateSubmit);
+  const editForm = document.getElementById("edit-cat-inv-form");
+  const createForm = document.getElementById("create-cat-inv-form");
+  tableBody.removeEventListener("click", handleTableClick);
+  tableBody.addEventListener("click", handleTableClick);
+  tableBody.removeEventListener("change", handleStatusSwitch);
+  tableBody.addEventListener("change", handleStatusSwitch);
+  editForm.removeEventListener("submit", handleUpdateSubmit);
+  editForm.addEventListener("submit", handleUpdateSubmit);
+  createForm.removeEventListener("submit", handleCreateSubmit);
+  createForm.addEventListener("submit", handleCreateSubmit);
 
   // Delegated handler dentro del módulo Categorias para ir al Inventario (sin tocar main.js)
   try {
-    const pageRoot = tableBody.closest('.card') || document.getElementById('main-content') || document;
+    const pageRoot =
+      tableBody.closest(".card") ||
+      document.getElementById("main-content") ||
+      document;
     if (pageRoot.__inventarioHandler) {
-      pageRoot.removeEventListener('click', pageRoot.__inventarioHandler);
+      pageRoot.removeEventListener("click", pageRoot.__inventarioHandler);
       pageRoot.__inventarioHandler = null;
     }
 
     const inventarioHandler = function (ev) {
       const target = ev.target;
-      const shortcut = target.closest('[data-page="inventario"]') || target.closest('#btn-ir-inventario') || target.closest('button.app-nav') || target.closest('a.app-nav');
+      const shortcut =
+        target.closest('[data-page="inventario"]') ||
+        target.closest("#btn-ir-inventario") ||
+        target.closest("button.app-nav") ||
+        target.closest("a.app-nav");
       if (!shortcut) return;
       if (!pageRoot.contains(shortcut)) return;
       ev.preventDefault();
 
       // Intentar disparar el enlace del nav principal
-      const shellLink = document.querySelector('.app-nav a[data-page="inventario"]');
+      const shellLink = document.querySelector(
+        '.app-nav a[data-page="inventario"]'
+      );
       if (shellLink) {
-        shellLink.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true }));
+        shellLink.dispatchEvent(
+          new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+          })
+        );
         return;
       }
 
       // Usar navigateTo si está disponible
-      if (typeof window.navigateTo === 'function') {
-        window.navigateTo('inventario');
+      if (typeof window.navigateTo === "function") {
+        window.navigateTo("inventario");
         return;
       }
 
-      // Fallback: redirigir a index.html
-      window.location.href = 'index.html?page=inventario';
+      // Fallback: redirigir a dashboard.html
+      window.location.href = "dashboard.html?page=inventario";
     };
 
-    pageRoot.addEventListener('click', inventarioHandler);
+    pageRoot.addEventListener("click", inventarioHandler);
     pageRoot.__inventarioHandler = inventarioHandler;
   } catch (err) {
-    console.error('Error wiring inventario shortcut in init():', err);
+    console.error("Error wiring inventario shortcut in init():", err);
   }
-
 }
 
 export { init };

@@ -78,11 +78,13 @@ const loadContent = async (page) => {
     if (page === "sensors") {
       import("../pages/sensors.js").then((sensorsModule) =>
         sensorsModule.init()
-      ); 
+      );
     }
 
     if (page === "sensor_types") {
-      import("../pages/sensor_types.js").then((sensorTypesModule) => sensorTypesModule.init()); 
+      import("../pages/sensor_types.js").then((sensorTypesModule) =>
+        sensorTypesModule.init()
+      );
     }
 
     if (page === "registro_sensores") {
@@ -151,17 +153,20 @@ const loadContent = async (page) => {
         infoVentaModule.init()
       );
     }
-    if(page === 'perfil') {
-      import ('./pages/perfil.js')
-        .then(perfilModule => perfilModule.init());
+    if (page === "perfil") {
+      import("./pages/perfil.js").then((perfilModule) => perfilModule.init());
     }
 
-      if (page === "alimentos") {
-      import("../pages/alimentos.js").then((alimentosModule) => alimentosModule.init());
+    if (page === "alimentos") {
+      import("../pages/alimentos.js").then((alimentosModule) =>
+        alimentosModule.init()
+      );
     }
 
-     if (page === "consumo_alimentos") {
-      import("../pages/consumos_alimentos.js").then((consumosModule) => consumosModule.init());
+    if (page === "consumo_alimentos") {
+      import("../pages/consumos_alimentos.js").then((consumosModule) =>
+        consumosModule.init()
+      );
     }
   } catch (error) {
     console.error("¡ERROR! Algo falló dentro de loadContent:", error);
@@ -201,7 +206,7 @@ if (logoutButton) {
     console.log("Cerrando sesión...");
     localStorage.removeItem("access_token");
     localStorage.removeItem("user");
-    window.location.href = "/login.html";
+    window.location.href = "/index.html";
   });
 }
 
