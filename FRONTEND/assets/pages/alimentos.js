@@ -318,14 +318,14 @@ async function handleCreateSubmit(event) {
   const pad = (n) => n.toString().padStart(2, '0');
   const fechaPC = `${fechaLocal.getFullYear()}-${pad(fechaLocal.getMonth() + 1)}-${pad(fechaLocal.getDate())}`;
 
-  const newIncidentData = {
+  const newAlimentoData = {
     nombre: document.getElementById('create-nombre_alimento').value,
     cantidad: parseInt(document.getElementById('create-cantidad_alimento').value),
     fecha_ingreso: fechaPC,
   };
 
   try {
-  await alimentoService.createAlimento(newIncidentData);
+  await alimentoService.createAlimento(newAlimentoData);
 
   const createAlimento_modal = document.getElementById('create-alimento-modal');
   let createAlimentoModalInstance = bootstrap.Modal.getInstance(createAlimento_modal);
@@ -501,12 +501,12 @@ function downloadBlob(content, mimeType, filename) {
   URL.revokeObjectURL(url);
 }
 
-async function exportToPDF(data, filename = "alimentos.pdf") {
+async function exportToPDF(data, filename = "alimentos.pdf") { 
   const sanitizedData = data.map(row => ({
-    id_aislamiento: row.id_aislamiento || "",
-    fecha_hora: row.fecha_hora || "",
-    id_incidente_gallina: row.id_incidente_gallina || "",
-    id_galpon: row.id_galpon || "",
+    id_alimento: row.id_alimento || "",
+    nombre: row.nombre || "",
+    cantidad: row.cantidad || "",
+    fecha_ingreso: row.fecha_ingreso || "",
   }));
 
   if (!window.jspdf) {
@@ -530,10 +530,10 @@ async function exportToPDF(data, filename = "alimentos.pdf") {
   doc.text("Reporte de Alimentos", 14, 15);
 
   const columns = [
-    { header: "Id", dataKey: "id_aislamiento" },
-    { header: "Fecha y hora", dataKey: "fecha_hora" },
-    { header: "Incidente N.", dataKey: "id_incidente_gallina" },
-    { header: "Galpón", dataKey: "id_galpon" },
+    { header: "Id", dataKey: "id_alimento" },
+    { header: "Nombre alimento", dataKey: "nombre" },
+    { header: "Cantidad (Kg)", dataKey: "cantidad" },
+    { header: "Fecha ingreso", dataKey: "fecha_ingreso" },
   ];
 
   doc.autoTable({ columns, body: sanitizedData, startY: 25, styles: { fontSize: 9 } });
@@ -551,12 +551,13 @@ function loadScript(src) {
 }
 
 function exportToCSV(data, filename = "alimentos.csv") {
+  console.log("DATA QUE LLEGA AL CSV:", data);
+
   const columns = [
-    { header: "ID", key: "id_aislamiento" },
-    { header: "Fecha y hora", key: "fecha_hora" },
-    { header: "Incidente N.", key: "id_incidente_gallina" },
-    { header: "id galpon", key: "id_galpon" },
-    // { header: "Latitud", key: "latitud" },
+    { header: "Id", key: "id_alimento" },
+    { header: "Nombre alimento", key: "nombre" },
+    { header: "Cantidad (Kg)", key: "cantidad" },
+    { header: "Fecha ingreso", key: "fecha_ingreso" },
   ];
   const csv = convertToCSV(data, columns);
   downloadBlob(csv, "text/csv;charset=utf-8;", filename);
@@ -590,15 +591,15 @@ async function exportToExcel(data, filename = "alimentos.xlsx") {
 
   // Mapear datos a objetos planos para json_to_sheet
   const rows = data.map((r) => ({
-    "Id aislamiento": r.id_aislamiento,
-    "Fecha y hora": r.fecha_hora,
-    "Id incidente gallina": r.id_incidente_gallina,
-    "Id galpón origen": r.id_galpon,
+    "Id": r.id_alimento,
+    "Nombre alimento": r.nombre ,
+    "Cantidad (Kg)": r.cantidad ,
+    "Fecha ingreso": r.fecha_ingreso,
   }));
 
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Asilamiento");
+  XLSX.utils.book_append_sheet(wb, ws, "Alimentos");
 
   try {
     XLSX.writeFile(wb, filename);
@@ -638,11 +639,10 @@ async function handleExportClick(event) {
 
   let response;
 
-  // 👉 Si NO hay filtros, llamar API normal
   if (!activeFechaInicio || !activeFechaFin) {
     response = await fetchAlimentos(1, 10);
   } 
-  // 👉 Si hay filtros, enviarlos formateados
+
   else {
     const fechaInicio = formatDateForAPI(activeFechaInicio);
     const fechaFin = formatDateForAPI(activeFechaFin);
