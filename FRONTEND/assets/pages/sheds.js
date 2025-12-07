@@ -2,7 +2,6 @@ import { shedService } from '../js/api/shed.service.js';
 
 let modalInstance = null; // Guardará la instancia del modal de Bootstrap
 let originalId = null;
-let createModalInstance = null; // Guardará la instancia del modal de creación
 
 function createShedRow(shed) {
   const statusBadge = shed.estado 
@@ -10,6 +9,13 @@ function createShedRow(shed) {
     : `<span class="badge bg-danger">Inactivo</span>`;
 
   const shedId = shed.id_galpon;
+
+  const puedeEditar = window.tienePermiso && window.tienePermiso('galpones', 'editar');
+  const btnEditar = puedeEditar 
+    ? `<button class="btn btn-sm btn-success btn-edit-shed" data-shed-id="${shed.id_galpon}" data-action="edit">
+         <i class="fa-regular fa-pen-to-square"></i>
+       </button>`
+    : '';
 
   return `
     <tr>
@@ -28,7 +34,7 @@ function createShedRow(shed) {
         </div>
       </td>
       <td class="text-end">
-          <button class="btn btn-sm btn-success btn-edit-shed" data-shed-id="${shed.id_galpon}"><i class="fa-regular fa-pen-to-square"></i></button>
+        ${btnEditar}
       </td>
     </tr>
   `;
@@ -45,13 +51,15 @@ async function openEditModal(id_galpon) {
   try {
     const shed = await shedService.getShedById(id_galpon);
     originalId = shed.id_galpon;
+
     document.getElementById('edit-shed-id').value = shed.id_galpon;
-    // Cargar opciones de fincas primero
-    await loadLandsSelect('edit-nombre_finca'); 
+    await loadLandsSelect('edit-nombre_finca', shed.id_finca); 
+
     document.getElementById('edit-nombre_finca').value = shed.id_finca;
     document.getElementById('edit-nombre-galpon').value = shed.nombre;
     document.getElementById('edit-capacidad').value = shed.capacidad;
     document.getElementById('edit-cant-actual').value = shed.cant_actual;
+
     modalInstance.show();
   } catch (error) {
     console.error('Error al obtener datos del galpón ${shedId}: ', error);
@@ -63,6 +71,7 @@ async function openEditModal(id_galpon) {
 
 async function handleUpdateSubmit(event) {
   event.preventDefault();
+
   const shedId = document.getElementById('edit-shed-id').value;
   const updatedData = {
     id_finca: document.getElementById('edit-nombre_finca').value,
@@ -73,86 +82,26 @@ async function handleUpdateSubmit(event) {
 
   try {
     await shedService.updateShed(shedId, updatedData);
-    modalInstance.hide();
+
+    bootstrap.Modal.getInstance('#edit-shed-modal').hide();
     Swal.fire({
-        position: "top-center",
         icon: "success",
         title: `Galpón actualizado con éxito.`,
         showConfirmButton: false,
-        timer: 1500
+        timer: 1200
     });
-    init(); // Recargamos la tabla para ver los cambios
+
+    init();
   } catch (error) {
     console.error('Error al actualizar el galpón ${shedId}:', error);
     alert('No se pudo actualizar el galpón.');
   }
 }
 
-async function handleTableClick(event) {
-  // Manejador para el botón de editar
-  const editButton = event.target.closest('.btn-edit-shed');
-  if (editButton) {
-    const id_galpon = editButton.dataset.shedId;
-    console.log(id_galpon);
-    openEditModal(id_galpon);
-    return;
-  }
-}
-
-async function handleStatusSwitch(event) {
-  const switchElement = event.target;
-  if (!switchElement.classList.contains('shed-status-switch')) return;
-
-  const confirmacion = await Swal.fire({
-    title: '¿Estás seguro?',
-    text: `¿Deseas ${switchElement.checked ? 'activar' : 'desactivar'} este galpón?`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sí',
-    cancelButtonText: 'No',
-    customClass: {
-      confirmButton: 'btn btn-success',
-      cancelButton: 'btn btn-secondary'
-    }
-  });
-
-  const shedId = switchElement.dataset.shedId;
-  const newStatus = switchElement.checked;
-  const actionText = newStatus ? 'activar' : 'desactivar';
-
-  if (confirmacion.isConfirmed) {
-    try {
-      await shedService.deleteShed(shedId, newStatus);
-      Swal.fire({
-        position: "top-center",
-        icon: "success",
-        title: `El galpón ha sido ${newStatus ? 'activado' : 'desactivado'} exitosamente.`,
-        showConfirmButton: false,
-        timer: 1500
-      });
-      init(); // Recargamos la tabla
-    } catch (error) {
-      console.error(`Error al ${actionText} el galpón ${shedId}:`, error);
-      Swal.fire({
-        position: "top-center",
-        icon: "warning",
-        title: `No se pudo ${actionText} el galpón.`,
-        showConfirmButton: false,
-        timer: 1500
-      });
-      switchElement.checked = !newStatus; // revertimos el cambio visual
-    }
-  } else {
-    switchElement.checked = !newStatus;
-  }
-}
-
-// manejador de formulario crear usuarios
+// ============ CREAR GALPONES ============
 async function handleCreateSubmit(event) {
   event.preventDefault();
-  
-  // // Obtenemos los datos del usuario logueado para el galpon
-  // const currentUser = JSON.parse(localStorage.getItem('user'));
+
   const newShedData = {
     id_finca: document.getElementById('create-nombre_finca').value,
     nombre: document.getElementById('create-nombre-galpon').value,
@@ -163,16 +112,17 @@ async function handleCreateSubmit(event) {
 
   try {
     await shedService.createShed(newShedData);
-    const modal = bootstrap.Modal.getInstance(document.getElementById('create-shed-modal'));
-    if (modal) modal.hide();
+
+    bootstrap.Modal.getInstance('#create-shed-modal').hide();
     document.getElementById('create-shed-form').reset();
+
     Swal.fire({
-        position: "top-center",
         icon: "success",
         title: `Galpón creado con éxito.`,
         showConfirmButton: false,
-        timer: 1500
-      });
+        timer: 1400
+    });
+
     init(); // Recargamos la tabla para ver el nuevo usuario
   } catch (error) {
 
@@ -187,6 +137,7 @@ async function handleCreateSubmit(event) {
   }
 }
 
+// ============ SELECCIONAR FINCA ============
 async function loadLandsSelect(selectId, selectedValue = '') {
   const select = document.getElementById(selectId);
   if (!select) return;
@@ -213,28 +164,11 @@ async function loadLandsSelect(selectId, selectedValue = '') {
   } catch (error) {
     console.error('Error al cargar las fincas activas:', error);
     select.innerHTML = '<option value="">Error al cargar fincas</option>';
-    if (window.Swal) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudieron cargar las fincas.',
-        confirmButtonText: 'Aceptar'
-      });
-    }
+    Swal.fire("Error","No se pudieron cargar las fincas.","error");
   }
 }
 
-// Cargar todos los galpones
-async function loadAllSheds() {
-  try {
-    const sheds = await shedService.getSheds();
-    renderShedsTable(sheds);
-  } catch (error) {
-    console.error("Error cargando todos los galpones:", error);
-  }
-}
-
-// Cargar fincas activas en el filtro de galpones
+// ============ FILTROS ============
 async function loadShedsFilter() {
   const selectElement = document.getElementById('filtro-galpones');
   const select = selectElement ? selectElement.value : 'all';
@@ -267,14 +201,68 @@ async function loadShedsFilter() {
   }
 }
 
-// Modificar init para cargar filtro y listeners
+// ============ INICIALIZACIÓN Y EVENTOS ============
+async function handleTableClick(event) {
+  const editButton = event.target.closest('.btn-edit-shed');
+  if (editButton) {
+    const id_galpon = editButton.dataset.shedId;
+    console.log(id_galpon);
+    openEditModal(id_galpon);
+    return;
+  }
+}
+
+async function handleStatusSwitch(event) {
+  const switchElement = event.target;
+  if (!switchElement.classList.contains('shed-status-switch')) return;
+
+  const shedId = switchElement.dataset.shedId;
+  const newStatus = switchElement.checked;
+  const actionText = newStatus ? 'activar' : 'desactivar';
+
+  const confirmacion = await Swal.fire({
+    title: `¿Deseas ${switchElement.checked ? 'activar' : 'desactivar'} este galpón?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí',
+    cancelButtonText: 'No',
+    customClass: {
+      confirmButton: 'btn btn-success',
+      cancelButton: 'btn btn-secondary'
+    }
+  });
+
+  if (confirmacion.isConfirmed) {
+    try {
+      await shedService.deleteShed(shedId, newStatus);
+      Swal.fire({
+        icon: "success",
+        title: `El galpón ha sido ${newStatus ? 'activado' : 'desactivado'} exitosamente.`,
+        showConfirmButton: false,
+        timer: 1500
+      });
+      init(); // Recargamos la tabla
+    } catch (error) {
+      console.error(`Error al ${actionText} el galpón ${shedId}:`, error);
+      Swal.fire({
+        icon: "warning",
+        title: `No se pudo ${actionText} el galpón.`,
+        showConfirmButton: false,
+        timer: 1500
+      });
+      switchElement.checked = !newStatus;
+    }
+  } else {
+    switchElement.checked = !newStatus;
+  }
+}
+
+// ============= INIT =============
 async function init() {
   const tableBody = document.getElementById('sheds-table-body');
   if (!tableBody) return;
 
   tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando galpones ... </td></tr>';
-
-  await loadShedsFilter();
 
   try {
     const sheds = (await shedService.getSheds());
@@ -314,6 +302,10 @@ async function init() {
   createForm.removeEventListener('submit', handleCreateSubmit);
   createForm.addEventListener('submit', handleCreateSubmit);
 
+  // Aplicar permisos después de cargar todo
+  if (window.aplicarPermisos) {
+    window.aplicarPermisos('galpones');
+  }
 }
 
 export { init };
