@@ -55,6 +55,8 @@ export async function request(endpoint, options = {}) {
                     icon: "warning",
                     title: "Acceso denegado",
                     text: "No tiene permisos para realizar esta acción.",
+                    showConfirmButton: false,
+                    timer: 1200,
                 });
                 
                 // Rechazamos la promesa con un error para que la función request() termine inmediatamente.
