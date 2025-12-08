@@ -164,7 +164,7 @@ const loadContent = async (page) => {
     }
 
     if (page === "consumo_alimento") {
-      import("../pages/consumos_alimentos.js").then((consumosModule) =>
+      import("../pages/consumo_alimento.js").then((consumosModule) =>
         consumosModule.init()
       );
     }
