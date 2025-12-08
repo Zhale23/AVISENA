@@ -384,15 +384,35 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
             LIMIT 2
         """)
         
-        # Obtener últimas ventas
+        # Obtener últimas ventas (de detalle_huevos y detalle_salvamento)
         query_ventas = text("""
             SELECT 
                 'venta' as tipo,
-                CONCAT('Venta registrada: ', cantidad, ' unidades') as descripcion,
-                fecha as fecha_registro,
+                CONCAT('Venta registrada: $', COALESCE(total, precio_venta)) as descripcion,
+                fecha_hora as fecha_registro,
                 'info' as color
-            FROM ventas
-            ORDER BY fecha DESC
+            FROM (
+                -- Ventas de huevos
+                SELECT 
+                    v.id_venta,
+                    v.fecha_hora,
+                    dh.precio_venta as precio_venta,
+                    dh.total as total
+                FROM ventas v 
+                INNER JOIN detalle_huevos dh ON v.id_venta = dh.id_venta
+                
+                UNION ALL
+                
+                -- Ventas de salvamento
+                SELECT 
+                    v.id_venta,
+                    v.fecha_hora,
+                    ds.precio_unitario as precio_venta,
+                    ds.total as total
+                FROM ventas v 
+                INNER JOIN detalle_salvamento ds ON v.id_venta = ds.id_venta
+            ) ventas_combinadas
+            ORDER BY fecha_hora DESC
             LIMIT 2
         """)
         
@@ -400,19 +420,20 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
         query_stock = text("""
             SELECT 
                 'stock' as tipo,
-                CONCAT('Movimiento de stock: ', tipo_movimiento) as descripcion,
-                fecha as fecha_registro,
+                CONCAT('Stock disponible: ', s.cantidad_disponible, ' ', s.unidad_medida) as descripcion,
+                ph.fecha as fecha_registro,
                 'secondary' as color
-            FROM stock
-            ORDER BY fecha DESC
+            FROM stock s
+            JOIN produccion_huevos ph ON s.id_produccion = ph.id_produccion
+            ORDER BY ph.fecha DESC
             LIMIT 2
         """)
         
         # Obtener últimas tareas
         query_tareas = text("""
             SELECT 
-                'tarea' as tipo,
-                CONCAT('Tarea: ', titulo) as descripcion,
+                'tarea' as tipo, 
+                CONCAT('Tarea: ', descripcion) as descripcion,
                 fecha_creacion as fecha_registro,
                 'primary' as color
             FROM tareas
