@@ -388,7 +388,7 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
         query_ventas = text("""
             SELECT 
                 'venta' as tipo,
-                CONCAT('Venta registrada: $', COALESCE(total, precio_venta)) as descripcion,
+                CONCAT('Venta registrada: $', total_venta) as descripcion,
                 fecha_hora as fecha_registro,
                 'info' as color
             FROM (
@@ -396,8 +396,7 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
                 SELECT 
                     v.id_venta,
                     v.fecha_hora,
-                    dh.precio_venta as precio_venta,
-                    dh.total as total
+                    (dh.cantidad * dh.precio_venta - COALESCE(dh.valor_descuento, 0)) as total_venta
                 FROM ventas v 
                 INNER JOIN detalle_huevos dh ON v.id_venta = dh.id_venta
                 
@@ -407,8 +406,7 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
                 SELECT 
                     v.id_venta,
                     v.fecha_hora,
-                    ds.precio_unitario as precio_venta,
-                    ds.total as total
+                    (ds.cantidad * ds.precio_venta - COALESCE(ds.valor_descuento, 0)) as total_venta
                 FROM ventas v 
                 INNER JOIN detalle_salvamento ds ON v.id_venta = ds.id_venta
             ) ventas_combinadas
@@ -434,10 +432,10 @@ def get_actividad_reciente(db: Session, limit: int = 10) -> List[Dict]:
             SELECT 
                 'tarea' as tipo, 
                 CONCAT('Tarea: ', descripcion) as descripcion,
-                fecha_creacion as fecha_registro,
+                fecha_hora_init as fecha_registro,
                 'primary' as color
             FROM tareas
-            ORDER BY fecha_creacion DESC
+            ORDER BY fecha_hora_init DESC
             LIMIT 2
         """)
         
