@@ -1,5 +1,6 @@
 import { alimentoService } from '../js/alimentos.service.js';
-import { init as initConsumo_alimento } from './consumo_alimentos.js';
+import { init as initConsumo_alimento } from './consumo_alimento.js';
+import { consumoService } from '../js/consumo_alimento.service.js';
 
 let modalInstance = null;
 let activeFechaInicio = "";
@@ -11,9 +12,9 @@ document.addEventListener('click', async (e) => {
   if (!btn) return;  
 
   try {
-    const response = await fetch('pages/consumo_alimentos.html');
+    const response = await fetch('pages/consumo_alimento.html');
     if (!response.ok) throw new Error('Error al cargar el HTML');
-    
+
     const html = await response.text();
     document.getElementById('main-content').innerHTML = html;
 
@@ -57,6 +58,9 @@ function createAlimentosRow(alimento) {
       <td class="px-0">${fechaFormateada}</td>
       <td class="text-end justify-content-end gap-2">
           <button class="btn btn-sm btn-success btn-edit-alimento" data-alimento-id="${alimentoId}" aria-label="Editar"><i class="fa-regular fa-pen-to-square me-0"></i></button>
+          ${alimento.cantidad > 0 ? `
+            <button class="btn btn-sm btn-success btn-consumo-alimento" data-alimento-id="${alimentoId}" data-alimento-nombre="${alimento.nombre}" data-alimento-cantidad="${alimento.cantidad}"><i class="fa-solid fa-utensils"></i></button>
+          ` : ''}
       </td>
     </tr>
   `;
@@ -277,6 +281,16 @@ async function handleTableClick(event) {
     openEditModal(idAlimento);
     return;
   }
+  //  Manejador de eventos para el boton consumo
+  const consumoButton = event.target.closest('.btn-consumo-alimento');
+  if (consumoButton) {
+    const alimentoId = consumoButton.dataset.alimentoId;
+    const alimentoNombre = consumoButton.dataset.alimentoNombre;
+    const alimentoCantidad = consumoButton.dataset.alimentoCantidad;
+    
+    await openConsumoModal(alimentoId, alimentoNombre, alimentoCantidad);
+    return;
+  }
 }
 
 // --- MANEJADORES DE EVENTOS ---
@@ -309,6 +323,180 @@ async function handleUpdateSubmit(event) {
       confirmButtonColor: '#d33'
     });
   }
+}
+
+// ----- FUNCIONES DE CONSUMOS -----
+
+async function openConsumoModal(alimentoId, alimentoNombre, alimentoCantidad) {
+    try {
+        // Llenar los campos del modal
+        document.getElementById('consumo-id-alimento').value = alimentoId;
+        document.getElementById('consumo-alimento-display').value = alimentoNombre;
+        document.getElementById('consumo-cantidad-alimento').value = '';
+        document.getElementById('consumo-cantidad-alimento').max = alimentoCantidad;
+        
+        // Mostrar cantidad disponible
+        const maxText = document.getElementById('consumo-cantidad-max-text');
+        if (maxText) {
+            maxText.textContent = `Cantidad disponible: ${alimentoCantidad} Kg`;
+        }
+        
+        // Llenar select de galpones (necesitarás cargarlos)
+        await cargarGalponesParaConsumo();
+        
+        // Establecer fecha actual por defecto
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('consumo-fecha').value = today;
+        
+        // Mostrar el modal
+        const modalElement = document.getElementById('createConsumoFromAlimentoModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+    } catch (error) {
+        console.error(`Error al abrir modal de consumo para alimento ${alimentoId}:`, error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "No se pudieron cargar los datos para el consumo.",
+        });
+    }
+}
+
+async function cargarGalponesParaConsumo() {
+    try {
+        // Necesitarás importar o tener acceso al servicio de galpones
+        const shedsService = await import('../js/sheeds.service.js');
+        const galpones = await shedsService.shedsService.getSheds();
+        
+        const galponesActivos = galpones.filter(g => g.estado === true);
+        const selectGalpon = document.getElementById('consumo-id-galpon');
+        
+        if (selectGalpon) {
+            selectGalpon.innerHTML = 
+                `<option value="" disabled selected>Seleccione un galpón</option>` +
+                galponesActivos.map(g => `<option value="${g.id_galpon}">${g.nombre}</option>`).join('');
+        }
+        
+    } catch (error) {
+        console.error("Error cargando galpones:", error);
+        const selectGalpon = document.getElementById('consumo-id-galpon');
+        if (selectGalpon) {
+            selectGalpon.innerHTML = `<option value="">Error al cargar galpones</option>`;
+        }
+    }
+}
+
+async function handleConsumoSubmit(event) {
+    event.preventDefault();
+    
+    const consumoData = {
+        id_alimento: parseInt(document.getElementById('consumo-id-alimento').value),
+        id_galpon: parseInt(document.getElementById('consumo-id-galpon').value),
+        cantidad_alimento: parseFloat(document.getElementById('consumo-cantidad-alimento').value),
+        fecha_registro: document.getElementById('consumo-fecha').value
+    };
+
+    const alimentoNombre = document.getElementById('consumo-alimento-display').value;
+    const galponSelect = document.getElementById('consumo-id-galpon');
+    const galponNombre = galponSelect.options[galponSelect.selectedIndex].text;
+
+    // Validaciones
+    if (!consumoData.cantidad_alimento || consumoData.cantidad_alimento <= 0) {
+        Swal.fire({
+            icon: "warning",
+            title: "Cantidad inválida",
+            text: "Por favor ingrese una cantidad válida.",
+        });
+        return;
+    }
+
+    try {
+        const createdConsumo = await consumoService.createConsumo(consumoData);
+        
+        const modalElement = document.getElementById('createConsumoFromAlimentoModal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        modal.hide();
+
+        const result = await Swal.fire({
+            title: '¡Consumo Registrado Exitosamente!',
+            html: `
+                <div class="text-start">
+                    <div class="alert alert-success border-success bg-success bg-opacity-10">
+                        <div class="d-flex align-items-center">
+                            <i class="fa-solid fa-circle-check text-success me-2"></i>
+                            <strong>El consumo se ha registrado exitosamente</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="border rounded p-3 bg-light mt-3">
+                        <h6 class="text-success mb-3">
+                            <i class="fa-solid fa-utensils me-2"></i>Detalles del Consumo
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="mb-2"><strong><i class="fa-solid fa-wheat-awn me-1 text-muted"></i> Alimento:</strong></p>
+                                <p class="mb-2"><strong><i class="fa-solid fa-warehouse me-1 text-muted"></i> Galpón:</strong></p>
+                                <p class="mb-2"><strong><i class="fa-solid fa-weight me-1 text-muted"></i> Cantidad:</strong></p>
+                                <p class="mb-0"><strong><i class="fa-solid fa-calendar me-1 text-muted"></i> Fecha:</strong></p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-2">${alimentoNombre}</p>
+                                <p class="mb-2">${galponNombre}</p>
+                                <p class="mb-2">${consumoData.cantidad_alimento} Kg</p>
+                                <p class="mb-0">${consumoData.fecha_registro}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="mt-4 text-center text-muted">
+                        <i class="fa-solid fa-arrow-pointer me-1"></i>¿Qué deseas hacer ahora?
+                    </p>
+                </div>
+            `,
+            icon: 'success',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fa-solid fa-list me-2"></i> Ir a Consumos',
+            cancelButtonText: '<i class="fa-solid fa-wheat-awn me-2"></i> Seguir en Alimentos',
+            reverseButtons: true,
+            width: '600px',
+            customClass: {
+                popup: 'border-success',
+                confirmButton: 'btn-success',
+                cancelButton: 'btn-secondary'
+            }
+        });
+
+        if (result.isConfirmed) {
+            // Cargar la página de consumos
+            const btnConsumo = document.getElementById('consumo_alimento');
+            if (btnConsumo) {
+                btnConsumo.click();
+            }
+        } else {
+            // Recargar la página de alimentos
+            init(1, 10, activeFechaInicio, activeFechaFin);
+        }
+        
+    } catch (error) {
+        console.error('Error al crear el consumo:', error);
+        Swal.fire({
+            icon: "error",
+            title: "Error al registrar consumo",
+            html: `
+                <div class="text-start">
+                    <p>No se pudo registrar el consumo:</p>
+                    <div class="alert alert-danger mt-2">
+                        <strong>Error:</strong> ${error.message || "Error desconocido"}
+                    </div>
+                </div>
+            `,
+            confirmButtonColor: '#198754'
+        });
+    }
 }
 
 async function handleCreateSubmit(event) {
@@ -445,6 +633,12 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
     tableBody.addEventListener('click', handleTableClick);
     createForm.removeEventListener('submit', handleCreateSubmit);
     createForm.addEventListener('submit', handleCreateSubmit);
+    // Event listener de consumo
+    const consumoForm = document.getElementById('create-consumo-from-alimento-form');
+    if (consumoForm) {
+        consumoForm.removeEventListener('submit', handleConsumoSubmit);
+        consumoForm.addEventListener('submit', handleConsumoSubmit);
+    }
 
     inicializarBuscador();
     inicializarFiltroFechas();
