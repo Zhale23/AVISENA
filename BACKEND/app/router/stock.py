@@ -5,7 +5,7 @@ from typing import List
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.schemas.users import UserOut
-from app.schemas.stock import StockCreate, StockUpdate, StockOut
+from app.schemas.stock import StockCreate, StockOut
 from core.database import get_db
 from app.crud import crud_stock
 
