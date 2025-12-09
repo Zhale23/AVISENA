@@ -206,6 +206,7 @@ async function cargarDatosDashboard() {
     console.warn("Actividad reciente no disponible:", e);
   }
 
+  // Actualizar sensores cada 5 minutos (300000ms)
   setInterval(async () => {
     try {
       const sensores = await dashboardService.getSensores();
@@ -213,8 +214,9 @@ async function cargarDatosDashboard() {
     } catch (error) {
       console.error("Error actualizando sensores:", error);
     }
-  }, 30000);
+  }, 300000);
 
+  // Actualizar actividad reciente cada 3 minutos (180000ms)
   setInterval(async () => {
     try {
       const actividades = await dashboardService.getActividadReciente();
@@ -222,7 +224,7 @@ async function cargarDatosDashboard() {
     } catch (error) {
       console.error("Error actualizando actividad reciente:", error);
     }
-  }, 60000);
+  }, 180000);
 }
 
 // Mostrar/ocultar widgets del panel según el rol

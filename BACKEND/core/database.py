@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Crear el motor de base de datos con configuraciones óptimas
 engine = create_engine(
     settings.DATABASE_URL,
-    echo=True,           # Activar o desactivar el modo debug para imprimir en consola todas las sentencias SQL
+    echo=False,          # Desactivado para reducir logs en producción (cambiar a True solo para debug local)
     pool_pre_ping=True,  # Verifica que las conexiones estén activas antes de usarlas
     pool_recycle=3600,   # Recicla conexiones después de una hora para evitar el error "connection has been closed"
     pool_size=10,        # Número máximo de conexiones permanentes en el pool
