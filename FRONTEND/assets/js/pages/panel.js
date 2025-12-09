@@ -149,10 +149,23 @@ async function cargarDatosDashboard() {
     await cargarGraficoProduccionRango(7);
   } catch (e) {
     console.error("No se pudo cargar producción semanal:", e);
-    // Fallback local: 7 días con ceros para que no quede en blanco
-    const dias = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    // Fallback local: 7 días con fechas YYYY-MM-DD
+    const hoy = new Date();
+    const inicio = new Date(hoy);
+    inicio.setDate(inicio.getDate() - 6);
+    
+    const fechas = [];
+    for (let i = 0; i < 7; i++) {
+      const fecha = new Date(inicio);
+      fecha.setDate(fecha.getDate() + i);
+      const ano = fecha.getFullYear();
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+      const dia = String(fecha.getDate()).padStart(2, '0');
+      fechas.push(`${ano}-${mes}-${dia}`);
+    }
+    
     const fallback = {
-      labels: dias,
+      labels: fechas,
       data_actual: [0, 0, 0, 0, 0, 0, 0],
       data_anterior: [0, 0, 0, 0, 0, 0, 0],
     };
@@ -688,12 +701,15 @@ function cargarGraficoProduccion(data) {
     produccionChart.destroy();
   }
 
-  // Crear gráfica (mejor calidad visual y gradient)
+  // Crear gráfica mejorada con fechas legibles
   const ctx2d = canvas.getContext("2d");
   const gradient = ctx2d.createLinearGradient(0, 0, 0, 300);
-  gradient.addColorStop(0, "rgba(117,193,129,0.35)");
-  gradient.addColorStop(1, "rgba(117,193,129,0.02)");
+  gradient.addColorStop(0, "rgba(40,167,69,0.25)");
+  gradient.addColorStop(1, "rgba(40,167,69,0.02)");
+  
+  // Determinar número de puntos para ajustar visualización
   const manyPoints = labels.length > 31;
+  const showAllLabels = labels.length <= 7;
 
   produccionChart = new Chart(ctx2d, {
     type: "line",
@@ -701,26 +717,34 @@ function cargarGraficoProduccion(data) {
       labels: labels,
       datasets: [
         {
-          label: "Semana actual",
+          label: "Producción Actual",
           data: datasetActual,
-          borderColor: chartColors.success,
+          borderColor: "#28a745",
           backgroundColor: gradient,
           fill: true,
           borderWidth: 3,
-          tension: 0.35,
-          pointRadius: manyPoints ? 0 : 3,
-          pointHoverRadius: manyPoints ? 2 : 5,
+          tension: 0.4,
+          pointRadius: manyPoints ? 0 : 5,
+          pointBackgroundColor: "#28a745",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          pointHoverRadius: manyPoints ? 4 : 7,
+          segment: {
+            borderColor: ctx => ctx.p1DataIndex === ctx.p0DataIndex ? "#28a745" : "#28a745",
+          }
         },
         {
-          label: "Semana anterior",
+          label: "Período Anterior",
           data: datasetAnterior,
-          borderColor: chartColors.gray,
-          backgroundColor: "rgba(169,181,201,0.1)",
+          borderColor: "#6c757d",
+          backgroundColor: "rgba(108,117,125,0.05)",
           fill: false,
-          borderDash: [6, 4],
-          tension: 0.35,
+          borderDash: [5, 5],
+          tension: 0.4,
           borderWidth: 2,
-          pointRadius: manyPoints ? 0 : 2,
+          pointRadius: manyPoints ? 0 : 3,
+          pointBackgroundColor: "#6c757d",
+          pointHoverRadius: manyPoints ? 3 : 5,
         },
       ],
     },
@@ -729,26 +753,69 @@ function cargarGraficoProduccion(data) {
       maintainAspectRatio: false,
       devicePixelRatio: 2,
       plugins: {
-        legend: { display: true, position: "bottom" },
+        legend: { 
+          display: true, 
+          position: "top",
+          labels: { 
+            font: { size: 13, weight: 'bold' },
+            padding: 15,
+            usePointStyle: true,
+            pointStyle: 'circle'
+          }
+        },
         tooltip: {
           intersect: false,
           mode: "index",
+          backgroundColor: "rgba(0,0,0,0.8)",
+          padding: 12,
+          titleFont: { size: 13, weight: 'bold' },
+          bodyFont: { size: 12 },
+          borderColor: "#28a745",
+          borderWidth: 1,
           callbacks: {
+            title: (ctx) => `Fecha: ${ctx[0].label}`,
             label: (ctx) =>
-              ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} huevos`,
+              `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} huevos`,
+            afterLabel: (ctx) => {
+              if (ctx.datasetIndex === 0 && ctx.parsed.y > 0) {
+                return `📊 Huevos producidos`;
+              }
+              return '';
+            }
           },
         },
       },
       scales: {
         y: {
           beginAtZero: true,
+          title: { display: true, text: 'Huevos (Unidades)' },
           ticks: {
             callback: (value) => Number(value).toLocaleString(),
+            font: { size: 11 }
           },
-          grid: { color: "rgba(0,0,0,0.06)" },
+          grid: { color: "rgba(0,0,0,0.08)", drawBorder: false },
+          max: Math.max(...datasetActual, ...datasetAnterior) * 1.1 || 100
         },
-        x: { grid: { display: false } },
+        x: { 
+          grid: { display: false },
+          ticks: {
+            maxRotation: labels.length > 7 ? 45 : 0,
+            minRotation: labels.length > 7 ? 45 : 0,
+            font: { size: 11 },
+            callback: function(index) {
+              // Mostrar cada label para 7 días, cada 2 para 30, cada 3 para 90+
+              if (showAllLabels || index % Math.ceil(labels.length / 7) === 0) {
+                return labels[index];
+              }
+              return '';
+            }
+          },
+        },
       },
+      animation: {
+        duration: 750,
+        easing: 'easeInOutQuart'
+      }
     },
   });
 

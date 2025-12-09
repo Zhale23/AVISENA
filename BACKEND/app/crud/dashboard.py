@@ -118,7 +118,8 @@ def get_produccion_semanal(db: Session) -> Dict:
             fecha_actual = inicio_actual + timedelta(days=i)
             fecha_anterior = inicio_anterior + timedelta(days=i)
             
-            labels.append(dias_semana[fecha_actual.weekday()])
+            # Formato mejorado: mostrar fecha en formato YYYY-MM-DD para claridad
+            labels.append(fecha_actual.strftime("%Y-%m-%d"))
             data_actual.append(fechas_actual[fecha_actual])
             data_anterior.append(fechas_anterior[fecha_anterior])
         
@@ -129,8 +130,11 @@ def get_produccion_semanal(db: Session) -> Dict:
         }
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener producción semanal: {e}")
+        hoy = date.today()
+        inicio = hoy - timedelta(days=6)
+        fallback_labels = [(inicio + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
         return {
-            "labels": ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            "labels": fallback_labels,
             "data_actual": [0, 0, 0, 0, 0, 0, 0],
             "data_anterior": [0, 0, 0, 0, 0, 0, 0]
         }
@@ -174,17 +178,8 @@ def get_produccion_por_rango(db: Session, dias: int = 7) -> Dict:
             valor = int(fechas_dict[fecha]) if fechas_dict[fecha] else 0
             datos.append(valor)
             
-            # Formato de label según rango
-            if dias <= 7:
-                # Última semana: mostrar día de semana
-                dias_semana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-                labels.append(dias_semana[fecha.weekday()])
-            elif dias <= 31:
-                # Último mes: mostrar día del mes
-                labels.append(f"{fecha.day}/{fecha.month}")
-            else:
-                # 3 o 6 meses: mostrar día/mes
-                labels.append(f"{fecha.day}/{fecha.month}")
+            # Formato de label: mostrar fechas completas en formato YYYY-MM-DD
+            labels.append(fecha.strftime("%Y-%m-%d"))
         
         total = sum(datos)
         promedio = round(total / dias, 1) if dias > 0 else 0
