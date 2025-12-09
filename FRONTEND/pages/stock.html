@@ -45,13 +45,6 @@
                             Exportar CSV
                         </button>
                     </div>
-
-                    <!-- Botón Crear -->
-                    <div class="col-auto">
-                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#create-stock-modal" style="color: rgb(12, 12, 12);">
-                            <i class="fa fa-plus me-1"></i>Nuevo Stock</button>
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -65,6 +58,12 @@
             <div id="chart" style="max-width:100%;"></div>
         </div>
     </div>
+    <div class="app-card shadow-sm mb-4">
+        <div class="app-card-body">
+            <div id="donutChart" style="max-width:100%;"></div>
+        </div>
+    </div>
+
     <div class="card mt-3 p-3">
         <h5 class="fw-bold">Resumen de inventario</h5>
         <p id="productoMayor">Cargando...</p>
@@ -82,10 +81,10 @@
                     <thead>
                         <tr>
                             <th class="fw-semibold">ID Producto</th>
-                            <th class="fw-semibold">Unidad</th>
-                            <th class="fw-semibold">Producción</th>
+                            <th class="fw-semibold">tipo</th>
+                            <th class="fw-semibold">Unidad medida</th>
+                            <th class="fw-semibold">nombre producto</th>
                             <th class="fw-semibold">Cantidad Disponible</th>
-                            <th class="fw-semibold text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="stock-table-body"></tbody>
@@ -101,7 +100,7 @@
     </nav>
 
 </div> <!-- container -->
-
+<!-- 
 <!-- =========================================== -->
 <!--               MODAL CREAR                   -->
 <!-- =========================================== -->
@@ -148,7 +147,7 @@
 
         </div>
     </div>
-</div>
+</div> 
 
 <!-- =========================================== -->
 <!--               MODAL EDITAR                  -->
