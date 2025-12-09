@@ -309,7 +309,7 @@ def get_ultimos_registros_sensores(db: Session) -> Dict:
             FROM registro_sensores rs
             JOIN sensores s ON rs.id_sensor = s.id_sensor
             JOIN tipo_sensores st ON s.id_tipo_sensor = st.id_tipo
-            WHERE rs.fecha_hora >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            WHERE rs.fecha_hora >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 HOUR)
             ORDER BY rs.fecha_hora DESC
             LIMIT 20
         """)
