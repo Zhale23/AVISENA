@@ -180,7 +180,10 @@ async function viewRegistroDetails(registroId) {
           </div>
         `,
                 icon: 'info',
-                confirmButtonText: 'Cerrar'
+                confirmButtonText: 'Cerrar',
+                customClass:{
+                    confirmButton:'btn btn-secondary'
+                }
             });
         }
     } catch (error) {
