@@ -53,9 +53,6 @@ function createIsolationRow(isolation) {
       <td class="px-0">${isolation.id_incidente_gallina}</td>
       <td class="px-0">${fechaFormateada}</td>
       <td class="px-0">${isolation.nombre}</td>
-      <td class="text-end justify-content-end gap-2">
-          <button class="btn btn-sm btn-success btn-edit-isolation" data-isolation-id="${isolationId}" aria-label="Editar"><i class="fa-regular fa-pen-to-square me-0"></i></button>
-      </td>
     </tr>
   `;
 }
@@ -241,103 +238,6 @@ function filtrarAislamientos(fechaInicio, fechaFin) {
   init(1, 10);
 }
 
-
-//_____________selects para que cargen los nombres de la tabla galpon del create y edit_______________
-
-async function loadGalponesSelectEdit(select, selectedId = null) {
-    try {
-        // Llamamos directamente al servicio
-        const galpones = await isolationService.getGalponesAll();
-
-        // Limpiar y agregar opción por defecto
-        select.innerHTML = '<option value="">Selecciona un galpón</option>';
-
-        // Llenar el select
-        galpones.forEach(g => {
-            const option = document.createElement('option');
-            option.value = g.id_galpon;
-            option.textContent = g.nombre;
-
-            if (g.id_galpon === selectedId) option.selected = true;
-
-            select.appendChild(option);
-        });
-
-    } catch (error) {
-        console.error("Error al cargar galpones:", error);
-    }
-}
-
-
-//___________para abrir el modal de edit_________________________________________
-async function openEditModal(id_aislamiento) {
-  const modalElement = document.getElementById('edit-isolation-modal');
-  if (!modalInstance) {
-    modalInstance = new bootstrap.Modal(modalElement);
-  }
-
-  try {
-    const isolation = await isolationService.getIsolationById(id_aislamiento);
-
-    document.getElementById('edit-isolation-id').value = isolation.id_aislamiento;
-    document.getElementById('edit-idIncidentGallina').value = isolation.id_incidente_gallina;
-    
-    const selectGalpon = document.getElementById('edit_id_galpon');
-    await loadGalponesSelectEdit(selectGalpon, isolation.id_galpon);
-    
-    modalInstance.show();
-  } catch (error) {
-      Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'No se pudieron cargar los datos del aislamiento.',
-      confirmButtonText: "OK",
-      customClass: {
-        confirmButton: "btn btn-success"
-      },
-      buttonsStyling: false
-    });
-  };
-};
-
-async function handleTableClick(event) {
-  // Manejador para el botón de editar
-  const editButton = event.target.closest('.btn-edit-isolation');
-  if (editButton) {
-    const idAislamiento = editButton.dataset.isolationId;
-    openEditModal(idAislamiento);
-    return;
-  }
-}
-
-// --- MANEJADORES DE EVENTOS ---
-async function handleUpdateSubmit(event) {
-  event.preventDefault();
-  const isolationId = document.getElementById('edit-isolation-id').value;
-  const updatedData = {
-    id_incidente_gallina: document.getElementById('edit-idIncidentGallina').value,
-    id_galpon: document.getElementById('edit_id_galpon').value,
-  };
-
-
-  try {
-    await isolationService.updateIsolation(isolationId, updatedData);
-    modalInstance.hide();
-    init(); // Recargamos la tabla para ver los cambios
-  } catch (error) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'No se pudo actualizar del aislamiento.',
-      confirmButtonText: "OK",
-      customClass: {
-          confirmButton: "btn btn-success"
-        },
-      buttonsStyling: false
-    });
-  }
-}
-
 //____________________________________buscador inteligente____________________________________
 function inicializarBuscador() {
   const BuscarAislamiento = document.getElementById('search-isolation');
@@ -415,15 +315,6 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
       }
 
     renderPagination(data.total_pages || 1, page);
-
-    // Inicializar event listeners de la tabla
-    const editForm = document.getElementById('edit-isolation-form');
-    tableBody.removeEventListener('click', handleTableClick);
-    tableBody.addEventListener('click', handleTableClick);
-    editForm.removeEventListener('submit', handleUpdateSubmit);
-    editForm.addEventListener('submit', handleUpdateSubmit);
-
-    // ⭐ INICIALIZAR FILTROS Y BUSCADOR DESPUÉS DE CARGAR LA TABLA
     inicializarBuscador();
     inicializarFiltroFechas();
 
@@ -433,6 +324,26 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
 }
 
 //_____________________para exportar archivos excel, CSV, pdf_______________________________________
+function formatDateTime(datetimeStr) {
+  if (!datetimeStr) return "";
+
+  const date = new Date(datetimeStr);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  const ampm = hours >= 12 ? "pm" : "am";
+  hours = hours % 12;
+  hours = hours === 0 ? 12 : hours;
+
+  return `${year}-${month}-${day}, ${hours}:${minutes}:${seconds} ${ampm}`;
+}
+
 function convertToCSV(rows, columns) {
   const escapeCell = (val) => {
     if (val === null || val === undefined) return "";
@@ -470,7 +381,7 @@ function downloadBlob(content, mimeType, filename) {
 async function exportToPDF(data, filename = "aislamientos.pdf") {
   const sanitizedData = data.map(row => ({
     id_aislamiento: row.id_aislamiento || "",
-    fecha_hora: row.fecha_hora || "",
+    fecha_hora: formatDateTime(row.fecha_hora) || "",
     id_incidente_gallina: row.id_incidente_gallina || "",
     id_galpon: row.id_galpon || "",
   }));
@@ -517,14 +428,19 @@ function loadScript(src) {
 }
 
 function exportToCSV(data, filename = "aislamientos.csv") {
+  const formattedData = data.map(row => ({
+    ...row, 
+    fecha_hora: formatDateTime(row.fecha_hora),
+  }));
+
   const columns = [
     { header: "ID", key: "id_aislamiento" },
     { header: "Fecha y hora", key: "fecha_hora" },
     { header: "Incidente N.", key: "id_incidente_gallina" },
     { header: "id galpon", key: "id_galpon" },
-    // { header: "Latitud", key: "latitud" },
   ];
-  const csv = convertToCSV(data, columns);
+
+  const csv = convertToCSV(formattedData, columns);
   downloadBlob(csv, "text/csv;charset=utf-8;", filename);
 }
 
@@ -557,7 +473,7 @@ async function exportToExcel(data, filename = "aislamientos.xlsx") {
   // Mapear datos a objetos planos para json_to_sheet
   const rows = data.map((r) => ({
     "Id aislamiento": r.id_aislamiento,
-    "Fecha y hora": r.fecha_hora,
+    "Fecha y hora": formatDateTime(r.fecha_hora),
     "Id incidente gallina": r.id_incidente_gallina,
     "Id galpón origen": r.id_galpon,
   }));
