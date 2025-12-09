@@ -15,6 +15,8 @@ let pageSize = 10;
 let totalPages = 1;
 // Valor actual del input de búsqueda (por nombre)
 let currentSearch = "";
+// Filtro de categoria seleccionado (id o texto)
+let currentCategory = "";
 
 function createInvRow(inv) {
   const invId = inv.id_inventario || inv.id;
@@ -423,13 +425,38 @@ function renderInventoryPage() {
   const source = Array.isArray(cachedInventory) ? cachedInventory : [];
   const q = (currentSearch || "").toString().trim().toLowerCase();
 
-  let filtered = source;
-  if (q) {
-    filtered = source.filter((inv) => {
-      const nombre = (inv.nombre || inv.name || "").toString().toLowerCase();
-      return nombre.includes(q);
-    });
-  }
+  // Filtrar por búsqueda y por categoria
+  let filtered = source.filter((inv) => {
+    // Nombre match
+    const nombre = (inv.nombre || inv.name || "").toString().toLowerCase();
+    const matchesSearch = !q || nombre.includes(q);
+
+    // Categoria match (si hay filtro)
+    if (!currentCategory) return matchesSearch;
+
+    const catFilter = String(currentCategory).trim();
+    // intentar comparar por id's posibles
+    const possibleCatIds = [
+      inv.id_categoria,
+      inv.id_cat,
+      inv.category_id,
+      inv.category,
+      (inv.categoria && (inv.categoria.id_categoria || inv.categoria.id || inv.categoria.id_cat)),
+      (inv.categoria && (inv.categoria.nombre || inv.categoria.name)),
+    ].filter((x) => x !== undefined && x !== null);
+
+    const matchesCategory = possibleCatIds.some((pid) =>
+      {
+        const pidStr = String(pid).toLowerCase();
+        if (pidStr === catFilter.toLowerCase()) return true;
+        const mapped = categoryMap.get(String(pid));
+        if (mapped && mapped.toLowerCase() === catFilter.toLowerCase()) return true;
+        return false;
+      }
+    );
+
+    return matchesSearch && matchesCategory;
+  });
 
   if (!filtered || filtered.length === 0) {
     tableBody.innerHTML =
@@ -450,6 +477,12 @@ function renderInventoryPage() {
 // Maneja el input de búsqueda y refresca la página
 function handleSearchInput(e) {
   currentSearch = e.target.value || "";
+  currentPage = 1;
+  renderInventoryPage();
+}
+
+function handleCategoryChange(e) {
+  currentCategory = e.target.value || "";
   currentPage = 1;
   renderInventoryPage();
 }
@@ -484,6 +517,27 @@ async function cargarCategorias() {
         })
         .join("");
       selectCrear.insertAdjacentHTML("beforeend", opts);
+    }
+
+    // Poblar select de filtro por categoria si existe
+    const filterSelect = document.getElementById("filter-cat-inv");
+    if (filterSelect) {
+      const placeholder = '<option value="">Todas las categorias</option>';
+      filterSelect.innerHTML = placeholder;
+      const optsF = categorias
+        .map((tipoOrig) => {
+          const { id, nombre } = normalizeTipo(tipoOrig);
+          if (id !== null && id !== undefined) {
+            // guardar en mapa por si se necesita
+            categoryMap.set(String(id), nombre);
+            return `<option value="${id}">${nombre}</option>`;
+          }
+          // si no hay id pero hay nombre, permitir filtrar por nombre
+          if (nombre) return `<option value="${nombre}">${nombre}</option>`;
+          return "";
+        })
+        .join("");
+      filterSelect.insertAdjacentHTML("beforeend", optsF);
     }
 
     let selectEditar = document.getElementById("edit-cat-inv");
@@ -627,12 +681,10 @@ async function loadInventoryByLand(landId) {
     '<tr><td colspan="7" class="text-center">Cargando Inventario...</td></tr>';
   try {
     const inventory = await inventoryService.getInventoryByLand(landId);
-    if (inventory && inventory.length > 0) {
-      tableBody.innerHTML = inventory.map(createInvRow).join("");
-    } else {
-      tableBody.innerHTML =
-        '<tr><td colspan="7" class="text-center">No se encontraron Items en el inventario para esta finca.</td></tr>';
-    }
+    // almacenar en caché para permitir búsqueda y filtrado por categoría
+    cachedInventory = Array.isArray(inventory) ? inventory : [];
+    currentPage = 1;
+    renderInventoryPage();
   } catch (err) {
     console.error("Error al obtener inventario por finca:", err);
     tableBody.innerHTML =
@@ -687,6 +739,12 @@ async function init() {
   if (searchEl) {
     searchEl.removeEventListener("input", handleSearchInput);
     searchEl.addEventListener("input", handleSearchInput);
+  }
+  // Vincular filtro por categoria
+  const filterCat = document.getElementById("filter-cat-inv");
+  if (filterCat) {
+    filterCat.removeEventListener("change", handleCategoryChange);
+    filterCat.addEventListener("change", handleCategoryChange);
   }
 
   // Delegated handler dentro del módulo Inventario para accesos directos (p. ej. categorias)
