@@ -36,7 +36,12 @@ async function openEditModal(id) {
     console.error(`Error al obtener datos del tipo de gallina ${id}:`, error);
     await Swal.fire({
       icon: "error",
-      text: "No se pudieron cargar los datos del tipo de gallina."
+      text: "No se pudieron cargar los datos del tipo de gallina.",
+      confirmButtonText: "OK",
+      customClass: {
+        confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
   }
 }
@@ -53,18 +58,42 @@ async function handleUpdateSubmit(event) {
 
   try {
     await typeChickenService.updateTypeChicken(typeChickenId, updatedData);
+    console.log(updatedData);
     modalInstance.hide();
     await Swal.fire({
       icon: "success",
-      text: "Tipo de gallina actualizado exitosamente."
+      text: "Tipo de gallina actualizado exitosamente.",
+      confirmButtonText: "OK",
+      customClass: {
+        confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
     init(); // Recargamos la tabla para ver los cambios
   } catch (error) {
     console.error(`Error al actualizar el tipo de gallina ${typeChickenId}:`, error);
-    await Swal.fire({
-      icon: "error",
-      text: "No se pudo actualizar el tipo de gallina."
-    });
+    if (error.message === "El tipo de gallina con esa raza y descripción ya existe.") {
+      await Swal.fire({
+        icon: "error",
+        text: "El tipo de gallina con esa raza y descripción ya existe.",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "btn btn-success"
+        },
+        buttonsStyling: false
+
+      });
+    } else {
+      await Swal.fire({
+        icon: "error",
+        text: "Error al actualizar tipo de gallina.",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "btn btn-success"
+        },
+        buttonsStyling: false
+      });
+    }
   }
 }
 
@@ -97,7 +126,13 @@ async function handleCreateSubmit(event) {
     document.getElementById('create-tipo-gallina-form').reset(); // Limpiamos el formulario
     await Swal.fire({
       icon: "success",
-      text: "Tipo de gallina creado exitosamente."
+      text: "Tipo de gallina creado exitosamente.",
+      confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "btn btn-success"
+        },
+        buttonsStyling: false
+
     });
     init(); // Recargamos la tabla para ver el nuevo tipo
   } catch (error) {
@@ -105,12 +140,22 @@ async function handleCreateSubmit(event) {
     if (error.message === "El tipo de gallina con esa raza y descripción ya existe.") {
       await Swal.fire({
         icon: "error",
-        text: "El tipo de gallina con esa raza y descripción ya existe."
+        text: "El tipo de gallina con esa raza y descripción ya existe.",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "btn btn-success"
+        },
+        buttonsStyling: false
       });
     } else {
       await Swal.fire({
         icon: "error",
-        text: "Error al crear tipo de gallina."
+        text: "Error al crear tipo de gallina.",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "btn btn-success"
+        },
+        buttonsStyling: false
       });
     }
   }
@@ -133,7 +178,15 @@ function handleExportClick(event) {
     const dateTag = new Date().toISOString().slice(0, 10);
     const data = allTypeChickens;
     if (!data || data.length === 0) {
-        Swal.fire({ title: "No hay datos para exportar.", icon: "info" });
+        Swal.fire({ 
+          title: "No hay datos para exportar.", 
+          icon: "info",
+          confirmButtonText: "OK",
+          customClass: {
+            confirmButton: "btn btn-success"
+          },
+          buttonsStyling: false 
+        });
         return;
     }
 
@@ -248,6 +301,11 @@ async function exportToExcel(data, filename = "Tipos de gallinas.xlsx") {
                 title: "Error al generar .xlsx",
                 text: err.message || String(err),
                 icon: "error",
+                confirmButtonText: "OK",
+                customClass: {
+                  confirmButton: "btn btn-success"
+                },
+                buttonsStyling: false
             });
         }
     }
