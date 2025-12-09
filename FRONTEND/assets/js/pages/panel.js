@@ -286,18 +286,26 @@ function aplicarLayoutPorRol() {
         "chickens",
         "produccion_huevos",
         "rescue",
-        "sensors",
       ],
     };
     const desired = orderByRole[role] || orderByRole["administrador"];
-    const links = Array.from(shortcuts.querySelectorAll(".shortcut-link"));
+    let links = Array.from(shortcuts.querySelectorAll(".shortcut-link"));
+
+    // Eliminamos totalmente el shortcut de sensores para operario por seguridad
+    if (role === "operario") {
+      links
+        .filter((l) => l.dataset.page === "sensors")
+        .forEach((l) => l.remove());
+      // actualizar la lista tras eliminar
+      links = Array.from(shortcuts.querySelectorAll(".shortcut-link"));
+    }
 
     // Mostrar/ocultar shortcuts según rol
     links.forEach((link) => {
       const page = link.dataset.page;
       if (role === "operario") {
-        // Operario: solo mostrar tareas, incidentes, chickens, produccion_huevos, rescue, sensors
-        if (["galpones", "ventas"].includes(page)) {
+        // Operario: solo mostrar tareas, incidentes, chickens, produccion_huevos, rescue
+        if (["galpones", "ventas", "sensors"].includes(page)) {
           link.style.display = "none";
         } else {
           link.style.display = "";
@@ -945,13 +953,13 @@ function cargarIncidentes(incidentes) {
 function actualizarSensoresData(sensores) {
   const tempEl = document.getElementById("sensor-temp");
   const humEl = document.getElementById("sensor-hum");
-  const co2El = document.getElementById("sensor-co2");
-  const luzEl = document.getElementById("sensor-luz");
+  // const co2El = document.getElementById("sensor-co2");
+  // const luzEl = document.getElementById("sensor-luz");
 
   if (tempEl) tempEl.textContent = sensores.temperatura.toFixed(1) + "°C";
   if (humEl) humEl.textContent = sensores.humedad.toFixed(0) + "%";
-  if (co2El) co2El.textContent = sensores.co2 + " ppm";
-  if (luzEl) luzEl.textContent = sensores.luminosidad + " lux";
+  // if (co2El) co2El.textContent = sensores.co2 + " ppm";
+  // if (luzEl) luzEl.textContent = sensores.luminosidad + " lux";
 }
 
 // Cargar actividad reciente

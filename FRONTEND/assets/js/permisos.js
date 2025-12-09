@@ -18,24 +18,48 @@
       inventario: { ver: true, crear: true, editar: true, eliminar: true },
       sensors: { ver: true, crear: true, editar: true, eliminar: true },
       sensor_types: { ver: true, crear: true, editar: true, eliminar: true },
-      registro_sensores: { ver: true, crear: false, editar: false, eliminar: false },
-      incidentes_gallina: { ver: true, crear: true, editar: true, eliminar: true },
+      registro_sensores: {
+        ver: true,
+        crear: false,
+        editar: false,
+        eliminar: false,
+      },
+      incidentes_gallina: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: true,
+      },
       chickens: { ver: true, crear: true, editar: true, eliminar: true },
       tipos_gallinas: { ver: true, crear: true, editar: true, eliminar: true },
       rescue: { ver: true, crear: true, editar: true, eliminar: true },
       aislamientos: { ver: true, crear: true, editar: true, eliminar: true },
-      produccion_huevos: { ver: true, crear: true, editar: true, eliminar: true },
+      produccion_huevos: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: true,
+      },
       stock: { ver: true, crear: true, editar: true, eliminar: true },
       ventas: { ver: true, crear: true, editar: true, eliminar: true },
       alimento: { ver: true, crear: true, editar: true, eliminar: true },
       metodo_pago: { ver: true, crear: true, editar: true, eliminar: true },
-      categoria_inventario: { ver: true, crear: true, editar: true, eliminar: true },
+      categoria_inventario: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: true,
+      },
       tipo_huevos: { ver: true, crear: true, editar: true, eliminar: true },
       modulos: { ver: true, crear: true, editar: true, eliminar: true },
       permisos: { ver: true, crear: true, editar: true, eliminar: true },
       alimentos: { ver: true, crear: true, editar: true, eliminar: true },
-      consumo_gallinas: { ver: true, crear: true, editar: true, eliminar: true},
-
+      consumo_gallinas: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: true,
+      },
     },
     administrador: {
       users: { ver: true, crear: true, editar: true, eliminar: true },
@@ -47,24 +71,48 @@
       inventario: { ver: true, crear: true, editar: true, eliminar: true },
       sensors: { ver: true, crear: true, editar: true, eliminar: false },
       sensor_types: { ver: true, crear: true, editar: true, eliminar: false },
-      registro_sensores: { ver: true, crear: false, editar: false, eliminar: false },
-      incidentes_gallina: { ver: true, crear: true, editar: true, eliminar: true },
+      registro_sensores: {
+        ver: true,
+        crear: false,
+        editar: false,
+        eliminar: false,
+      },
+      incidentes_gallina: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: true,
+      },
       chickens: { ver: true, crear: true, editar: true, eliminar: true },
       tipos_gallinas: { ver: true, crear: true, editar: true, eliminar: true },
       rescue: { ver: true, crear: true, editar: true, eliminar: true },
       aislamientos: { ver: true, crear: true, editar: true, eliminar: true },
-      produccion_huevos: { ver: true, crear: true, editar: true, eliminar: true },
+      produccion_huevos: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: true,
+      },
       stock: { ver: true, crear: true, editar: true, eliminar: true },
       ventas: { ver: true, crear: true, editar: true, eliminar: true },
       alimento: { ver: true, crear: true, editar: true, eliminar: true },
       metodo_pago: { ver: true, crear: true, editar: true, eliminar: true },
-      categoria_inventario: { ver: true, crear: true, editar: true, eliminar: true },
+      categoria_inventario: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: true,
+      },
       tipo_huevos: { ver: true, crear: true, editar: true, eliminar: true },
       modulos: { ver: true, crear: true, editar: true, eliminar: false },
       permisos: { ver: true, crear: true, editar: true, eliminar: false },
       alimentos: { ver: true, crear: true, editar: true, eliminar: false },
-      consumo_gallinas: { ver: true, crear: true, editar: true, eliminar: false },
-
+      consumo_gallinas: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: false,
+      },
     },
     supervisor: {
       users: { ver: false, crear: false, editar: false, eliminar: false },
@@ -76,24 +124,48 @@
       inventario: { ver: false, crear: false, editar: false, eliminar: false },
       sensors: { ver: true, crear: true, editar: true, eliminar: false },
       sensor_types: { ver: true, crear: true, editar: true, eliminar: false },
-      registro_sensores: { ver: true, crear: false, editar: false, eliminar: false },
-      incidentes_gallina: { ver: true, crear: true, editar: true, eliminar: false },
+      registro_sensores: {
+        ver: true,
+        crear: false,
+        editar: false,
+        eliminar: false,
+      },
+      incidentes_gallina: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: false,
+      },
       chickens: { ver: true, crear: true, editar: true, eliminar: false },
       tipos_gallinas: { ver: true, crear: true, editar: true, eliminar: false },
       rescue: { ver: true, crear: true, editar: true, eliminar: false },
       aislamientos: { ver: true, crear: true, editar: false, eliminar: false },
-      produccion_huevos: { ver: true, crear: true, editar: true, eliminar: false },
+      produccion_huevos: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: false,
+      },
       stock: { ver: true, crear: true, editar: true, eliminar: false },
       ventas: { ver: false, crear: false, editar: false, eliminar: false },
       alimento: { ver: false, crear: false, editar: false, eliminar: false },
       metodo_pago: { ver: false, crear: false, editar: false, eliminar: false },
-      categoria_inventario: { ver: false, crear: false, editar: false, eliminar: false },
+      categoria_inventario: {
+        ver: false,
+        crear: false,
+        editar: false,
+        eliminar: false,
+      },
       tipo_huevos: { ver: true, crear: false, editar: false, eliminar: false },
       modulos: { ver: false, crear: false, editar: false, eliminar: false },
       permisos: { ver: false, crear: false, editar: false, eliminar: false },
       alimentos: { ver: true, crear: true, editar: true, eliminar: false },
-      consumo_gallinas: { ver: true, crear: true, editar: true, eliminar: false },
-
+      consumo_gallinas: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: false,
+      },
     },
     operario: {
       users: { ver: false, crear: false, editar: false, eliminar: false },
@@ -101,27 +173,62 @@
       tareas: { ver: true, crear: false, editar: true, eliminar: false },
       lands: { ver: false, crear: false, editar: false, eliminar: false },
       galpones: { ver: true, crear: false, editar: false, eliminar: false },
-      incidentes: { ver: true, crear: true, editar: true, eliminar: false },
+      incidentes: { ver: true, crear: false, editar: true, eliminar: false },
       inventario: { ver: false, crear: false, editar: false, eliminar: false },
       sensors: { ver: false, crear: false, editar: false, eliminar: false },
-      sensor_types: { ver: false, crear: false, editar: false, eliminar: false },
-      registro_sensores: { ver: true, crear: false, editar: false, eliminar: false },
-      incidentes_gallina: { ver: true, crear: true, editar: true, eliminar: false },
+      sensor_types: {
+        ver: false,
+        crear: false,
+        editar: false,
+        eliminar: false,
+      },
+      registro_sensores: {
+        ver: true,
+        crear: false,
+        editar: false,
+        eliminar: false,
+      },
+      incidentes_gallina: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: false,
+      },
       chickens: { ver: true, crear: true, editar: true, eliminar: false },
-      tipos_gallinas: { ver: true, crear: false, editar: false, eliminar: false },
+      tipos_gallinas: {
+        ver: true,
+        crear: false,
+        editar: false,
+        eliminar: false,
+      },
       rescue: { ver: true, crear: true, editar: true, eliminar: false },
       aislamientos: { ver: true, crear: true, editar: false, eliminar: false },
-      produccion_huevos: { ver: true, crear: true, editar: true, eliminar: false },
+      produccion_huevos: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: false,
+      },
       stock: { ver: true, crear: true, editar: false, eliminar: false },
       ventas: { ver: false, crear: false, editar: false, eliminar: false },
       alimento: { ver: false, crear: false, editar: false, eliminar: false },
       metodo_pago: { ver: false, crear: false, editar: false, eliminar: false },
-      categoria_inventario: { ver: false, crear: false, editar: false, eliminar: false },
+      categoria_inventario: {
+        ver: false,
+        crear: false,
+        editar: false,
+        eliminar: false,
+      },
       tipo_huevos: { ver: true, crear: false, editar: false, eliminar: false },
       modulos: { ver: false, crear: false, editar: false, eliminar: false },
       permisos: { ver: false, crear: false, editar: false, eliminar: false },
       alimentos: { ver: true, crear: false, editar: false, eliminar: false },
-      consumo_gallinas: { ver: true, crear: true, editar: true, eliminar: false },
+      consumo_gallinas: {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: false,
+      },
     },
   };
 
@@ -136,6 +243,51 @@
   document.addEventListener("DOMContentLoaded", function () {
     aplicarPermisos();
   });
+
+  // Determinar el módulo actual según el enlace activo o el título
+  function obtenerModuloActual() {
+    const activeLink = document.querySelector("a[data-page].active");
+    if (activeLink) return activeLink.getAttribute("data-page");
+
+    const allLinks = document.querySelectorAll("a[data-page]");
+    let lastPage = null;
+    allLinks.forEach((link) => {
+      const page = link.getAttribute("data-page");
+      if (page) lastPage = page;
+    });
+    if (lastPage) return lastPage;
+
+    const pageTitle = document.querySelector(
+      "#main-content h4, #main-content h1"
+    );
+    if (pageTitle) {
+      const texto = pageTitle.textContent.toLowerCase().trim();
+      const mapeo = {
+        panel: "panel",
+        usuarios: "users",
+        roles: "roles",
+        tareas: "tareas",
+        fincas: "lands",
+        galpones: "galpones",
+        incidentes: "incidentes",
+        "inventario finca": "inventario",
+        sensores: "sensors",
+        "tipos de sensores": "sensor_types",
+        "registros de sensores": "registro_sensores",
+        "incidente gallina": "incidentes_gallina",
+        "registro gallinas": "chickens",
+        "tipos de gallinas": "tipos_gallinas",
+        salvamento: "rescue",
+        aislamientos: "aislamientos",
+        "produccion huevos": "produccion_huevos",
+        stock: "stock",
+        ventas: "ventas",
+      };
+      return mapeo[texto] || null;
+    }
+
+    return null;
+  }
 
   // También exponer para llamar manualmente después de cargar contenido dinámico
   window.aplicarPermisos = function (modulo = null) {
@@ -153,6 +305,16 @@
     }
 
     console.log("Aplicando permisos para:", paginaActual, "Rol:", rol);
+
+    // Ocultar shortcuts del panel según permisos
+    if (paginaActual === "panel") {
+      document.querySelectorAll(".shortcut-link[data-page]").forEach((link) => {
+        const targetPage = link.getAttribute("data-page");
+        if (targetPage && !tienePermiso(targetPage, "ver")) {
+          link.style.display = "none";
+        }
+      });
+    }
 
     // Ocultar botones de crear
     if (!tienePermiso(paginaActual, "crear")) {
@@ -194,61 +356,7 @@
         btn.style.display = "none";
       }
     });
-
-    // Para administrador: ocultar opción de crear/editar superadmin
-    if (rol === "administrador" && paginaActual === "users") {
-      ocultarOpcionSuperadmin();
-    }
   };
-
-  // Obtener módulo actual desde el contenido cargado
-  function obtenerModuloActual() {
-    // Método 1: Buscar en el último link clickeado (guardado por main.js)
-    const activeLink = document.querySelector("a[data-page].active");
-    if (activeLink) {
-      return activeLink.getAttribute("data-page");
-    }
-
-    // Método 2: Buscar el último link con data-page que tenga contenido cargado
-    const allLinks = document.querySelectorAll("a[data-page]");
-    let lastPage = null;
-    allLinks.forEach((link) => {
-      const page = link.getAttribute("data-page");
-      if (page) lastPage = page;
-    });
-
-    // Método 3: Si no hay links, intentar desde el título de la página
-    const pageTitle = document.querySelector(
-      "#main-content h4, #main-content h1"
-    );
-    if (pageTitle) {
-      const texto = pageTitle.textContent.toLowerCase().trim();
-      // Mapeo de títulos a módulos
-      const mapeo = {
-        usuarios: "users",
-        roles: "roles",
-        tareas: "tareas",
-        fincas: "lands",
-        galpones: "galpones",
-        incidentes: "incidentes",
-        "inventario finca": "inventario",
-        sensores: "sensors",
-        "tipos de sensores": "sensor_types",
-        "registros de sensores": "registro_sensores",
-        "incidente gallina": "incidentes_gallina",
-        "registro gallinas": "chickens",
-        "tipos de gallinas": "tipos_gallinas",
-        salvamento: "rescue",
-        aislamientos: "aislamientos",
-        "produccion huevos": "produccion_huevos",
-        stock: "stock",
-        ventas: "ventas",
-      };
-      return mapeo[texto] || null;
-    }
-
-    return null;
-  }
 
   // Función específica para ocultar rol superadmin en selects
   function ocultarOpcionSuperadmin() {

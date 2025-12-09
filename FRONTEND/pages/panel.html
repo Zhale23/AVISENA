@@ -17,7 +17,7 @@
                         <p class="text-muted mb-1 small">Total Gallinas</p>
                         <h2 class="mb-0 fw-bold" id="total-gallinas">---</h2>
                         <small class="text-success"><i class="fas fa-arrow-up"></i> <span
-                                id="gallinas-trend">+2.5%</span> vs mes anterior</small>
+                                id="gallinas-trend"></span> vs mes anterior</small>
                     </div>
                     <div class="p-3 bg-primary bg-opacity-10 rounded">
                         <i class="fas fa-egg fa-2x text-primary"></i>
@@ -36,7 +36,7 @@
                         <p class="text-muted mb-1 small">Producción Hoy</p>
                         <h2 class="mb-0 fw-bold" id="produccion-hoy">---</h2>
                         <small class="text-success"><i class="fas fa-arrow-up"></i> <span
-                                id="produccion-trend">+5.8%</span> vs ayer</small>
+                                id="produccion-trend"></span> vs ayer</small>
                     </div>
                     <div class="p-3 bg-success bg-opacity-10 rounded">
                         <i class="fas fa-chart-line fa-2x text-success"></i>
@@ -136,7 +136,7 @@
 
     <!-- Accesos Directos -->
     <div class="col-12 col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <h5 class="card-title mb-3">Accesos Directos</h5>
                 <div class="d-grid gap-3" id="panel-shortcuts">
@@ -160,11 +160,6 @@
                         class="btn btn-outline-success rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn"
                         data-page="produccion_huevos">
                         <i class="fas fa-egg me-2"></i> <span class="flex-grow-1">Nueva Producción</span>
-                    </a>
-                    <a href="#"
-                        class="btn btn-outline-info rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn"
-                        data-page="rescue">
-                        <i class="fas fa-medkit me-2"></i> <span class="flex-grow-1">Salvamento</span>
                     </a>
                     <a href="#"
                         class="btn btn-outline-secondary rounded-pill shadow-sm d-flex align-items-center shortcut-link shortcut-btn"
@@ -206,7 +201,6 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="card-title mb-0">Monitoreo de Sensores</h5>
-                    <span class="badge bg-success">En línea</span>
                 </div>
                 <div class="row g-2" id="sensores-container">
                     <!-- Sensor Temperatura -->
@@ -216,7 +210,7 @@
                                 <small class="text-muted">Temperatura</small>
                                 <i class="fas fa-thermometer-half text-danger"></i>
                             </div>
-                            <h4 class="mb-0" id="sensor-temp">25°C</h4>
+                            <h4 class="mb-0" id="sensor-temp"></h4>
                             <div class="progress mt-2" style="height: 4px;">
                                 <div class="progress-bar bg-danger" style="width: 65%"></div>
                             </div>
@@ -235,7 +229,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Sensor CO2 -->
+                    <!-- Sensor CO2
                     <div class="col-6">
                         <div class="p-3 bg-light rounded">
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -247,9 +241,9 @@
                                 <div class="progress-bar bg-info" style="width: 45%"></div>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                     <!-- Sensor Luz -->
-                    <div class="col-6">
+                    <!-- <div class="col-6">
                         <div class="p-3 bg-light rounded">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <small class="text-muted">Luminosidad</small>
@@ -260,7 +254,7 @@
                                 <div class="progress-bar bg-warning" style="width: 75%"></div>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>

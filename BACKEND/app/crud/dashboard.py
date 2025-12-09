@@ -309,13 +309,12 @@ def get_ultimos_registros_sensores(db: Session) -> Dict:
             FROM registro_sensores rs
             JOIN sensores s ON rs.id_sensor = s.id_sensor
             JOIN tipo_sensores st ON s.id_tipo_sensor = st.id_tipo
-            WHERE rs.fecha_hora >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 HOUR)
             ORDER BY rs.fecha_hora DESC
-            LIMIT 20
+            LIMIT 100
         """)
         resultados = db.execute(query).mappings().all()
         
-        # Agrupar por tipo de sensor y obtener el último valor
+        # Agrupar por tipo de sensor y obtener el último valor disponible
         sensores = {
             "temperatura": 25.0,
             "humedad": 60.0,
