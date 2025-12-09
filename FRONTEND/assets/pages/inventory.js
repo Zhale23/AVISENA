@@ -13,6 +13,8 @@ let cachedInventory = [];
 let currentPage = 1;
 let pageSize = 10;
 let totalPages = 1;
+// Valor actual del input de búsqueda (por nombre)
+let currentSearch = "";
 
 function createInvRow(inv) {
   const invId = inv.id_inventario || inv.id;
@@ -417,21 +419,39 @@ function handlePaginationClick(e) {
 function renderInventoryPage() {
   const tableBody = document.getElementById("inv-table-body");
   if (!tableBody) return;
+  // Aplicar búsqueda (cliente) sobre la caché
+  const source = Array.isArray(cachedInventory) ? cachedInventory : [];
+  const q = (currentSearch || "").toString().trim().toLowerCase();
 
-  if (!cachedInventory || cachedInventory.length === 0) {
+  let filtered = source;
+  if (q) {
+    filtered = source.filter((inv) => {
+      const nombre = (inv.nombre || inv.name || "").toString().toLowerCase();
+      return nombre.includes(q);
+    });
+  }
+
+  if (!filtered || filtered.length === 0) {
     tableBody.innerHTML =
       '<tr><td colspan="7" class="text-center">No se encontraron Items en el inventario.</td></tr>';
     renderPagination(1, 1);
     return;
   }
 
-  totalPages = Math.max(1, Math.ceil(cachedInventory.length / pageSize));
+  totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   if (currentPage > totalPages) currentPage = totalPages;
   const start = (currentPage - 1) * pageSize;
-  const slice = cachedInventory.slice(start, start + pageSize);
+  const slice = filtered.slice(start, start + pageSize);
 
   tableBody.innerHTML = slice.map(createInvRow).join("");
   renderPagination(currentPage, totalPages);
+}
+
+// Maneja el input de búsqueda y refresca la página
+function handleSearchInput(e) {
+  currentSearch = e.target.value || "";
+  currentPage = 1;
+  renderInventoryPage();
 }
 
 async function cargarCategorias() {
@@ -660,6 +680,13 @@ async function init() {
   if (pagList) {
     pagList.removeEventListener("click", handlePaginationClick);
     pagList.addEventListener("click", handlePaginationClick);
+  }
+
+  // Vincular input de búsqueda
+  const searchEl = document.getElementById("search-inv");
+  if (searchEl) {
+    searchEl.removeEventListener("input", handleSearchInput);
+    searchEl.addEventListener("input", handleSearchInput);
   }
 
   // Delegated handler dentro del módulo Inventario para accesos directos (p. ej. categorias)
