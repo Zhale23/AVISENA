@@ -219,12 +219,16 @@ function inicializarFiltroFechas() {
 }
 
 function filtrarAislamientos(fechaInicio, fechaFin) {
-  if (!fechaInicio || !fechaFin) {
+  if (!fechaInicio || !fechaFin || fechaInicio == ""|| fechaFin=="") {
     Swal.fire({
-      icon: 'info',
+      icon: 'error',
       title: 'Error',
       text: 'Debe seleccionar ambas fechas',
-      confirmButtonColor: 'rgba(51, 136, 221, 1)'
+      confirmButtonText: "OK",
+      customClass: {
+        confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
     return;
   }
@@ -287,7 +291,11 @@ async function openEditModal(id_aislamiento) {
       icon: 'error',
       title: 'Error',
       text: 'No se pudieron cargar los datos del aislamiento.',
-      confirmButtonColor: '#d33'
+      confirmButtonText: "OK",
+      customClass: {
+        confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
   };
 };
@@ -321,7 +329,11 @@ async function handleUpdateSubmit(event) {
       icon: 'error',
       title: 'Error',
       text: 'No se pudo actualizar del aislamiento.',
-      confirmButtonColor: '#d33'
+      confirmButtonText: "OK",
+      customClass: {
+          confirmButton: "btn btn-success"
+        },
+      buttonsStyling: false
     });
   }
 }
@@ -371,7 +383,6 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
 
   const tableBody = document.getElementById('isolations-table-body');
   if (!tableBody) {
-    console.error("❌ No se encontró isolations-table-body");
     return;
   }
 
@@ -390,7 +401,7 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
             tableBody.innerHTML = `
               <tr>
                 <td colspan="7" class="text-center">
-                  <div class="alert alert-info mt-3">
+                  <div class="alert alert-success mt-3">
                     <i class="fas fa-info-circle me-2"></i>
                     No se encontraron aislamientos en el rango de fechas:<br>
                     <strong>${activeFechaInicio} a ${activeFechaFin}</strong>
@@ -417,7 +428,6 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
     inicializarFiltroFechas();
 
   } catch (error) {
-    console.error("❌ Error al cargar aislamientos:", error);
     tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>`;
   }
 }
@@ -577,6 +587,11 @@ async function exportToExcel(data, filename = "aislamientos.xlsx") {
         title: "Error al generar .xlsx",
         text: err.message || String(err),
         icon: "error",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "btn btn-success"
+        },
+        buttonsStyling: false
       });
     }
   }
@@ -608,7 +623,14 @@ async function handleExportClick(event) {
   const data = response?.isolation || [];
 
   if (data.length === 0) {
-    Swal.fire({ title: "No hay datos para exportar.", icon: "info" });
+    Swal.fire({ 
+      title: "No hay datos para exportar.",
+      icon: "info",
+      confirmButtonText: "OK",
+      customClass: {
+        confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false });
     return;
   }
 

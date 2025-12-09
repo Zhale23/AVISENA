@@ -492,6 +492,11 @@ async function openEditModal(chickenId) {
         Swal.fire({
             icon: "error",
             text: "No se pudieron cargar los datos de los registros.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
     }
 }
@@ -527,6 +532,11 @@ async function handleUpdateSubmit(event) {
             icon: "success",
             title: "Actualizado",
             text: "Registro actualizado exitosamente.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
     } catch (error) {
         console.error(`Error al actualizar el registro ${chickenId}:`, error);
@@ -538,12 +548,22 @@ async function handleUpdateSubmit(event) {
                 icon: "warning",
                 title: "Capacidad excedida",
                 text: "La cantidad de gallinas excede la capacidad del galpón.",
+                confirmButtonText: "OK",
+                customClass: {
+                    confirmButton: "btn btn-success"
+                },
+                buttonsStyling: false
             });
         } else {
             Swal.fire({
                 icon: "error",
                 title: "Error",
                 text: "No se pudo actualizar el registro.",
+                confirmButtonText: "OK",
+                customClass: {
+                    confirmButton: "btn btn-success"
+                },
+                buttonsStyling: false
             });
         }
     }
@@ -606,6 +626,11 @@ async function openRescueModal(chickenId) {
             icon: "error",
             title: "Error",
             text: "No se pudieron cargar los datos para el salvamento.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
     }
 }
@@ -634,6 +659,11 @@ async function handleRescueSubmit(event) {
             icon: "warning",
             title: "Cantidad inválida",
             text: "Por favor ingrese una cantidad válida de gallinas.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
         return;
     }
@@ -735,7 +765,7 @@ async function handleRescueSubmit(event) {
                     </div>
                 </div>
             `,
-            confirmButtonColor: '#198754'
+            confirmButtonColor: 'success'
         });
     }
 }
@@ -750,6 +780,11 @@ async function handleDeleteChicken(chickenId) {
             showCancelButton: true,
             confirmButtonText: "Sí, eliminar",
             cancelButtonText: "Cancelar",
+            customClass: {
+                confirmButton: "btn btn-success",
+                cancelButton: "btn btn-secondary"
+            },
+            buttonsStyling: false
         });
 
         if (!result.isConfirmed) return;
@@ -760,6 +795,11 @@ async function handleDeleteChicken(chickenId) {
             icon: "success",
             title: "Eliminado",
             text: "Registro eliminado exitosamente.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false  
         });
 
         // If we were viewing this galpon, reload recent view
@@ -780,6 +820,11 @@ async function handleDeleteChicken(chickenId) {
             icon: "error",
             title: "Error",
             text: error?.message || "No se pudo eliminar el registro.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
     }
 }
@@ -811,6 +856,11 @@ async function handleCreateSubmit(event) {
             icon: "success",
             title: "Creado",
             text: "Registro creado exitosamente.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
         // After create, reload either recent view or full view based on mode
         if (currentSelectedGalponId && !isVerMasMode) {
@@ -832,13 +882,22 @@ async function handleCreateSubmit(event) {
                 icon: "warning",
                 title: "Capacidad excedida",
                 text: "La cantidad de gallinas excede la capacidad del galpón.",
-                confirmButtonColor: '#198754',
+                confirmButtonText: "OK",
+                customClass: {
+                    confirmButton: "btn btn-success"
+                },
+                buttonsStyling: false
             });
         } else {
             Swal.fire({
                 icon: "error",
                 title: "Error",
                 text: "No se pudo crear el registro.",
+                confirmButtonText: "OK",
+                customClass: {
+                    confirmButton: "btn btn-success"
+                },
+                buttonsStyling: false
             });
         }
     }
@@ -1025,7 +1084,12 @@ function handleExportClick(event) {
     if (!dataToExport || dataToExport.length === 0) {
         Swal.fire({ 
             title: "No hay datos para exportar.", 
-            icon: "info" 
+            icon: "info",
+            confirmButtonText: "OK",
+            customClass: {
+            confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
         item.classList.remove('exporting');
         return;
@@ -1047,7 +1111,12 @@ function handleExportClick(event) {
         Swal.fire({
             title: "Error",
             text: "No se pudo generar el archivo de exportación.",
-            icon: "error"
+            icon: "error",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
         item.classList.remove('exporting');
     }
@@ -1160,6 +1229,11 @@ async function exportToExcel(data, filename = "Gallinas.xlsx") {
                 title: "Error al generar .xlsx",
                 text: err.message || String(err),
                 icon: "error",
+                confirmButtonText: "OK",
+                customClass: {
+                    confirmButton: "btn btn-success"
+                },
+                buttonsStyling: false
             });
         }
     }

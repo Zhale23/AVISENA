@@ -101,9 +101,9 @@ def update_chicken(
                 detail="El tipo de gallina con esa raza y descripción ya existe."
             )
 
-        success = crud_type_chicken.update_type_chicken_by_id(db, id_ingreso, type_chicken)
-        if not success:
+        if not created:
             raise HTTPException(status_code=400, detail="No se pudo actualizar el registro")
         return {"message": "Registro actualizado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
+
