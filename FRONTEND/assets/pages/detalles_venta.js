@@ -293,6 +293,8 @@ async function handleTableClick(event) {
                     icon: 'success',
                     title: "Éxito",
                     text: "Detalle eliminado correctamente",
+                    confirmButtonColor: '#28a745'
+
                 });
 
                 imprimirDetalles(detallesVenta);
@@ -518,6 +520,8 @@ async function handleUpdateSubmit(event) {
             icon: 'success',
             title: "Exito",
             text: "¡Detalle venta actualizado exitosamente!",
+            confirmButtonColor: '#28a745'
+
         });
         
     } catch (error) {

@@ -136,7 +136,7 @@
 
     <!-- Accesos Directos -->
     <div class="col-12 col-lg-4">
-        <div class="card border-0 shadow-sm">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <h5 class="card-title mb-3">Accesos Directos</h5>
                 <div class="d-grid gap-3" id="panel-shortcuts">
@@ -262,10 +262,10 @@
 
     <!-- Actividad Reciente -->
     <div class="col-12 col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <h5 class="card-title mb-3">Actividad Reciente</h5>
-                <div class="timeline" id="actividad-reciente">
+                <div class="timeline" id="actividad-reciente" style="max-height: 150px; overflow-y: auto;">
                     <div class="text-center py-3">
                         <div class="spinner-border spinner-border-sm text-primary" role="status">
                             <span class="visually-hidden">Cargando...</span>
@@ -285,7 +285,7 @@
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <h5 class="card-title mb-3">Distribución por Tipo</h5>
-                <div style="height: 300px; position: relative;">
+                <div style="height: 250px; position: relative;">
                     <canvas id="tipoGallinaChart"></canvas>
                 </div>
             </div>
@@ -297,7 +297,7 @@
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <h5 class="card-title mb-3">Ocupación de Galpones</h5>
-                <div style="height: 300px; position: relative;">
+                <div style="height: 250px; position: relative;">
                     <canvas id="galponesChart"></canvas>
                 </div>
             </div>
@@ -309,7 +309,7 @@
             <div class="card-body">
                 <h5 class="card-title mb-3">Incidentes - Este Mes</h5>
                 <div class="list-group list-group-flush" id="incidentes-list"
-                    style="max-height: 300px; overflow-y: auto;">
+                    style="max-height: 250px; overflow-y: auto;">
                     <div class="text-center py-3">
                         <div class="spinner-border spinner-border-sm text-primary" role="status">
                             <span class="visually-hidden">Cargando...</span>
