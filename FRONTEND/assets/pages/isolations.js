@@ -423,7 +423,6 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
     editForm.removeEventListener('submit', handleUpdateSubmit);
     editForm.addEventListener('submit', handleUpdateSubmit);
 
-    // ⭐ INICIALIZAR FILTROS Y BUSCADOR DESPUÉS DE CARGAR LA TABLA
     inicializarBuscador();
     inicializarFiltroFechas();
 
@@ -433,6 +432,26 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
 }
 
 //_____________________para exportar archivos excel, CSV, pdf_______________________________________
+function formatDateTime(datetimeStr) {
+  if (!datetimeStr) return "";
+
+  const date = new Date(datetimeStr);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  const ampm = hours >= 12 ? "pm" : "am";
+  hours = hours % 12;
+  hours = hours === 0 ? 12 : hours;
+
+  return `${year}-${month}-${day}, ${hours}:${minutes}:${seconds} ${ampm}`;
+}
+
 function convertToCSV(rows, columns) {
   const escapeCell = (val) => {
     if (val === null || val === undefined) return "";
@@ -470,7 +489,7 @@ function downloadBlob(content, mimeType, filename) {
 async function exportToPDF(data, filename = "aislamientos.pdf") {
   const sanitizedData = data.map(row => ({
     id_aislamiento: row.id_aislamiento || "",
-    fecha_hora: row.fecha_hora || "",
+    fecha_hora: formatDateTime(row.fecha_hora) || "",
     id_incidente_gallina: row.id_incidente_gallina || "",
     id_galpon: row.id_galpon || "",
   }));
@@ -517,14 +536,19 @@ function loadScript(src) {
 }
 
 function exportToCSV(data, filename = "aislamientos.csv") {
+  const formattedData = data.map(row => ({
+    ...row, 
+    fecha_hora: formatDateTime(row.fecha_hora),
+  }));
+
   const columns = [
     { header: "ID", key: "id_aislamiento" },
     { header: "Fecha y hora", key: "fecha_hora" },
     { header: "Incidente N.", key: "id_incidente_gallina" },
     { header: "id galpon", key: "id_galpon" },
-    // { header: "Latitud", key: "latitud" },
   ];
-  const csv = convertToCSV(data, columns);
+
+  const csv = convertToCSV(formattedData, columns);
   downloadBlob(csv, "text/csv;charset=utf-8;", filename);
 }
 
@@ -557,7 +581,7 @@ async function exportToExcel(data, filename = "aislamientos.xlsx") {
   // Mapear datos a objetos planos para json_to_sheet
   const rows = data.map((r) => ({
     "Id aislamiento": r.id_aislamiento,
-    "Fecha y hora": r.fecha_hora,
+    "Fecha y hora": formatDateTime(r.fecha_hora),
     "Id incidente gallina": r.id_incidente_gallina,
     "Id galpón origen": r.id_galpon,
   }));
