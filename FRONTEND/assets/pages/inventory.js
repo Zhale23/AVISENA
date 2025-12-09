@@ -154,8 +154,8 @@ async function handleCreateSubmit(e) {
   } catch (error) {
     console.error("Error al crear Item Inventario:", error);
     Swal.fire({
-        icon: "success",
-        title: `Item creado con éxito.`,
+        icon: "error",
+        title: `Error al crear el Item Inventario: ${error.message}`,
         showConfirmButton: false,
         timer: 1200
     });
