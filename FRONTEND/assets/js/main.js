@@ -1,6 +1,113 @@
 const mainContent = document.getElementById("main-content");
 const navLinks = document.querySelector(".app-nav");
 
+// Oculta los ítems de menú según rol usando permisos.js si está cargado
+function applyMenuPermissions() {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const role = (user?.nombre_rol || "").toLowerCase();
+
+  // Fallback local si no está disponible tienePermiso
+  const fallback = {
+    superadmin: [
+      "users",
+      "alimentos",
+      "consumo_alimento",
+      "tareas",
+      "galpones",
+      "incidentes",
+      "inventario",
+      "registro_sensores",
+      "incidentes_gallina",
+      "chickens",
+      "tipos_gallinas",
+      "rescue",
+      "produccion_huevos",
+      "stock",
+      "ventas",
+    ],
+    administrador: [
+      "users",
+      "alimentos",
+      "consumo_alimento",
+      "tareas",
+      "galpones",
+      "incidentes",
+      "inventario",
+      "registro_sensores",
+      "incidentes_gallina",
+      "chickens",
+      "tipos_gallinas",
+      "rescue",
+      "produccion_huevos",
+      "stock",
+      "ventas",
+    ],
+    supervisor: [
+      "tareas",
+      "alimentos",
+      "consumo_alimento",
+      "incidentes",
+      "registro_sensores",
+      "tipos_gallinas",
+      "rescue",
+      "chickens",
+      "incidentes_gallina",
+      "produccion_huevos",
+      "stock",
+    ],
+    operario: [
+      "tareas",
+      "galpones",
+      "alimentos",
+      "consumo_alimento",
+      "incidentes",
+      "registro_sensores",
+      "tipos_gallinas",
+      "rescue",
+      "chickens",
+      "incidentes_gallina",
+      "produccion_huevos",
+      "stock",
+    ],
+  };
+
+  const canView = (page) => {
+    if (page === "panel") return true;
+    if (typeof window.tienePermiso === "function") {
+      return window.tienePermiso(page, "ver");
+    }
+    const allowed = fallback[role];
+    return !!(allowed && allowed.includes(page));
+  };
+
+  document.querySelectorAll("a[data-page]").forEach((link) => {
+    const page = link.getAttribute("data-page");
+    if (!page || page === "panel") return;
+    if (!canView(page)) {
+      const li = link.closest("li.nav-item");
+      if (li) li.style.display = "none";
+    }
+  });
+
+  [
+    "submenu-usuario",
+    "submenu-monitoreo",
+    "submenu-gallinas",
+    "submenu-producción",
+    "submenu-alimentos",
+  ].forEach((submenuId) => {
+    const submenu = document.getElementById(submenuId);
+    if (!submenu) return;
+    const visibles = Array.from(submenu.querySelectorAll("li.nav-item")).filter(
+      (li) => li.style.display !== "none"
+    );
+    if (visibles.length === 0) {
+      const wrapper = submenu.closest("li.nav-item.has-submenu");
+      if (wrapper) wrapper.style.display = "none";
+    }
+  });
+}
+
 const loadContent = async (page) => {
   try {
     const response = await fetch(`pages/${page}.html`);
@@ -181,6 +288,7 @@ navLinks.addEventListener("click", (event) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  applyMenuPermissions();
   loadContent("panel");
 });
 
@@ -205,10 +313,11 @@ document.addEventListener("click", (e) => {
   }
 });
 const buttonPerfil = document.getElementById("buttonPerfil");
-
-buttonPerfil.addEventListener("click", ()=>{
-  const pageValue = buttonPerfil.dataset.page;  
-  loadContent(pageValue);
-})
+if (buttonPerfil) {
+  buttonPerfil.addEventListener("click", () => {
+    const pageValue = buttonPerfil.dataset.page;
+    if (pageValue) loadContent(pageValue);
+  });
+}
 // para  llamar pagnas dentro de paginas
 window.loadContent = loadContent;
