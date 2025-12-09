@@ -11,10 +11,10 @@ class StockBase(BaseModel):
 class StockCreate(StockBase):
     pass
 
-class StockUpdate(BaseModel):
-    unidad_medida: Optional[Literal['unidad', 'panal', 'docena', 'medio_panal']] = None
-    id_produccion: Optional[int] = Field(default=None, gt=0)
-    cantidad_disponible: Optional[int] = Field(default=None, ge=0)
+# class StockUpdate(BaseModel):
+#     unidad_medida: Optional[Literal['unidad', 'panal', 'docena', 'medio_panal']] = None
+#     id_produccion: Optional[int] = Field(default=None, gt=0)
+#     cantidad_disponible: Optional[int] = Field(default=None, ge=0)
 
 class StockOut(StockBase):
     id_producto: int

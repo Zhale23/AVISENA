@@ -1,17 +1,9 @@
 const mainContent = document.getElementById("main-content");
 const navLinks = document.querySelector(".app-nav");
 
-console.log("main.js cargado. El script principal está listo.");
-
 const loadContent = async (page) => {
-  console.log(`Paso 2: Se llamó a loadContent con el parámetro: '${page}'`);
   try {
     const response = await fetch(`pages/${page}.html`);
-    console.log(
-      "Paso 3: Se intentó hacer fetch. Respuesta recibida:",
-      response
-    );
-
     if (!response.ok) {
       // Si la respuesta no es OK, lanzamos un error para que lo capture el catch.
       throw new Error(
@@ -20,8 +12,6 @@ const loadContent = async (page) => {
     }
     const html = await response.text();
     mainContent.innerHTML = html;
-    console.log("Paso 4: El contenido HTML se ha inyectado en #main-content.");
-
     // Aplicar permisos después de cargar contenido
     if (typeof window.aplicarPermisos === "function") {
       setTimeout(() => window.aplicarPermisos(page), 50);
@@ -164,7 +154,7 @@ const loadContent = async (page) => {
     }
 
     if (page === "consumo_alimento") {
-      import("../pages/consumos_alimentos.js").then((consumosModule) =>
+      import("../pages/consumo_alimento.js").then((consumosModule) =>
         consumosModule.init()
       );
     }
@@ -176,14 +166,10 @@ const loadContent = async (page) => {
 
 navLinks.addEventListener("click", (event) => {
   const link = event.target.closest("a[data-page]");
-  console.log(event);
 
   if (link) {
     event.preventDefault();
     const pageToLoad = link.dataset.page;
-    console.log(
-      `Paso 1: Clic detectado. Se va a cargar la página: '${pageToLoad}'`
-    );
     loadContent(pageToLoad);
 
     // const sidepanel = document.getElementById('app-sidepanel');
@@ -203,7 +189,6 @@ const logoutButton = document.getElementById("logout-button");
 if (logoutButton) {
   logoutButton.addEventListener("click", (event) => {
     event.preventDefault();
-    console.log("Cerrando sesión...");
     localStorage.removeItem("access_token");
     localStorage.removeItem("user");
     window.location.href = "/index.html";
@@ -216,7 +201,6 @@ document.addEventListener("click", (e) => {
   if (shortcut) {
     e.preventDefault();
     const page = shortcut.dataset.page;
-    console.log(`[Shortcut] Cargando página dinámica: ${page}`);
     loadContent(page);
   }
 });

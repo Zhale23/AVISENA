@@ -1,8 +1,8 @@
 import { request } from './api/apiClient.js';
 
-export const chickenService = {
+export const consumoService = {
     /**
-     * Obtener todos los rescates
+     * Obtener todos los salvamentos
      * @returns {Promise<object>}
      */
     getConsumo: (page = 1, page_size = 10) => {
@@ -11,7 +11,7 @@ export const chickenService = {
     },
     
     /**
-     * Obtener un rescate por su ID
+     * Obtener un salvamento por su ID
      * @param {number} consumoId - El ID del rescate a buscar
      * @returns {Promise<object>}
      */
@@ -29,7 +29,13 @@ export const chickenService = {
 
     getConsumoByRangeDate: (date_start, date_end, page = 1, page_size = 10) => {
         // CORRECCIÓN: Nombre de función y parámetro
-        const endpoint = `/consumo_gallinas/rango-fechas?fecha_inicio=${date_start}&fecha_fin${date_end}&page=${page}&page_size=${page_size}`;
+        const endpoint = `/consumo_gallinas/rango-fechas?fecha_inicio=${date_start}&fecha_fin=${date_end}&page=${page}&page_size=${page_size}`;
+        return request(endpoint);
+    },
+
+    getAlimentos: (page = 1, page_size = 10) => {
+        // CORRECCIÓN: Nombre de función y parámetro
+        const endpoint = `/alimento/all-type-alimentos_pag?page=${page}&page_size=${page_size}`;
         return request(endpoint);
     },
 
