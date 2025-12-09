@@ -269,7 +269,7 @@ async function exportToExcel() {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo exportar a Excel: ' + error.message,
+            text: 'No se pudo exportar a Excel',
             confirmButtonText: 'Aceptar',
             confirmButtonColor: '#198754'
         });
@@ -337,7 +337,7 @@ async function exportToPDF() {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo exportar a PDF: ' + error.message,
+            text: 'No se pudo exportar a PDF',
             confirmButtonText: 'Aceptar',
             confirmButtonColor: '#198754'
         });
@@ -390,7 +390,7 @@ async function exportToCSV() {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo exportar a CSV: ' + error.message,
+            text: 'No se pudo exportar a CSV',
             confirmButtonText: 'Aceptar',
             confirmButtonColor: '#198754'
         });
@@ -562,7 +562,7 @@ async function handleUpdateSubmit(event) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo actualizar el salvamento: ' + error.message,
+            text: 'No se pudo actualizar el salvamento',
             confirmButtonText: 'Aceptar',
             confirmButtonColor: '#198754'
         });
@@ -664,7 +664,7 @@ async function handleCreateSubmit(event) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo crear el salvamento: ' + error.message,
+            text: 'No se pudo crear el salvamento',
             confirmButtonText: 'Aceptar',
             confirmButtonColor: '#198754'
         });
