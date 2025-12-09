@@ -6,7 +6,7 @@
       <div class="card-body">
 
         <!-- ======================= ENCABEZADO ======================== -->
-        <div class="row align-items-center mb-3 g-2">
+        <div class="row mb-3 g-2">
           <div class="col-12 col-md-9">
             <h4 class="card-title m-0">Aislamientos</h4>
           </div>
@@ -70,19 +70,17 @@
 
         <!-- ======================= TABLA ======================== -->
         <div class="table-responsive mt-4">
-          <table class="table table-striped table-hover table-sm mb-0 text-nowrap align-middle">
-            <thead>
+          <table class="table table-striped table-hover table-sm align-middle text-center">
+            <thead class="table-light">
               <tr>
-                <th class="fw-semibold">incidente gallina N.</th>
-                <th class="fw-semibold">fecha y hora</th>
+                <th class="fw-semibold">Incidente gallina N.</th>
+                <th class="fw-semibold">Fecha y hora</th>
                 <th class="fw-semibold">Nombre del galpón</th>
-                <th class="fw-semibold text-end">Acciones</th>
               </tr>
             </thead>
             <tbody id="isolations-table-body"></tbody>
           </table>
         </div>
-
       </div>
     </div>
   </div>
@@ -92,80 +90,6 @@
 <nav class="mt-3" aria-label="Page navigation">
   <ul id="pagination" class="pagination justify-content-center"></ul>
 </nav>
-
-<!-- ============ MODAL EDITAR ============ -->
-<div class="modal fade" id="edit-isolation-modal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h5 class="modal-title">Editar</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        <form id="edit-isolation-form">
-          <input type="hidden" id="edit-isolation-id">
-
-          <div class="mb-3">
-            <label class="form-label">Incidente gallina N.</label>
-            <input type="number" class="form-control rounded border-secondary shadow-sm bg-white"
-              id="edit-idIncidentGallina">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Galpón</label>
-            <select id="edit_id_galpon" class="form-select form-select-sm rounded border-secondary shadow-sm bg-white"
-              required></select>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-success">Guardar Cambios</button>
-          </div>
-        </form>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- ============ MODAL CREAR ============ -->
-<div class="modal fade" id="exampleModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h1 class="modal-title fs-5">Crear aislamiento</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        <form id="create-isolation-form">
-
-          <div class="mb-3">
-            <label class="form-label">Incidente gallina N.</label>
-            <input type="text" class="form-control rounded border-secondary shadow-sm bg-white"
-              id="create-id_incident_gallina" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Galpón</label>
-            <select id="create_id_galpon"
-              class="form-select form-select-sm rounded border-secondary shadow-sm bg-white" required></select>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Crear aislamiento</button>
-          </div>
-
-        </form>
-      </div>
-
-    </div>
-  </div>
-</div>
 
 <style>
   .select2-dropdown.custom-dropdown .select2-results__options {
@@ -177,6 +101,7 @@
     width: 100% !important;
   }
 </style>
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
