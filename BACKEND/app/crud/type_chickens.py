@@ -71,10 +71,13 @@ def update_type_chicken_by_id(db: Session, id_tipo_gallinas: int, type_chicken: 
         check_query = text("""
             SELECT COUNT(*) AS total
             FROM tipo_gallinas
-            WHERE raza = :raza AND descripcion = :descripcion
+            WHERE raza = :raza 
+            AND descripcion = :descripcion
+            AND id_tipo_gallinas != :id_tipo_gallinas
         """)
 
         result = db.execute(check_query, {
+            "id_tipo_gallinas": id_tipo_gallinas,
             "raza": type_chicken.raza,
             "descripcion": type_chicken.descripcion
         }).scalar()
@@ -99,4 +102,6 @@ def update_type_chicken_by_id(db: Session, id_tipo_gallinas: int, type_chicken: 
         db.rollback()
         logger.error(f"Error al actualizar el tipo de gallina {id_tipo_gallinas}: {e}")
         raise Exception("Error de base de datos al actualizar el tipo de gallina")
+    
+
     
