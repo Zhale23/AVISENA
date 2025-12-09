@@ -51,13 +51,20 @@ function createAlimentosRow(alimento) {
     year: 'numeric'
   }).format(fecha);
 
+  const puedeEditar = window.tienePermiso && window.tienePermiso('alimentos', 'editar');
+  const btnEditar = puedeEditar 
+    ? `<button class="btn btn-sm btn-success btn-edit-alimento" data-alimento-id="${alimentoId}" data-action="edit">
+         <i class="fa-regular fa-pen-to-square"></i>
+       </button>`
+    : '';
+
   return `
     <tr>
       <td class="px-0">${alimento.nombre}</td>
       <td class="px-0">${alimento.cantidad}</td> 
       <td class="px-0">${fechaFormateada}</td>
       <td class="text-end justify-content-end gap-2">
-          <button class="btn btn-sm btn-success btn-edit-alimento" data-alimento-id="${alimentoId}" aria-label="Editar"><i class="fa-regular fa-pen-to-square me-0"></i></button>
+          ${btnEditar}
           ${alimento.cantidad > 0 ? `
             <button class="btn btn-sm btn-success btn-consumo-alimento" data-alimento-id="${alimentoId}" data-alimento-nombre="${alimento.nombre}" data-alimento-cantidad="${alimento.cantidad}"><i class="fa-solid fa-utensils"></i></button>
           ` : ''}

@@ -531,13 +531,13 @@
 
 			// Definir qué módulos puede ver cada rol
 			const permisos = {
-				superadmin: ['users', 'tareas', 'galpones', 'incidentes', 'inventario', 'registro_sensores', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas', 'alimentos', 'consumo_alimento'],
+				superadmin: ['users', 'alimentos', 'consumo_alimento', 'tareas', 'galpones', 'incidentes', 'inventario', 'registro_sensores', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
 
-				administrador: ['users', 'tareas', 'galpones', 'incidentes', 'inventario', 'registro_sensores', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas', 'alimentos', 'consumo_alimento'],
+				administrador: ['users', 'alimentos', 'consumo_alimento', 'tareas', 'galpones', 'incidentes', 'inventario', 'registro_sensores', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
 
-				supervisor: ['tareas', 'incidentes', 'registro_sensores', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock'],
+				supervisor: ['tareas', 'alimentos', 'consumo_alimento', 'incidentes', 'registro_sensores', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock'],
 
-				operario: ['tareas', 'galpones', 'incidentes', 'registro_sensores', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock']
+				operario: ['tareas', 'galpones', 'alimentos', 'consumo_alimento', 'incidentes', 'registro_sensores', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock']
 			};
 
 			// Si no hay rol válido, ocultar todo

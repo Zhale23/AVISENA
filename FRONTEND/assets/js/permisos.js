@@ -28,12 +28,14 @@
       stock: { ver: true, crear: true, editar: true, eliminar: true },
       ventas: { ver: true, crear: true, editar: true, eliminar: true },
       alimento: { ver: true, crear: true, editar: true, eliminar: true },
-      consumo_gallinas: { ver: true, crear: true, editar: true, eliminar: true },
       metodo_pago: { ver: true, crear: true, editar: true, eliminar: true },
       categoria_inventario: { ver: true, crear: true, editar: true, eliminar: true },
       tipo_huevos: { ver: true, crear: true, editar: true, eliminar: true },
       modulos: { ver: true, crear: true, editar: true, eliminar: true },
       permisos: { ver: true, crear: true, editar: true, eliminar: true },
+      alimentos: { ver: true, crear: true, editar: true, eliminar: true },
+      consumo_gallinas: { ver: true, crear: true, editar: true, eliminar: true},
+
     },
     administrador: {
       users: { ver: true, crear: true, editar: true, eliminar: true },
@@ -55,12 +57,14 @@
       stock: { ver: true, crear: true, editar: true, eliminar: true },
       ventas: { ver: true, crear: true, editar: true, eliminar: true },
       alimento: { ver: true, crear: true, editar: true, eliminar: true },
-      consumo_gallinas: { ver: true, crear: true, editar: true, eliminar: true },
       metodo_pago: { ver: true, crear: true, editar: true, eliminar: true },
       categoria_inventario: { ver: true, crear: true, editar: true, eliminar: true },
       tipo_huevos: { ver: true, crear: true, editar: true, eliminar: true },
       modulos: { ver: true, crear: true, editar: true, eliminar: false },
       permisos: { ver: true, crear: true, editar: true, eliminar: false },
+      alimentos: { ver: true, crear: true, editar: true, eliminar: false },
+      consumo_gallinas: { ver: true, crear: true, editar: true, eliminar: false },
+
     },
     supervisor: {
       users: { ver: false, crear: false, editar: false, eliminar: false },
@@ -82,12 +86,14 @@
       stock: { ver: true, crear: true, editar: true, eliminar: false },
       ventas: { ver: false, crear: false, editar: false, eliminar: false },
       alimento: { ver: false, crear: false, editar: false, eliminar: false },
-      consumo_gallinas: { ver: false, crear: false, editar: false, eliminar: false },
       metodo_pago: { ver: false, crear: false, editar: false, eliminar: false },
       categoria_inventario: { ver: false, crear: false, editar: false, eliminar: false },
       tipo_huevos: { ver: true, crear: false, editar: false, eliminar: false },
       modulos: { ver: false, crear: false, editar: false, eliminar: false },
       permisos: { ver: false, crear: false, editar: false, eliminar: false },
+      alimentos: { ver: true, crear: true, editar: true, eliminar: false },
+      consumo_gallinas: { ver: true, crear: true, editar: true, eliminar: false },
+
     },
     operario: {
       users: { ver: false, crear: false, editar: false, eliminar: false },
@@ -109,12 +115,13 @@
       stock: { ver: true, crear: true, editar: false, eliminar: false },
       ventas: { ver: false, crear: false, editar: false, eliminar: false },
       alimento: { ver: false, crear: false, editar: false, eliminar: false },
-      consumo_gallinas: { ver: false, crear: false, editar: false, eliminar: false },
       metodo_pago: { ver: false, crear: false, editar: false, eliminar: false },
       categoria_inventario: { ver: false, crear: false, editar: false, eliminar: false },
       tipo_huevos: { ver: true, crear: false, editar: false, eliminar: false },
       modulos: { ver: false, crear: false, editar: false, eliminar: false },
       permisos: { ver: false, crear: false, editar: false, eliminar: false },
+      alimentos: { ver: true, crear: false, editar: false, eliminar: false },
+      consumo_gallinas: { ver: true, crear: true, editar: true, eliminar: false },
     },
   };
 
