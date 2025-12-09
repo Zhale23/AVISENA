@@ -32,7 +32,11 @@ document.addEventListener('click', async (e) => {
       icon: 'error',
       title: 'Error',
       text: 'No se pudo cargar la página de consumos',
-      confirmButtonColor: '#d33'
+      confirmButtonText: "OK",
+      customClass: {
+          confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
   }
 });
@@ -51,20 +55,13 @@ function createAlimentosRow(alimento) {
     year: 'numeric'
   }).format(fecha);
 
-  const puedeEditar = window.tienePermiso && window.tienePermiso('alimentos', 'editar');
-  const btnEditar = puedeEditar 
-    ? `<button class="btn btn-sm btn-success btn-edit-alimento" data-alimento-id="${alimentoId}" data-action="edit">
-         <i class="fa-regular fa-pen-to-square"></i>
-       </button>`
-    : '';
-
   return `
     <tr>
       <td class="px-0">${alimento.nombre}</td>
       <td class="px-0">${alimento.cantidad}</td> 
       <td class="px-0">${fechaFormateada}</td>
       <td class="text-end justify-content-end gap-2">
-          ${btnEditar}
+          <button class="btn btn-sm btn-success btn-edit-alimento" data-alimento-id="${alimentoId}" aria-label="Editar"><i class="fa-regular fa-pen-to-square me-0"></i></button>
           ${alimento.cantidad > 0 ? `
             <button class="btn btn-sm btn-success btn-consumo-alimento" data-alimento-id="${alimentoId}" data-alimento-nombre="${alimento.nombre}" data-alimento-cantidad="${alimento.cantidad}"><i class="fa-solid fa-utensils"></i></button>
           ` : ''}
@@ -235,10 +232,14 @@ function inicializarFiltroFechas() {
 function filtrarAlimentos(fechaInicio, fechaFin) {
   if (!fechaInicio || !fechaFin) {
     Swal.fire({
-      icon: 'info',
+      icon: 'error',
       title: 'Error',
       text: 'Debe seleccionar ambas fechas',
-      confirmButtonColor: 'rgba(51, 136, 221, 1)'
+      confirmButtonText: "OK",
+      customClass: {
+          confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
     return;
   }
@@ -275,7 +276,11 @@ async function openEditModal(id_alimento) {
       icon: 'error',
       title: 'Error',
       text: 'No se pudieron cargar los datos del alimento.',
-      confirmButtonColor: '#d33'
+      confirmButtonText: "OK",
+      customClass: {
+        confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
   }
 }
@@ -327,7 +332,11 @@ async function handleUpdateSubmit(event) {
       icon: 'error',
       title: 'Error',
       text: 'No se pudo actualizar el alimento.',
-      confirmButtonColor: '#d33'
+      confirmButtonText: "OK",
+      customClass: {
+        confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
   }
 }
@@ -366,6 +375,11 @@ async function openConsumoModal(alimentoId, alimentoNombre, alimentoCantidad) {
             icon: "error",
             title: "Error",
             text: "No se pudieron cargar los datos para el consumo.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
     }
 }
@@ -414,6 +428,11 @@ async function handleConsumoSubmit(event) {
             icon: "warning",
             title: "Cantidad inválida",
             text: "Por favor ingrese una cantidad válida.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
         return;
     }
@@ -501,7 +520,11 @@ async function handleConsumoSubmit(event) {
                     </div>
                 </div>
             `,
-            confirmButtonColor: '#198754'
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
     }
 }
@@ -537,7 +560,11 @@ async function handleCreateSubmit(event) {
       icon: 'success',
       title: '¡Guardado!',
       text: 'Alimento creado correctamente.',
-      confirmButtonColor: '#28a745'
+      confirmButtonText: "OK",
+      customClass: {
+          confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
 
     // 🔹 Recargar la tabla para que aparezca el nuevo alimento
@@ -550,7 +577,11 @@ async function handleCreateSubmit(event) {
       icon: 'error',
       title: 'Error',
       text: 'Error al crear el alimento: ' + (error.message || 'Error desconocido'),
-      confirmButtonColor: '#d33'
+      confirmButtonText: "OK",
+      customClass: {
+          confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
   }
 }
@@ -823,6 +854,11 @@ async function exportToExcel(data, filename = "alimentos.xlsx") {
         title: "Error al generar .xlsx",
         text: err.message || String(err),
         icon: "error",
+        confirmButtonText: "OK",
+        customClass: {
+            confirmButton: "btn btn-success"
+        },
+        buttonsStyling: false
       });
     }
   }
@@ -853,7 +889,15 @@ async function handleExportClick(event) {
   const data = response?.alimento || [];
 
   if (data.length === 0) {
-    Swal.fire({ title: "No hay datos para exportar.", icon: "info" });
+    Swal.fire({ 
+      title: "No hay datos para exportar.", 
+      icon: "info",
+      confirmButtonText: "OK",
+      customClass: {
+          confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
+    });
     return;
   }
 

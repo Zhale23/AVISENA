@@ -39,7 +39,11 @@ document.addEventListener('click', async (e) => {
       icon: 'error',
       title: 'Error',
       text: 'No se pudo cargar la página de alimentos',
-      confirmButtonColor: '#d33'
+      confirmButtonText: "OK",
+      customClass: {
+          confirmButton: "btn btn-success"
+      },
+      buttonsStyling: false
     });
   }
 });
@@ -244,6 +248,11 @@ async function openEditModal(consumoId) {
         Swal.fire({
             icon: "error",
             text: "No se pudieron cargar los datos del consumo.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
     }
 }
@@ -271,6 +280,11 @@ async function handleUpdateSubmit(event) {
             icon: "success",
             title: "Actualizado",
             text: "Registro actualizado exitosamente.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
     } catch (error) {
         console.error(`Error al actualizar el consumo ${consumoId}:`, error);
@@ -278,6 +292,11 @@ async function handleUpdateSubmit(event) {
             icon: "error",
             title: "Error",
             text: error?.message || "No se pudo actualizar el registro.",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
     }
 }
@@ -538,7 +557,12 @@ function handleExportClick(event) {
     if (!dataToExport || dataToExport.length === 0) {
         Swal.fire({ 
             title: "No hay datos para exportar.", 
-            icon: "info" 
+            icon: "info", 
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
         item.classList.remove('exporting');
         return;
@@ -560,7 +584,12 @@ function handleExportClick(event) {
         Swal.fire({
             title: "Error",
             text: "No se pudo generar el archivo de exportación.",
-            icon: "error"
+            icon: "error",
+            confirmButtonText: "OK",
+            customClass: {
+                confirmButton: "btn btn-success"
+            },
+            buttonsStyling: false
         });
         item.classList.remove('exporting');
     }
@@ -665,6 +694,11 @@ async function exportToExcel(data, filename = "Consumos.xlsx") {
                 title: "Error al generar .xlsx",
                 text: err.message || String(err),
                 icon: "error",
+                confirmButtonText: "OK",
+                customClass: {
+                    confirmButton: "btn btn-success"
+                },
+                buttonsStyling: false
             });
         }
     }
@@ -783,3 +817,141 @@ if (document.readyState === 'loading') {
 }
 
 export { init };
+
+
+export async function renderChart() {
+  console.log("Renderizando gráfica con datos reales...");
+
+  // 1️⃣ Obtener los datos desde la API
+  const stocks = await stockService.GetStockAll();
+
+  if (!stocks || stocks.length === 0) {
+    console.warn("No hay stock para graficar.");
+    return;
+  }
+
+  // 2️⃣ Crear etiquetas tipo "Nombre (Unidad/Tipo)"
+  const labels = stocks.map(s => {
+    const tipo = s.tipo == 1 ? "AA" :
+                 s.tipo == 2 ? "AAA" :
+                 s.tipo == 3 ? "Super" : "";
+    return `${s.nombre_producto} (${tipo || s.unidad_medida})`;
+  });
+
+  // 3️⃣ Cantidades de stock disponible
+  const cantidades = stocks.map(s => s.cantidad_disponible);
+
+  // 4️⃣ Detectar producto mayor y menor
+  const mayor = stocks.reduce((max, s) =>
+    s.cantidad_disponible > max.cantidad_disponible ? s : max
+  );
+  const menor = stocks.reduce((min, s) =>
+    s.cantidad_disponible < min.cantidad_disponible ? s : min
+  );
+
+  document.getElementById("productoMayor").textContent =
+    `Producto con mayor stock: ${mayor.nombre_producto} (${mayor.cantidad_disponible} unidades)`;
+
+  document.getElementById("productoMenor").textContent =
+    `Producto con menor stock: ${menor.nombre_producto} (${menor.cantidad_disponible} unidades)`;
+
+  // 5️⃣ Calcular promedio
+  const promedio = Math.round(cantidades.reduce((a, b) => a + b, 0) / cantidades.length);
+  const promedioSeries = cantidades.map(() => promedio);
+  // 6️⃣ Configurar gráfica (solo 2 líneas: Stock y Promedio)
+  const chartDiv = document.querySelector("#chart");
+  if (!chartDiv) return;
+
+  const options = {
+    series: [
+      {
+        name: "Stock disponible",
+        data: cantidades
+      },
+      {
+        name: "Promedio de stock",
+        data: promedioSeries
+      }
+    ],
+    chart: { type: 'bar', height: 350 },
+    plotOptions: { bar: { horizontal: false, columnWidth: '55%', borderRadius: 5 } },
+    dataLabels: { enabled: false },
+    stroke: { show: true, width: 2, colors: ['transparent'] },
+    xaxis: { categories: labels, labels: { rotate: -45, style: { fontSize: '13px' } } },
+    yaxis: {
+      title: { text: 'Cantidad (unidades)' },
+      labels: { formatter: value => value.toFixed(0) }
+    },
+    fill: { opacity: 1 },
+    tooltip: { y: { formatter: val => val + " unidades" } }
+  };
+
+  const chart = new ApexCharts(chartDiv, options);
+  chart.render();
+}
+
+export async function renderDonutChart() {
+  console.log("Renderizando gráfica tipo dona...");
+
+  // 1️⃣ Obtener datos desde la API
+  const stocks = await stockService.GetStockAll();
+
+  if (!stocks || stocks.length === 0) {
+    console.warn("No hay stock para graficar.");
+    return;
+  }
+
+  // 2️⃣ Etiquetas tipo "Nombre (Tipo/Unidad)"
+  const labels = stocks.map(s => {
+    const tipo = s.tipo == 1 ? "AA" :
+                 s.tipo == 2 ? "AAA" :
+                 s.tipo == 3 ? "Super" : "";
+    const extra = tipo || s.unidad_medida;
+    return extra ? `${s.nombre_producto} (${extra})` : s.nombre_producto;
+  });
+
+  // 3️⃣ Cantidades de stock
+  const cantidades = stocks.map(s => s.cantidad_disponible);
+
+  // 4️⃣ Configurar gráfica dona
+  const chartDiv = document.querySelector("#donutChart"); // nuevo div para la dona
+  if (!chartDiv) return;
+
+  const options = {
+    series: cantidades,
+    chart: {
+      type: 'donut',
+      height: 350
+    },
+    labels: labels,
+    legend: {
+      position: 'right',
+      fontSize: '18px'
+    },
+    tooltip: {
+      y: {
+        formatter: val => val + " unidades"
+      }
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '60%',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Total',
+              formatter: function (w) {
+                return w.globals.seriesTotals.reduce((a, b) => a + b, 0)
+              }
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const chart = new ApexCharts(chartDiv, options);
+  chart.render();
+}
