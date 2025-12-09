@@ -146,16 +146,18 @@ async function handleCreateSubmit(e) {
     await init();
 
     Swal.fire({
-      title: "Item creado exitosamente",
-      icon: "success",
-      draggable: true,
+        icon: "success",
+        title: `Item creado con éxito.`,
+        showConfirmButton: false,
+        timer: 1200
     });
   } catch (error) {
     console.error("Error al crear Item Inventario:", error);
     Swal.fire({
-      title: "Error al crear el Item Inventario: " + error.message,
-      icon: "error",
-      draggable: true,
+        icon: "success",
+        title: `Item creado con éxito.`,
+        showConfirmButton: false,
+        timer: 1200
     });
   }
 }
