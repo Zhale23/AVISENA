@@ -204,5 +204,11 @@ document.addEventListener("click", (e) => {
     loadContent(page);
   }
 });
+const buttonPerfil = document.getElementById("buttonPerfil");
+
+buttonPerfil.addEventListener("click", ()=>{
+  const pageValue = buttonPerfil.dataset.page;  
+  loadContent(pageValue);
+})
 // para  llamar pagnas dentro de paginas
 window.loadContent = loadContent;
