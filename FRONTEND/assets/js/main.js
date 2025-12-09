@@ -144,7 +144,7 @@ const loadContent = async (page) => {
       );
     }
     if (page === "perfil") {
-      import("./pages/perfil.js").then((perfilModule) => perfilModule.init());
+      import("../pages/perfil.js").then((perfilModule) => perfilModule.init());
     }
 
     if (page === "alimentos") {
