@@ -3,6 +3,8 @@ from sqlalchemy import text
 from typing import Optional
 from sqlalchemy.exc import SQLAlchemyError
 import logging
+import random
+from datetime import datetime, timedelta
 from core.security import get_hashed_password
 from app.schemas.users import UserCreate, UserUpdate
 from fastapi import HTTPException
