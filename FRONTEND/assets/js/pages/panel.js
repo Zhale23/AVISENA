@@ -153,17 +153,17 @@ async function cargarDatosDashboard() {
     const hoy = new Date();
     const inicio = new Date(hoy);
     inicio.setDate(inicio.getDate() - 6);
-    
+
     const fechas = [];
     for (let i = 0; i < 7; i++) {
       const fecha = new Date(inicio);
       fecha.setDate(fecha.getDate() + i);
       const ano = fecha.getFullYear();
-      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-      const dia = String(fecha.getDate()).padStart(2, '0');
+      const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+      const dia = String(fecha.getDate()).padStart(2, "0");
       fechas.push(`${ano}-${mes}-${dia}`);
     }
-    
+
     const fallback = {
       labels: fechas,
       data_actual: [0, 0, 0, 0, 0, 0, 0],
@@ -183,18 +183,28 @@ async function cargarDatosDashboard() {
   }
 
   // 3) Gráficos secundarios (best-effort)
+  let distData = null;
+  let galponesData = null;
+
   try {
-    const dist = await dashboardService.getDistribucionTipos();
-    cargarGraficoTipoGallina(dist);
+    distData = await dashboardService.getDistribucionTipos();
   } catch (e) {
     console.warn("Distribución tipos no disponible:", e);
   }
 
   try {
-    const galpones = await dashboardService.getOcupacionGalpones();
-    cargarGraficoGalpones(galpones);
+    galponesData = await dashboardService.getOcupacionGalpones();
   } catch (e) {
     console.warn("Ocupación de galpones no disponible:", e);
+  }
+
+  // Cargar gráfico combinado si hay datos de ambos
+  if (distData && galponesData) {
+    cargarGraficoCombinado(distData, galponesData);
+  } else if (distData) {
+    cargarGraficoTipoGallina(distData);
+  } else if (galponesData) {
+    cargarGraficoGalpones(galponesData);
   }
 
   try {
@@ -360,59 +370,38 @@ function aplicarLayoutPorRol() {
 
   switch (role) {
     case "operario":
-      // Operario: Reorganizar layout
+      // Operario: layout simplificado y ordenado
       hide(el.produccionCard);
       hide(el.actividadCard);
       hide(el.incidentesCard);
 
-      show(el.distribucionCard);
-      show(el.galponesCard);
-      show(el.sensoresCard);
-
-      // Reorganizar DOM: Sensores al lado de accesos, gráficas abajo
-      const sensoresCard = el.sensoresCard;
-      const distribucionCard = el.distribucionCard;
-      const galponesCard = el.galponesCard;
+      // Ocultar columna de producción y expandir accesos directos a ancho completo
+      const produccionCol = document.querySelector(
+        ".row.g-3.mb-4 > .col-12.col-lg-8"
+      );
       const shortcutsCol = document.querySelector(
         ".row.g-3.mb-4 > .col-12.col-lg-4"
       );
-
-      if (sensoresCard && distribucionCard && galponesCard && shortcutsCol) {
+      if (produccionCol) produccionCol.style.display = "none";
+      // Colocar Monitoreo de Sensores al lado de Accesos Directos
+      const sensoresCol = document
+        .getElementById("sensores-container")
+        ?.closest(".col-12.col-lg-6");
+      if (shortcutsCol && sensoresCol && shortcutsCol.parentElement) {
         const produccionRow = shortcutsCol.parentElement;
-
-        // Ocultar producción
-        const produccionCol = produccionRow.querySelector(".col-12.col-lg-8");
-        if (produccionCol) produccionCol.style.display = "none";
-
-        // 1. Mover sensores al lado de accesos directos
-        const sensoresCol = sensoresCard.parentElement;
         sensoresCol.className = "col-12 col-lg-6";
-
-        // Insertar sensores antes de accesos directos
-        produccionRow.insertBefore(sensoresCol, shortcutsCol);
-
-        // Ajustar accesos directos
         shortcutsCol.className = "col-12 col-lg-6";
-
-        // 2. Crear nueva fila para distribución y galpones
-        const nuevaFilaGraficas = document.createElement("div");
-        nuevaFilaGraficas.className = "row g-3 mb-4";
-        nuevaFilaGraficas.id = "operario-graficas-row";
-
-        const distribucionCol = distribucionCard.parentElement;
-        const galponesCol = galponesCard.parentElement;
-        distribucionCol.className = "col-12 col-lg-6";
-        galponesCol.className = "col-12 col-lg-6";
-
-        nuevaFilaGraficas.appendChild(distribucionCol);
-        nuevaFilaGraficas.appendChild(galponesCol);
-
-        // Insertar después de la fila de sensores/accesos
-        produccionRow.parentElement.insertBefore(
-          nuevaFilaGraficas,
-          produccionRow.nextSibling
-        );
+        produccionRow.insertBefore(sensoresCol, shortcutsCol);
       }
+
+      const actividadCol = document
+        .getElementById("actividad-reciente")
+        ?.closest(".col-12.col-lg-6");
+      if (actividadCol) actividadCol.style.display = "none";
+
+      // Asegurar que la sección de gráficas adicionales (galpones+distribución) se muestre completa
+      const graficasRow = document.getElementById("graficas-adicionales-row");
+      if (graficasRow) graficasRow.style.display = "";
 
       // Crear secciones destacadas para Tareas e Incidentes si es operario
       crearSeccionesOperario();
@@ -701,50 +690,37 @@ function cargarGraficoProduccion(data) {
     produccionChart.destroy();
   }
 
-  // Crear gráfica mejorada con fechas legibles
+  // Crear gráfica de barras
   const ctx2d = canvas.getContext("2d");
-  const gradient = ctx2d.createLinearGradient(0, 0, 0, 300);
-  gradient.addColorStop(0, "rgba(40,167,69,0.25)");
-  gradient.addColorStop(1, "rgba(40,167,69,0.02)");
-  
+
   // Determinar número de puntos para ajustar visualización
   const manyPoints = labels.length > 31;
   const showAllLabels = labels.length <= 7;
 
   produccionChart = new Chart(ctx2d, {
-    type: "line",
+    type: "bar",
     data: {
       labels: labels,
       datasets: [
         {
           label: "Producción Actual",
           data: datasetActual,
-          borderColor: "#28a745",
-          backgroundColor: gradient,
-          fill: true,
-          borderWidth: 3,
-          tension: 0.4,
-          pointRadius: manyPoints ? 0 : 5,
-          pointBackgroundColor: "#28a745",
-          pointBorderColor: "#fff",
-          pointBorderWidth: 2,
-          pointHoverRadius: manyPoints ? 4 : 7,
-          segment: {
-            borderColor: ctx => ctx.p1DataIndex === ctx.p0DataIndex ? "#28a745" : "#28a745",
-          }
+          backgroundColor: "#28a745",
+          borderColor: "#1e7e34",
+          borderWidth: 2,
+          borderRadius: 4,
+          barPercentage: 0.7,
+          categoryPercentage: labels.length > 30 ? 0.95 : 0.8,
         },
         {
           label: "Período Anterior",
           data: datasetAnterior,
-          borderColor: "#6c757d",
-          backgroundColor: "rgba(108,117,125,0.05)",
-          fill: false,
-          borderDash: [5, 5],
-          tension: 0.4,
+          backgroundColor: "#6c757d",
+          borderColor: "#545b62",
           borderWidth: 2,
-          pointRadius: manyPoints ? 0 : 3,
-          pointBackgroundColor: "#6c757d",
-          pointHoverRadius: manyPoints ? 3 : 5,
+          borderRadius: 4,
+          barPercentage: 0.7,
+          categoryPercentage: labels.length > 30 ? 0.95 : 0.8,
         },
       ],
     },
@@ -753,69 +729,73 @@ function cargarGraficoProduccion(data) {
       maintainAspectRatio: false,
       devicePixelRatio: 2,
       plugins: {
-        legend: { 
-          display: true, 
+        legend: {
+          display: true,
           position: "top",
-          labels: { 
-            font: { size: 13, weight: 'bold' },
+          labels: {
+            font: { size: 13, weight: "bold" },
             padding: 15,
             usePointStyle: true,
-            pointStyle: 'circle'
-          }
+            pointStyle: "rect",
+          },
         },
         tooltip: {
           intersect: false,
           mode: "index",
-          backgroundColor: "rgba(0,0,0,0.8)",
+          backgroundColor: "rgba(0,0,0,0.85)",
           padding: 12,
-          titleFont: { size: 13, weight: 'bold' },
+          titleFont: { size: 13, weight: "bold" },
           bodyFont: { size: 12 },
           borderColor: "#28a745",
-          borderWidth: 1,
+          borderWidth: 2,
           callbacks: {
-            title: (ctx) => `Fecha: ${ctx[0].label}`,
+            title: (ctx) => `📅 ${ctx[0].label}`,
             label: (ctx) =>
-              `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} huevos`,
-            afterLabel: (ctx) => {
-              if (ctx.datasetIndex === 0 && ctx.parsed.y > 0) {
-                return `📊 Huevos producidos`;
-              }
-              return '';
-            }
+              `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} 🥚`,
           },
         },
       },
       scales: {
         y: {
           beginAtZero: true,
-          title: { display: true, text: 'Huevos (Unidades)' },
+          title: {
+            display: true,
+            text: "Huevos (Unidades)",
+            font: { size: 12, weight: "bold" },
+          },
           ticks: {
             callback: (value) => Number(value).toLocaleString(),
-            font: { size: 11 }
-          },
-          grid: { color: "rgba(0,0,0,0.08)", drawBorder: false },
-          max: Math.max(...datasetActual, ...datasetAnterior) * 1.1 || 100
-        },
-        x: { 
-          grid: { display: false },
-          ticks: {
-            maxRotation: labels.length > 7 ? 45 : 0,
-            minRotation: labels.length > 7 ? 45 : 0,
             font: { size: 11 },
-            callback: function(index) {
+          },
+          grid: { color: "rgba(0,0,0,0.1)", drawBorder: false },
+          max: Math.max(...datasetActual, ...datasetAnterior) * 1.1 || 100,
+        },
+        x: {
+          grid: {
+            display: true,
+            color: "rgba(0,0,0,0.15)",
+            lineWidth: 2,
+            drawBorder: true,
+            drawTicks: true,
+          },
+          ticks: {
+            maxRotation: labels.length > 10 ? 45 : 0,
+            minRotation: labels.length > 10 ? 45 : 0,
+            font: { size: 10 },
+            callback: function (index) {
               // Mostrar cada label para 7 días, cada 2 para 30, cada 3 para 90+
               if (showAllLabels || index % Math.ceil(labels.length / 7) === 0) {
                 return labels[index];
               }
-              return '';
-            }
+              return "";
+            },
           },
         },
       },
       animation: {
         duration: 750,
-        easing: 'easeInOutQuart'
-      }
+        easing: "easeInOutQuart",
+      },
     },
   });
 
@@ -865,6 +845,240 @@ async function cargarGraficoProduccionRango(dias = 7) {
 }
 
 // Gráfico de Distribución por Tipo de Gallina
+// Gráfico Combinado: Distribución de Tipos + Ocupación de Galpones
+let combinedChart;
+function cargarGraficoCombinado(distData, galponesData) {
+  const container = document.getElementById("combinedChart");
+  if (!container) {
+    console.error("Canvas combinedChart no encontrado");
+    return;
+  }
+
+  // Validar datos
+  if (
+    (!distData || distData.length === 0) &&
+    (!galponesData || galponesData.length === 0)
+  ) {
+    console.warn("No hay datos para el gráfico combinado");
+    return;
+  }
+
+  // Si solo tenemos galpones, mostrar solo galpones
+  if (
+    (!distData || distData.length === 0) &&
+    galponesData &&
+    galponesData.length > 0
+  ) {
+    cargarGraficoGalpones(galponesData);
+    return;
+  }
+
+  // Si solo tenemos distribución, mostrar doughnut
+  if (
+    (!galponesData || galponesData.length === 0) &&
+    distData &&
+    distData.length > 0
+  ) {
+    cargarGraficoTipoGallina(distData);
+    return;
+  }
+
+  // Colores distintivos para cada tipo de gallina - tonos de verde
+  const coloresTipos = [
+    { nombre: distData[0]?.tipo || "Tipo 1", color: "#2d6a4f" }, // Verde oscuro
+    { nombre: distData[1]?.tipo || "Tipo 2", color: "#40916c" }, // Verde medio oscuro
+    { nombre: distData[2]?.tipo || "Tipo 3", color: "#52b788" }, // Verde medio
+    { nombre: distData[3]?.tipo || "Tipo 4", color: "#74c69d" }, // Verde claro
+    { nombre: distData[4]?.tipo || "Tipo 5", color: "#95d5b2" }, // Verde muy claro
+  ];
+
+  // Crear mapa de colores por nombre
+  const mapaColores = {};
+  distData.forEach((item, idx) => {
+    mapaColores[item.tipo] = coloresTipos[idx]?.color || "#6c757d";
+  });
+
+  // Calcular distribución por tipo (proporciones)
+  const totalGallinas = distData.reduce((sum, item) => sum + item.cantidad, 0);
+  const distribucion = distData.map((item) => ({
+    tipo: item.tipo,
+    cantidad: item.cantidad,
+    porcentaje: ((item.cantidad / totalGallinas) * 100).toFixed(1),
+    color: mapaColores[item.tipo],
+  }));
+
+  // Crear HTML para tarjetas con indicadores segmentados
+  const galponesHTML = galponesData
+    .slice(0, 4)
+    .map((gal) => {
+      const ocupacion = gal.ocupacion_porcentaje;
+      const cantidadActual =
+        gal.cantidad_actual || Math.round((ocupacion / 100) * gal.capacidad);
+      const capacidadDisponible = gal.capacidad - cantidadActual;
+
+      const colorBorde = "#28a745"; // Verde uniforme para todos
+
+      // Crear segmentos del círculo según distribución de tipos
+      let rotacion = -90; // Empezar desde arriba
+      const circunferencia = 283; // 2 * π * 45
+
+      const segmentos = distribucion
+        .map((dist) => {
+          const arcLength =
+            (parseFloat(dist.porcentaje) / 100) * circunferencia;
+
+          const segmento = `
+          <circle cx="60" cy="60" r="45" fill="none" stroke="${dist.color}" stroke-width="12" 
+            stroke-dasharray="${arcLength} ${circunferencia}"
+            stroke-linecap="butt"
+            style="transform: rotate(${rotacion}deg); transform-origin: 60px 60px;"/>
+        `;
+
+          rotacion += (parseFloat(dist.porcentaje) / 100) * 360;
+          return segmento;
+        })
+        .join("");
+
+      // Calcular cantidad estimada por tipo en este galpón
+      const detallesTipos = distribucion.map((dist) => {
+        const cantidadTipo = Math.round(
+          (parseFloat(dist.porcentaje) / 100) * cantidadActual
+        );
+        return { ...dist, cantidadTipo };
+      });
+
+      return `
+        <div class="col-md-6 col-lg-3 mb-3">
+          <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, ${colorBorde}10 0%, white 100%); border-left: 4px solid ${colorBorde};">
+            <div class="card-body text-center p-3">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <h6 class="card-title mb-0" style="font-weight: 600;">${
+                  gal.nombre
+                }</h6>
+                <div style="position: relative; width: 130px; height: 130px; display: flex; align-items: center; justify-content: center;">
+                  <svg viewBox="0 0 120 120" style="width: 130px; height: 130px; display: block;">
+                    <!-- Círculo base gris claro -->
+                    <circle cx="60" cy="60" r="45" fill="none" stroke="#e9ecef" stroke-width="12"/>
+                    <!-- Segmentos por tipo -->
+                    ${segmentos}
+                    <!-- Borde exterior -->
+                    <circle cx="60" cy="60" r="51" fill="none" stroke="${colorBorde}" stroke-width="1" opacity="0.3"/>
+                  </svg>
+                  <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div style="font-size: 28px; font-weight: bold; color: ${colorBorde}; line-height: 1;">${ocupacion}%</div>
+                    <div style="font-size: 10px; color: #666; font-weight: 500; line-height: 1.2;">Ocupación</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Información de capacidad -->
+              <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                  <span style="color: #666;">Actuales:</span>
+                  <strong style="color: #333;">${cantidadActual}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                  <span style="color: #666;">Capacidad:</span>
+                  <strong style="color: #333;">${gal.capacidad}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid #dee2e6; padding-top: 5px; margin-top: 5px;">
+                  <span style="color: #28a745;">Disponible:</span>
+                  <strong style="color: #28a745;">${capacidadDisponible}</strong>
+                </div>
+              </div>
+
+              <!-- Detalles por tipo -->
+              <div style="margin-top: 10px; font-size: 10px; text-align: left;">
+                ${detallesTipos
+                  .slice(0, 3)
+                  .map(
+                    (dt) => `
+                  <div style="display: flex; align-items: center; gap: 6px; margin: 4px 0;">
+                    <span style="width: 10px; height: 10px; background: ${dt.color}; border-radius: 2px; flex-shrink: 0;"></span>
+                    <span style="flex: 1; color: #666;">${dt.tipo}:</span>
+                    <strong style="color: #333;">~${dt.cantidadTipo}</strong>
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  // Leyenda general de tipos con totales
+  const leyendaTipos = distribucion
+    .map(
+      (dist) => `
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 8px; background: white; border-radius: 6px; border-left: 3px solid ${dist.color};">
+      <span style="width: 16px; height: 16px; background: ${dist.color}; border-radius: 3px; flex-shrink: 0;"></span>
+      <div style="flex: 1;">
+        <div style="font-size: 12px; font-weight: 600; color: #333;">${dist.tipo}</div>
+        <div style="font-size: 10px; color: #666;">${dist.cantidad} gallinas (${dist.porcentaje}%)</div>
+      </div>
+    </div>
+  `
+    )
+    .join("");
+
+  // Reemplazar contenedor
+  container.parentElement.parentElement.innerHTML = `
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title mb-4" style="font-weight: 600;">
+          <i class="fas fa-warehouse me-2"></i>Estado de Galpones y Distribución
+        </h5>
+        <!-- Tarjetas de Galpones -->
+        <div class="row g-3 mb-4">
+          ${galponesHTML}
+        </div>
+        <!-- Distribución Total -->
+        <div class="row">
+          <div class="col-12">
+            <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+              <h6 class="mb-3" style="font-size: 14px; font-weight: 600;">
+                <i class="fas fa-chart-pie me-2"></i>Distribución Total
+              </h6>
+              <div class="row align-items-center">
+                <div class="col-md-9">
+                  <div class="row">
+                    ${distribucion
+                      .map(
+                        (dist) => `
+                      <div class="col-md-4 col-6 mb-2">
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: white; border-radius: 6px; border-left: 3px solid ${dist.color};">
+                          <span style="width: 14px; height: 14px; background: ${dist.color}; border-radius: 3px; flex-shrink: 0;"></span>
+                          <div style="flex: 1;">
+                            <div style="font-size: 12px; font-weight: 600; color: #333;">${dist.tipo}</div>
+                            <div style="font-size: 11px; color: #666;">${dist.cantidad} (${dist.porcentaje}%)</div>
+                          </div>
+                        </div>
+                      </div>
+                    `
+                      )
+                      .join("")}
+                  </div>
+                </div>
+                <div class="col-md-3 text-center">
+                  <div style="padding: 20px; background: white; border-radius: 8px; border: 2px solid #28a745;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 8px; font-weight: 500;">Total General</div>
+                    <div style="font-size: 36px; font-weight: bold; color: #28a745;">${totalGallinas}</div>
+                    <div style="font-size: 11px; color: #666;">gallinas</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Gráfico de Tipo de Gallina (fallback)
 function cargarGraficoTipoGallina(data) {
   const ctx = document.getElementById("tipoGallinaChart");
   if (!ctx) {
