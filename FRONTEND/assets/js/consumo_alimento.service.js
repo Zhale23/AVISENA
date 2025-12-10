@@ -32,7 +32,10 @@ export const consumoService = {
         const endpoint = `/consumo_gallinas/rango-fechas?fecha_inicio=${date_start}&fecha_fin=${date_end}&page=${page}&page_size=${page_size}`;
         return request(endpoint);
     },
-
+    getAllConsumos: () => {
+        const endpoint = `/consumo_gallinas/all-consumos`;
+        return request(endpoint);
+    },
     getAlimentos: (page = 1, page_size = 10) => {
         // CORRECCIÓN: Nombre de función y parámetro
         const endpoint = `/alimento/all-type-alimentos_pag?page=${page}&page_size=${page_size}`;
@@ -66,3 +69,4 @@ export const consumoService = {
     },
 
 };
+
