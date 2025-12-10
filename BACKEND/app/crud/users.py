@@ -213,8 +213,6 @@ def change_user_status(db: Session, id_usuario: int, nuevo_estado: bool) -> bool
         logger.error(f"Error al cambiar el estado del usuario {id_usuario}: {e}")
         raise Exception("Error de base de datos al cambiar el estado del usuario")
 
-
-
 def get_all_user_except_superadmins(db: Session):
     try:
         query = text("""SELECT id_usuario, nombre, documento, usuarios.id_rol, email, telefono, usuarios.estado, nombre_rol, roles.descripcion as descripcion_rol
@@ -227,8 +225,81 @@ def get_all_user_except_superadmins(db: Session):
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener los usuarios: {e}")
         raise Exception("Error de base de datos al obtener los usuarios")
+
+def save_reset_token(db: Session, email: str) -> Optional[str]:
+    try:
+        reset_token = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        token_expiry = datetime.now() + timedelta(hours=1)
+        
+        query = text("""
+            UPDATE usuarios 
+            SET reset_token = :token, 
+                reset_token_expiry = :expiry
+            WHERE email = :email
+        """)
+        
+        result = db.execute(query, {
+            "token": reset_token,
+            "expiry": token_expiry,
+            "email": email
+        })
+        db.commit()
+        
+        if result.rowcount > 0:
+            return reset_token
+        return None
+        
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Error al guardar token de recuperación: {e}")
+        raise Exception("Error al generar token de recuperación")
     
-
-
-
-
+def get_user_by_reset_token(db: Session, token: str):
+    try:
+        query = text("""
+            SELECT id_usuario, email, reset_token, reset_token_expiry
+            FROM usuarios
+            WHERE reset_token = :token 
+            AND reset_token_expiry > :now
+        """)
+        
+        result = db.execute(query, {
+            "token": token,
+            "now": datetime.now()
+        }).mappings().first()
+        
+        return result
+        
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener usuario por token: {e}")
+        raise Exception("Error al validar token de recuperación")
+    
+def update_password_with_token(db: Session, token: str, new_password: str) -> bool:
+    try:
+        user = get_user_by_reset_token(db, token)
+        if not user:
+            return False
+        
+        hashed_password = get_hashed_password(new_password)
+        
+        query = text("""
+            UPDATE usuarios 
+            SET pass_hash = :new_password,
+                reset_token = NULL,
+                reset_token_expiry = NULL
+            WHERE reset_token = :token
+        """)
+        
+        result = db.execute(query, {
+            "new_password": hashed_password,
+            "token": token
+        })
+        db.commit()
+        
+        return result.rowcount > 0
+        
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Error al actualizar contraseña: {e}")
+        raise Exception("Error al actualizar la contraseña")
+    
