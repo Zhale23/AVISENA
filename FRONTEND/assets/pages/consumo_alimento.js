@@ -2,16 +2,17 @@ import { consumoService } from '../js/consumo_alimento.service.js';
 import { shedsService } from '../js/sheeds.service.js';
 import { alimentoService } from '../js/alimentos.service.js';
 import { init as initAlimentos } from './alimentos.js';
+import ApexCharts from "https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.esm.js";
 
 
-// =======================
-// CONFIG & STATE
-// =======================
-const PAGE_SIZE = 10; // fijo a 10 registros por página
-let currentPage = 1; // Variable global para rastrear la página actual
+
+
+const PAGE_SIZE = 10; 
+let currentPage = 1;
 let cacheGalpones = null;
 let cacheAlimentos = null;
 let filteredConsumos = [];
+let chartInstance = null;
 
 //______________________boton alimentos__________________________
 document.addEventListener('click', async (e) => {
@@ -48,17 +49,12 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-// =======================
-// HELPERS
-// =======================
+
 function formatDateDDMMYYYY(dateStr) {
     if (!dateStr) return '';
     return dateStr.split('-').reverse().join('/');
 }
 
-// =======================
-// ROW TEMPLATE
-// =======================
 function createConsumoRow(consumo) {
     const consumoId = consumo.id_consumo;
     const fechaFormateada = formatDateDDMMYYYY(consumo.fecha_registro);
@@ -82,9 +78,6 @@ function createConsumoRow(consumo) {
     return tabla;
 }
 
-// =======================
-// CARGA DE SELECTS PARA MODALES (EDITAR)
-// =======================
 async function cargarSelectGalponesModals(force = false) {
     const selectEdit = document.getElementById('edit-id_galpon');
 
@@ -136,9 +129,6 @@ async function cargarSelectAlimentosModals(force = false) {
     }
 }
 
-// =======================
-// SELECT FILTRO ALIMENTOS
-// =======================
 async function cargarSelectFilterAlimentos() {
     const selectFilter = document.getElementById('filter-alimento');
 
@@ -171,9 +161,7 @@ async function cargarSelectFilterAlimentos() {
     }
 }
 
-// =======================
-// RENDER TABLA
-// =======================
+
 function renderTabla(registros) {
     const tbody = document.getElementById('consumo-table-body');
     if (!tbody) return;
@@ -275,6 +263,11 @@ async function handleUpdateSubmit(event) {
         
         // Recargar datos actuales (con los filtros aplicados)
         await filtrarConsumos();
+
+        // Actualizar la gráfica según los mismos filtros
+        const startDate = document.getElementById('filter-start-date')?.value;
+        const endDate = document.getElementById('filter-end-date')?.value;
+        await renderChart(startDate, endDate);
         
         Swal.fire({
             icon: "success",
@@ -528,6 +521,7 @@ function limpiarFiltros() {
     
     // Cargar todos los registros sin filtros
     cargarTodosRegistrosPaginados(1);
+    renderChart();
 }
 
 // =======================
@@ -761,9 +755,22 @@ function setupEventListeners() {
     
     const btnFilter = document.getElementById('btn-filter');
     if (btnFilter) {
-        btnFilter.removeEventListener('click', () => filtrarConsumos(1));
-        btnFilter.addEventListener('click', () => filtrarConsumos(1));
+        btnFilter.removeEventListener('click', handleFilterClick);
+        btnFilter.addEventListener('click', handleFilterClick);
     }
+
+async function handleFilterClick() {
+    // Obtener fechas del filtro
+    const start = document.getElementById('filter-start-date').value;
+    const end = document.getElementById('filter-end-date').value;
+
+    // Actualizar tabla (tu función actual)
+    filtrarConsumos(1);
+
+    // Actualizar gráfica
+    await renderChart(start, end);
+}
+
 
     const btnClear = document.getElementById('btn_clear_filters');
     if (btnClear) {
@@ -790,6 +797,7 @@ function setupEventListeners() {
         tableBody.addEventListener('click', handleTableClick);
     }
 }
+
 async function init() {
     console.log('Inicializando módulo de consumos...');
     
@@ -805,8 +813,8 @@ async function init() {
 
     // Cargar todos los registros al entrar
     await cargarTodosRegistrosPaginados(1);
-
     setupEventListeners();
+    await renderChart();
 }
 
 // Inicializar cuando el DOM esté listo
@@ -818,140 +826,101 @@ if (document.readyState === 'loading') {
 
 export { init };
 
-
-export async function renderChart() {
-  console.log("Renderizando gráfica con datos reales...");
-
-  // 1️⃣ Obtener los datos desde la API
-  const stocks = await stockService.GetStockAll();
-
-  if (!stocks || stocks.length === 0) {
-    console.warn("No hay stock para graficar.");
-    return;
-  }
-
-  // 2️⃣ Crear etiquetas tipo "Nombre (Unidad/Tipo)"
-  const labels = stocks.map(s => {
-    const tipo = s.tipo == 1 ? "AA" :
-                 s.tipo == 2 ? "AAA" :
-                 s.tipo == 3 ? "Super" : "";
-    return `${s.nombre_producto} (${tipo || s.unidad_medida})`;
-  });
-
-  // 3️⃣ Cantidades de stock disponible
-  const cantidades = stocks.map(s => s.cantidad_disponible);
-
-  // 4️⃣ Detectar producto mayor y menor
-  const mayor = stocks.reduce((max, s) =>
-    s.cantidad_disponible > max.cantidad_disponible ? s : max
-  );
-  const menor = stocks.reduce((min, s) =>
-    s.cantidad_disponible < min.cantidad_disponible ? s : min
-  );
-
-  document.getElementById("productoMayor").textContent =
-    `Producto con mayor stock: ${mayor.nombre_producto} (${mayor.cantidad_disponible} unidades)`;
-
-  document.getElementById("productoMenor").textContent =
-    `Producto con menor stock: ${menor.nombre_producto} (${menor.cantidad_disponible} unidades)`;
-
-  // 5️⃣ Calcular promedio
-  const promedio = Math.round(cantidades.reduce((a, b) => a + b, 0) / cantidades.length);
-  const promedioSeries = cantidades.map(() => promedio);
-  // 6️⃣ Configurar gráfica (solo 2 líneas: Stock y Promedio)
+export async function renderChart(fecha_inicio, fecha_fin) {
   const chartDiv = document.querySelector("#chart");
+  const chartTitle = document.getElementById("chart-title");
   if (!chartDiv) return;
 
-  const options = {
-    series: [
-      {
-        name: "Stock disponible",
-        data: cantidades
-      },
-      {
-        name: "Promedio de stock",
-        data: promedioSeries
-      }
-    ],
-    chart: { type: 'bar', height: 350 },
-    plotOptions: { bar: { horizontal: false, columnWidth: '55%', borderRadius: 5 } },
-    dataLabels: { enabled: false },
-    stroke: { show: true, width: 2, colors: ['transparent'] },
-    xaxis: { categories: labels, labels: { rotate: -45, style: { fontSize: '13px' } } },
-    yaxis: {
-      title: { text: 'Cantidad (unidades)' },
-      labels: { formatter: value => value.toFixed(0) }
-    },
-    fill: { opacity: 1 },
-    tooltip: { y: { formatter: val => val + " unidades" } }
-  };
-
-  const chart = new ApexCharts(chartDiv, options);
-  chart.render();
-}
-
-export async function renderDonutChart() {
-  console.log("Renderizando gráfica tipo dona...");
-
-  // 1️⃣ Obtener datos desde la API
-  const stocks = await stockService.GetStockAll();
-
-  if (!stocks || stocks.length === 0) {
-    console.warn("No hay stock para graficar.");
-    return;
-  }
-
-  // 2️⃣ Etiquetas tipo "Nombre (Tipo/Unidad)"
-  const labels = stocks.map(s => {
-    const tipo = s.tipo == 1 ? "AA" :
-                 s.tipo == 2 ? "AAA" :
-                 s.tipo == 3 ? "Super" : "";
-    const extra = tipo || s.unidad_medida;
-    return extra ? `${s.nombre_producto} (${extra})` : s.nombre_producto;
-  });
-
-  // 3️⃣ Cantidades de stock
-  const cantidades = stocks.map(s => s.cantidad_disponible);
-
-  // 4️⃣ Configurar gráfica dona
-  const chartDiv = document.querySelector("#donutChart"); // nuevo div para la dona
-  if (!chartDiv) return;
-
-  const options = {
-    series: cantidades,
-    chart: {
-      type: 'donut',
-      height: 350
-    },
-    labels: labels,
-    legend: {
-      position: 'right',
-      fontSize: '18px'
-    },
-    tooltip: {
-      y: {
-        formatter: val => val + " unidades"
-      }
-    },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: '60%',
-          labels: {
-            show: true,
-            total: {
-              show: true,
-              label: 'Total',
-              formatter: function (w) {
-                return w.globals.seriesTotals.reduce((a, b) => a + b, 0)
-              }
-            }
-          }
-        }
-      }
+  try {
+    // Si no hay fechas, usar mes actual
+    if (!fecha_inicio || !fecha_fin) {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      fecha_inicio = firstDay.toISOString().split("T")[0]; // YYYY-MM-DD
+      fecha_fin = lastDay.toISOString().split("T")[0];     // YYYY-MM-DD
     }
-  };
 
-  const chart = new ApexCharts(chartDiv, options);
-  chart.render();
+    // Obtener todos los consumos
+    const response = await consumoService.getAllConsumos();
+    const consumos = response?.consumos || [];
+
+    if (!consumos.length) {
+      chartDiv.innerHTML = "<p class='text-center'>No hay datos para el rango seleccionado</p>";
+      if (chartTitle) chartTitle.textContent = "Consumo de Alimento";
+      return;
+    }
+
+    // Filtrar por fechas
+    const start = new Date(fecha_inicio);
+    const end = new Date(fecha_fin);
+    const consumosFiltrados = consumos.filter(c => {
+      const fecha = new Date(c.fecha_registro);
+      return fecha >= start && fecha <= end;
+    });
+
+    if (!consumosFiltrados.length) {
+      chartDiv.innerHTML = "<p class='text-center'>No hay datos en este rango de fechas</p>";
+      if (chartTitle) chartTitle.textContent = "Consumo de Alimento";
+      return;
+    }
+
+    // Agrupar por alimento
+    const agrupados = {};
+    const registrosPorAlimento = {};
+
+    consumosFiltrados.forEach(c => {
+    const alimento = c.alimento || "Desconocido";
+    agrupados[alimento] = (agrupados[alimento] || 0) + (c.cantidad_alimento || 0);
+    registrosPorAlimento[alimento] = (registrosPorAlimento[alimento] || 0) + 1;
+});
+
+    const sorted = Object.entries(agrupados).sort((a, b) => b[1] - a[1]);
+    const labels = sorted.map(([alimento]) => alimento);
+    const cantidades = sorted.map(([_, cantidad]) => cantidad);
+    
+    const promedioSeries = sorted.map(([alimento, _]) => {
+        const total = agrupados[alimento];
+        const count = registrosPorAlimento[alimento];
+        return total / count;
+    });
+
+    // Título de la gráfica
+    if (chartTitle) {
+      chartTitle.textContent =
+        start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
+          ? `Consumo de Alimento - ${start.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}`
+          : `Consumo de Alimento - ${start.toLocaleDateString()} a ${end.toLocaleDateString()}`;
+    }
+
+    // Destruir chart anterior si existe
+    if (chartInstance) {
+      chartInstance.destroy();
+      chartInstance = null;
+    }
+
+    // Configuración y render
+    const options = {
+      series: [
+        { name: "Consumo Total (Kg)", data: cantidades },
+        { name: "Promedio", data: promedioSeries, type: "line", stroke: { width: 3 }, markers: { size: 4 } }
+      ],
+      colors: ['#69d45bff', '#adacacff'],
+      chart: { type: 'bar', height: 380 },
+      plotOptions: { bar: { horizontal: false, columnWidth: '50%', borderRadius: 4 } },
+      xaxis: { categories: labels, labels: { rotate: -45, style: { fontSize: '13px' } } },
+      yaxis: { title: { text: "Cantidad consumida (Kg)" }, labels: { formatter: val => val.toFixed(0) } },
+      dataLabels: { enabled: false },
+      tooltip: { y: { formatter: val => `${val} Kg` } }
+    };
+
+    // Crear la nueva instancia y renderizar
+    chartInstance = new ApexCharts(chartDiv, options);
+    await chartInstance.render();
+
+  } catch (err) {
+    console.error("Error al renderizar la gráfica:", err);
+    chartDiv.innerHTML = "<p class='text-center text-danger'>Error al cargar la gráfica</p>";
+    if (chartTitle) chartTitle.textContent = "Consumo de Alimento";
+  }
 }
