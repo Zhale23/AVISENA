@@ -3,6 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.router import tareas
 from app.router import users, auth, ventas,modulos, permisos, roles, detalle_huevos, metodo_pago, detalle_salvamento, produccion_huevos, stock, tipo_huevos, rescue, chickens, isolation, type_chickens, chicken_incident, sheds, lands, incidentes_generales, registro_sensores, categories, inventory, sensor_types, sensors, dashboard, alimento, consumo_gallinas
 app = FastAPI()
+
+# Configuración de CORS para permitir todas las solicitudes desde cualquier origen
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://avisena.store"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],  # Permitir estos métodos HTTP
+    allow_headers=["*"],  # Permitir cualquier encabezado en las solicitudes
+)
  
 # Incluir en el objeto app los routers
 app.include_router(users.router, prefix="/users", tags=["users"])
@@ -35,17 +44,6 @@ app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(alimento.router, prefix="/alimento", tags=["alimento"])
 app.include_router(consumo_gallinas.router, prefix="/consumo_gallinas", tags=["consumo_gallinas"])
 
-
-
-
-# Configuración de CORS para permitir todas las solicitudes desde cualquier origen
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Permitir solicitudes desde cualquier origen
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],  # Permitir estos métodos HTTP
-    allow_headers=["*"],  # Permitir cualquier encabezado en las solicitudes
-)
 
 @app.get("/")
 def read_root():

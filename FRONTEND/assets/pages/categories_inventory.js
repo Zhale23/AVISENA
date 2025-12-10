@@ -62,16 +62,18 @@ async function handleCreateSubmit(e) {
     await init();
 
     Swal.fire({
-      title: "Categoría creada exitosamente",
-      icon: "success",
-      draggable: true,
+        icon: "success",
+        title: `Categoría creada con éxito.`,
+        showConfirmButton: false,
+        timer: 1200
     });
   } catch (error) {
     console.error("Error al crear categoría:", error);
     Swal.fire({
-      title: "Error al crear la categoría: " + error.message,
-      icon: "error",
-      draggable: true,
+        icon: "error",
+        title: `Categoría creada con éxito.`,
+        showConfirmButton: false,
+        timer: 1200
     });
   }
 }
