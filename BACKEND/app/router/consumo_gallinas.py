@@ -128,6 +128,23 @@ def get_consumo(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/all-consumos", response_model=ConsumoAllOut)
+def get_consumos_all(
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    id_rol = user_token.id_rol  
+
+    if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
+        raise HTTPException(status_code=401, detail="Usuario no autorizado")
+
+    data = crud_consumo.get_all_consumo(db)
+    if not data:
+        raise HTTPException(status_code=404, detail="No hay registros de consumo")
+
+    return {"consumos": data}
+
+
 @router.put("/by-id/{id_consumo}")
 def update_consumo(
     id_consumo: int, 
@@ -250,3 +267,4 @@ def delete_consumo(
         return {"message": f"Registro eliminado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
+

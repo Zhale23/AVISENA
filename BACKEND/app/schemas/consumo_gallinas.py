@@ -29,3 +29,7 @@ class ConsumoPaginated(BaseModel):
     total_consumos: int
     total_pages: int
     consumos: List[ConsumoOut]
+
+class ConsumoAllOut(BaseModel):
+    consumos: List[ConsumoOut]
+
