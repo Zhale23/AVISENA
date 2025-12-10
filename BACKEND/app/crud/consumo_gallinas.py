@@ -80,6 +80,30 @@ def get_all_consumo_pag(db: Session, skip: int = 0, limit: int = 10):
         logger.error(f"Error al obtener los consumos: {e}", exc_info=True)
         raise Exception("Error de base de datos al obtener los consumos")
 
+def get_all_consumo(db: Session):
+    try:
+        query = text("""SELECT 
+                cg.id_consumo, 
+                cg.id_alimento, 
+                a.nombre AS alimento, 
+                cg.cantidad_alimento,
+                cg.fecha_registro, 
+                cg.id_galpon, 
+                g.nombre AS galpon
+            FROM consumo_gallinas cg
+            JOIN alimento a ON cg.id_alimento = a.id_alimento
+            LEFT JOIN galpones g ON cg.id_galpon = g.id_galpon
+            ORDER BY fecha_registro DESC
+                """)
+        
+        result = db.execute(query).mappings().all()
+        return result
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener los consumos: {e}", exc_info=True)
+        raise Exception("Error de base de datos al obtener los consumos")
+
+
+
 def get_consumo_by_galpon(db: Session, skip: int = 0, limit: int = 10, id_galpon: int = 0):
     try:
         count_query = text("""
@@ -217,4 +241,5 @@ def get_cantidad_disponible(db: Session, id_alimento: int) -> int:
     result = db.execute(query, {"id_alimento": id_alimento}).scalar()
 
     return result if result is not None else 0
+
 
