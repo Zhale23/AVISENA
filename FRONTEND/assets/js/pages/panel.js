@@ -209,7 +209,10 @@ async function cargarDatosDashboard() {
 
   try {
     const inc = await dashboardService.getIncidentesRecientes();
-    cargarIncidentes(inc);
+    // Solo cargar incidentes si el elemento existe en la página
+    if (document.getElementById("incidentes-list")) {
+      cargarIncidentes(inc);
+    }
   } catch (e) {
     console.warn("Incidentes recientes no disponibles:", e);
   }

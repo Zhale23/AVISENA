@@ -512,16 +512,14 @@
 
 			// Definir qué módulos puede ver cada rol
 			const permisos = {
-				superadmin: ['users', 'alimentos', 'consumo_alimento', 'tareas', 'galpones', 'incidentes', 'inventario', 'registro_sensores', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
+				superadmin: ['users', 'roles', 'alimentos', 'consumo_alimento', 'tareas', 'galpones', 'incidentes', 'inventario', 'registro_sensores', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
 
 				administrador: ['users', 'alimentos', 'consumo_alimento', 'tareas', 'galpones', 'incidentes', 'inventario', 'registro_sensores', 'incidentes_gallina', 'chickens', 'tipos_gallinas', 'rescue', 'produccion_huevos', 'stock', 'ventas'],
 
 				supervisor: ['tareas', 'alimentos', 'consumo_alimento', 'incidentes', 'registro_sensores', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock'],
 
 				operario: ['tareas', 'galpones', 'alimentos', 'consumo_alimento', 'incidentes', 'registro_sensores', 'tipos_gallinas', 'rescue', 'chickens', 'incidentes_gallina', 'produccion_huevos', 'stock']
-			};
-
-			// Si no hay rol válido, ocultar todo
+			};			// Si no hay rol válido, ocultar todo
 			if (!rol || !permisos[rol]) {
 				console.warn('Rol no válido o no encontrado');
 				return;
@@ -536,11 +534,12 @@
 				// Nunca ocultar el panel
 				if (modulo === 'panel') return;
 				if (modulo && !modulosPermitidos.includes(modulo)) {
-					link.closest('li.nav-item').style.display = 'none';
+					const liElement = link.closest('li.nav-item');
+					if (liElement) {
+						liElement.style.display = 'none';
+					}
 				}
-			});
-
-			// Ocultar secciones completas si todos sus items están ocultos
+			});			// Ocultar secciones completas si todos sus items están ocultos
 			['submenu-usuario', 'submenu-monitoreo', 'submenu-gallinas', 'submenu-producción'].forEach(submenuId => {
 				const submenu = document.getElementById(submenuId);
 				if (submenu) {
