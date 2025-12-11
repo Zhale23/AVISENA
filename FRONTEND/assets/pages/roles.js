@@ -1,5 +1,6 @@
-import { rolesService } from "../api/roles.service.js";
+import { rolesService } from "../js/api/roles.service.js";
 
+console.log("Roles JS cargado");
 function createRolRow(rol) {
   return `
     <tr>
@@ -64,6 +65,7 @@ async function handleSwitchChange(event) {
 
 
   } catch (error) {
+    console.error(error);
     event.target.checked = !nuevoEstado;
 
     Swal.fire({
