@@ -1,4 +1,4 @@
-// import { loadContent } from "../main.js";
+import { loadContent } from "../main.js";
 import { detalleVentaService } from '../js/api/detalle_venta.service.js';
 import { ventaService } from "../api/venta.service.js"; 
 
