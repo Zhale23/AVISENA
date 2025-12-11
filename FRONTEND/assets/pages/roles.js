@@ -1,6 +1,7 @@
 import { rolesService } from "../js/api/roles.service.js";
 
 console.log("Roles JS cargado");
+
 function createRolRow(rol) {
   return `
     <tr>
@@ -21,7 +22,6 @@ function createRolRow(rol) {
   `;
 }
 
-
 async function handleSwitchChange(event) {
   if (!event.target.classList.contains("switch-estado")) return;
 
@@ -33,11 +33,11 @@ async function handleSwitchChange(event) {
     text: "Estás a punto de cambiar el estado de este rol.",
     icon: "warning",
     showCancelButton: true,
-    confirmButtonText: "Sí, cambiar!",
-    cancelButtonText: "No, cancelar!",
+    confirmButtonText: "Aceptar",
+    cancelButtonText: "Cancelar",
     reverseButtons: true,
-    confirmButtonColor: "#28a745", // verde
-    cancelButtonColor: "#6c757d"   // gris
+    confirmButtonColor: "#28a745",
+    cancelButtonColor: "#6c757d"
   });
 
   if (!result.isConfirmed) {
@@ -56,13 +56,12 @@ async function handleSwitchChange(event) {
 
     await rolesService.UpdateRolById(id, updateRol);
 
-   Swal.fire({
+    Swal.fire({
       icon: "success",
       title: "Rol actualizado",
       text: "El rol se modificó correctamente.",
       confirmButtonColor: "#28a745"
     });
-
 
   } catch (error) {
     console.error(error);
@@ -81,7 +80,7 @@ async function handleSwitchChange(event) {
 // =============================
 async function handleEditClick(event) {
   const btn = event.target.closest(".btn-edit");
-  if (!btn) return; // No se hizo clic en el botón editar
+  if (!btn) return;
 
   const id = btn.dataset.id;
 
@@ -92,7 +91,6 @@ async function handleEditClick(event) {
     document.getElementById("edit-nombre-rol").value = rol.nombre_rol;
     document.getElementById("edit-descripcion").value = rol.descripcion;
 
-    // Abrir modal correctamente
     const modal = new bootstrap.Modal(document.getElementById("edit-rol-modal"));
     modal.show();
 
@@ -106,7 +104,6 @@ async function handleEditClick(event) {
     });
   }
 }
-
 
 // =============================
 // Actualizar Rol
