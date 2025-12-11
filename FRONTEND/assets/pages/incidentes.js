@@ -240,7 +240,10 @@ async function handleStatusChange(incidenteId) {
         showCancelButton: true,
         confirmButtonText: 'Sí, cambiarlo',
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#198754'
+        customClass: {
+            confirmButton: 'btn btn-success',
+            cancelButton: 'btn btn-secondary'
+        }
     });
 
     if (confirmacion.isConfirmed) {
@@ -285,7 +288,10 @@ async function handleDeleteIncidente(incidenteId) {
         showCancelButton: true,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#6c757d'
+        customClass: {
+            confirmButton: 'btn btn-success',
+            cancelButton: 'btn btn-secondary'
+        }
     });
 
     if (confirmacion.isConfirmed) {
