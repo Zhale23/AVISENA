@@ -5,7 +5,7 @@ from typing import List
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.schemas.users import UserOut
-from app.schemas.stock import StockCreate, StockOut
+from app.schemas.stock import StockCreate, StockOut, StockResumen
 from core.database import get_db
 from app.crud import crud_stock
 
@@ -34,7 +34,7 @@ def get_stock(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/all", response_model=List[StockOut])
+@router.get("/stock/all", response_model=List[StockResumen])
 def get_all_stock(
     skip: int = 0,
     limit: int = 100,
