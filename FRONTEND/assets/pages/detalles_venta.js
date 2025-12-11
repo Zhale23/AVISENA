@@ -1,5 +1,5 @@
-import { loadContent } from "../main.js";
-import { detalleVentaService } from '../api/detalle_venta.service.js';
+// import { loadContent } from "../main.js";
+import { detalleVentaService } from '../js/api/detalle_venta.service.js';
 import { ventaService } from "../api/venta.service.js"; 
 
 let modalInstance = null; // Guardará la instancia del modal de Bootstrap
