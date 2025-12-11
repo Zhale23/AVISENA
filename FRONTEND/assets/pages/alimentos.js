@@ -361,7 +361,7 @@ async function openConsumoModal(alimentoId, alimentoNombre, alimentoCantidad) {
         await cargarGalponesParaConsumo();
         
         // Establecer fecha actual por defecto
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toLocaleDateString('en-CA');
         document.getElementById('consumo-fecha').value = today;
         
         // Mostrar el modal
@@ -923,3 +923,4 @@ inicializarExportacion();
 init(1, 10);
 
 export { init };
+
