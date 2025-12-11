@@ -7,44 +7,35 @@
   <title>Gestión de Roles</title>
 
   <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- FontAwesome -->
-  <link rel="stylesheet" href="../assets/css/style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
    <style>
     .form-check-input:checked {
       background-color: green ;
       border-color: green;
     }
-    .btn-nuevo {
-      background-color: #1dbf73;
-      color: #000;   
+    .btn-success{
+      color: black;
     }
-    .btn-nuevo:hover {
-      background-color: rgba(29, 191, 115, 0.7); /* más claro al pasar el mouse */
-    }
-   
   </style>
 </head>
-
 <body>
-
   <div class="row">
     <div class="col-12">
       <div class="card">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="card-title">Gestión de Roles</h4>
-            <button class="btn btn-nuevo" data-bs-toggle="modal" data-bs-target="#create-rol-modal">
-              <i class="fa-solid fa-plus"></i> Nuevo Rol
-            </button>
+             <div class="col-auto">
+                <button type="button" class="btn btn-sm btn-success flex-fill" data-bs-toggle="modal" data-action="create" 
+                  data-bs-target="#create-rol-modal">
+                  <i class="fa fa-plus me-1"></i><span class="d-none d-sm-inline">Agregar</span></button>
+              </div>
           </div>
-
           <!-- TABLA -->
           <table class="table table-striped align-middle">
             <thead>
               <tr>
-                <th >Nombre del Rol</th>
+                <th>Nombre del Rol</th>
                 <th>Descripción</th>
                 <th>Estado</th>
               </tr>
@@ -65,7 +56,7 @@
     <div class="modal-dialog">
       <form id="create-rol-form" class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nuevo Rol</h5>
+          <h5 class="modal-title">Agregar Rol</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
@@ -84,21 +75,15 @@
 
         <div class="modal-footer">
            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-success">Guardar</button>
+          <button type="submit" class="btn btn-success">Agregar</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
-    .btn-primario {
-      background-color: #15a362;
-      color: white;
-    }
-  </style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 </body>
 
