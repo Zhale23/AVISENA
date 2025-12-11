@@ -35,7 +35,7 @@ export const stockService = {
   //   Obtener TODO el stock
   // ------------------------------------
   GetStockAll: () => {
-    return request('/stock/all');
+    return request('/stock/stock/all');
   }
 
   // ------------------------------------
