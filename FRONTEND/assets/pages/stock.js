@@ -15,8 +15,6 @@ let fechaFinGlobal = null;
 function createStockRow(stock) {
   const tabla = `
     <tr>
-        <!-- ID Producto -->
-        <td>${stock.id_producto}</td>
 
         <!-- tipo -->
         <td>${
