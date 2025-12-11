@@ -3,11 +3,17 @@ from typing import Optional, Literal
 
 class StockBase(BaseModel):
     nombre_producto: str 
-    tipo: Optional[str] = None 
+    tipo: Optional[int] = None 
     unidad_medida: Literal['unidad', 'panal', 'docena', 'medio_panal']
     # id_produccion: int = Field(..., gt=0)
     cantidad_disponible: int = Field(..., ge=0)
 
+class StockResumen(BaseModel):
+    nombre_producto: str
+    unidad_medida: Literal['unidad', 'panal', 'docena', 'medio_panal']
+    tipo: Optional[int]
+    cantidad_disponible: int
+    
 class StockCreate(StockBase):
     pass
 
