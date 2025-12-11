@@ -177,24 +177,19 @@ function renderTabla(registros) {
 // =======================
 // CARGAR TODOS LOS REGISTROS (PAGINADO)
 // =======================
-async function cargarTodosRegistrosPaginados(page = 1, fechaInicio, fechaFin) {
+async function cargarTodosRegistrosPaginados(page = 1) {
     currentPage = page; // Actualizar página actual
+    
     const tbody = document.getElementById('consumo-table-body');
     tbody.innerHTML = '<tr><td colspan="5" class="text-center">Cargando registros...</td></tr>';
 
     try {
-        // Si no se pasan fechas, usamos hoy como rango por defecto
-        const today = new Date().toISOString().split('T')[0];
-        const start = fechaInicio || today;
-        const end = fechaFin || today;
-
-        // Llamamos a la función correcta del service
-        const data = await consumoService.getConsumoByRangeDate(start, end, page, PAGE_SIZE);
+        const data = await consumoService.getConsumo(page, PAGE_SIZE);
         const registros = data.consumos || [];
         filteredConsumos = registros;
 
         renderTabla(registros);
-
+        
         const paginationNav = document.querySelector("nav[aria-label='Page navigation']");
         if (paginationNav) {
             if (data.total_pages > 1) {
@@ -930,4 +925,5 @@ export async function renderChart(fecha_inicio, fecha_fin) {
     if (chartTitle) chartTitle.textContent = "Consumo de Alimento";
   }
 }
+
 
