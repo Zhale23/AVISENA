@@ -121,10 +121,14 @@ def get_stock_by_id(db: Session, id_producto: int):
 def get_all_stock(db: Session, skip: int = 0, limit: int = 100):
     try:
         query = text("""
-            SELECT nombre_producto, tipo, id_producto, unidad_medida, cantidad_disponible
+            SELECT 
+                nombre_producto,
+                unidad_medida,
+                tipo,
+                SUM(cantidad_disponible) AS cantidad_disponible
             FROM stock
-            ORDER BY id_producto ASC
-            LIMIT :limit OFFSET :skip
+            WHERE tipo IN (1, 2, 3)
+            GROUP BY nombre_producto, unidad_medida, tipo;
         """)
         result = db.execute(query, {"skip": skip, "limit": limit}).mappings().all()
         return result
