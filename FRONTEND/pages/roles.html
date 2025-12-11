@@ -11,6 +11,20 @@
   <!-- FontAwesome -->
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+   <style>
+    .form-check-input:checked {
+      background-color: green ;
+      border-color: green;
+    }
+    .btn-nuevo {
+      background-color: #1dbf73;
+      color: #000;   
+    }
+    .btn-nuevo:hover {
+      background-color: rgba(29, 191, 115, 0.7); /* más claro al pasar el mouse */
+    }
+   
+  </style>
 </head>
 
 <body>
@@ -21,7 +35,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="card-title">Gestión de Roles</h4>
-            <button class="btn btn-primario" data-bs-toggle="modal" data-bs-target="#create-rol-modal">
+            <button class="btn btn-nuevo" data-bs-toggle="modal" data-bs-target="#create-rol-modal">
               <i class="fa-solid fa-plus"></i> Nuevo Rol
             </button>
           </div>
