@@ -74,6 +74,10 @@ async function openEditModal(tipoId) {
       icon: "error",
       title: "Error",
       text: "No se pudieron cargar los datos del tipo de sensor.",
+      confirmButtonText: 'Aceptar',
+      customClass: {
+        confirmButton: 'btn btn-success'
+      }
     });
   }
 }
@@ -91,6 +95,10 @@ async function handleUpdateSubmit(event) {
       icon: "warning",
       title: "Descripción Inválida",
       text: "La descripción debe tener al menos 10 caracteres.",
+      confirmButtonText: 'Aceptar',
+      customClass: {
+        confirmButton: 'btn btn-success'
+      }
     });
     return;
   }
@@ -104,6 +112,8 @@ async function handleUpdateSubmit(event) {
       icon: "success",
       title: "Éxito",
       text: "Tipo de sensor actualizado exitosamente.",
+      showConfirmButton: false,
+      timer: 1200
     });
     init();
   } catch (error) {
@@ -112,6 +122,10 @@ async function handleUpdateSubmit(event) {
       icon: "error",
       title: "Error",
       text: "No se pudo actualizar el tipo de sensor.",
+      confirmButtonText: 'Aceptar',
+      customClass: {
+        confirmButton: 'btn btn-success'
+      }
     });
   }
 }
@@ -128,6 +142,10 @@ async function handleCreateSubmit(event) {
       icon: "warning",
       title: "Descripción Inválida",
       text: "La descripción debe tener al menos 10 caracteres.",
+      confirmButtonText: 'Aceptar',
+      customClass: {
+        confirmButton: 'btn btn-success'
+      }
     });
     return;
   }
@@ -142,6 +160,8 @@ async function handleCreateSubmit(event) {
       icon: "success",
       title: "Éxito",
       text: "Tipo de sensor creado exitosamente.",
+      showConfirmButton: false,
+      timer: 1400
     });
     init();
   } catch (error) {
@@ -150,6 +170,10 @@ async function handleCreateSubmit(event) {
       icon: "error",
       title: "Error",
       text: "No se pudo crear el tipo de sensor.",
+      confirmButtonText: 'Aceptar',
+      customClass: {
+        confirmButton: 'btn btn-success'
+      }
     });
   }
 }
@@ -161,36 +185,43 @@ async function handleStatusSwitch(event) {
   const tipoId = switchElement.dataset.tipoId;
   const newStatus = switchElement.checked;
 
-  Swal.fire({
-    title: "¿Está seguro?",
-    text: `¿Desea ${newStatus ? "activar" : "desactivar"} este tipo de sensor?`,
-    icon: "question",
+  const confirmacion = await Swal.fire({
+    title: `¿Deseas ${switchElement.checked ? 'activar' : 'desactivar'} este tipo de sensor?`,
+    icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: "Sí, confirmar",
-    cancelButtonText: "Cancelar",
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      try {
-        await sensorTypeService.changeSensorTypeStatus(tipoId, newStatus);
-        Swal.fire({
-          icon: "success",
-          title: "Éxito",
-          text: `El tipo de sensor ha sido ${newStatus ? "activado" : "desactivado"}.`,
-        });
-        init();
-      } catch (error) {
-        console.error("Error al cambiar estado:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "No se pudo cambiar el estado.",
-        });
-        switchElement.checked = !newStatus;
-      }
-    } else {
-      switchElement.checked = !newStatus;
+    confirmButtonText: 'Sí',
+    cancelButtonText: 'No',
+    customClass: {
+      confirmButton: 'btn btn-success',
+      cancelButton: 'btn btn-secondary'
     }
   });
+
+  if (confirmacion.isConfirmed) {
+    try {
+      await sensorTypeService.changeSensorTypeStatus(tipoId, newStatus);
+      Swal.fire({
+        icon: "success",
+        title: `El tipo de sensor ha sido ${newStatus ? 'activado' : 'desactivado'} exitosamente.`,
+        showConfirmButton: false,
+        timer: 1500
+      });
+      init(); // Recargamos la tabla
+    } catch (error) {
+      console.error(`Error al cambiar estado del tipo de sensor ${tipoId}:`, error);
+      Swal.fire({
+        icon: "error",
+        title: `No se pudo ${newStatus ? 'activar' : 'desactivar'} el tipo de sensor.`,
+        confirmButtonText: 'Aceptar',
+        customClass: {
+          confirmButton: 'btn btn-success'
+        }
+      });
+      switchElement.checked = !newStatus;
+    }
+  } else {
+    switchElement.checked = !newStatus;
+  }
 }
 
 async function handleTableClick(event) {
