@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from core.database import get_db
-from app.schemas.consumo_gallinas import ConsumoCreate, ConsumoOut, ConsumoPaginated, ConsumoUpdate
+from app.schemas.consumo_gallinas import ConsumoCreate, ConsumoOut, ConsumoPaginated, ConsumoUpdate, ConsumoAllOut
 from app.schemas.users import UserOut
 from app.crud import consumo_gallinas as crud_consumo
 
@@ -267,4 +267,5 @@ def delete_consumo(
         return {"message": f"Registro eliminado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
