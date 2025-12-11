@@ -3,27 +3,32 @@
   <div class="col-12">
     <div class="card">
       <div class="card-body">
-        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div class="d-md-flex align-items-center">
           <div>
-            <h4 class="card-title mb-0">Inventario</h4>
+            <h4 class="card-title">Inventario</h4>
           </div>
-          <div class="d-flex align-items-center gap-2">
-            <div class="input-group input-group-sm me-2" style="width: 240px;">
-              <input id="search-inv" type="search" class="form-control form-control-sm" placeholder="Buscar por nombre..." aria-label="Buscar">
-            </div>
-            <div class="input-group input-group-sm me-2" style="width: 220px;">
-              <select id="filter-cat-inv" class="form-select form-select-sm">
-                <option value="">Todas las categorias</option>
-              </select>
-            </div>
+          <div class="d-flex align-items-center ms-auto gap-2 mt-3 mt-md-0">
             <button type="button" class="btn btn-success btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#exampleModal">
-              + Agregar Item
+              <i class="fa fa-plus"></i><span class="d-none d-sm-inline">Agregar Item</span>
             </button>
-            <button id="btn-categorias-inv" type="button" class="btn btn-outline-primary me-2 btn-sm text-nowrap" data-page="categorias_inventario">
+            <button id="btn-categorias-inv" type="button" class="btn btn-outline-primary btn-sm text-nowrap" data-page="categorias_inventario">
               Categorias Inventario
             </button>
           </div>
         </div>
+
+        <!-- Filtros de Búsqueda -->
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <input id="search-inv" type="search" class="form-control" placeholder="Buscar por nombre..." aria-label="Buscar">
+          </div>
+          <div class="col-md-4">
+            <select id="filter-cat-inv" class="form-select">
+              <option value="">Todas las categorias</option>
+            </select>
+          </div>
+        </div>
+
         <div class="table-responsive mt-4">
           <table class="table table-striped table-hover table-sm mb-0 text-nowrap align-middle text-center">
             <thead>
