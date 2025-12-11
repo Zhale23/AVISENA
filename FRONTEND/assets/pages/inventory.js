@@ -296,7 +296,8 @@ async function handleTableClick(e) {
     const swalWithBootstrapButtons = Swal.mixin({
       customClass: {
         confirmButton: "btn btn-success",
-        cancelButton: "btn btn-danger",
+        cancelButton: "btn btn-secondary",
+        actions: "gap-3",
       },
       buttonsStyling: false,
     });
