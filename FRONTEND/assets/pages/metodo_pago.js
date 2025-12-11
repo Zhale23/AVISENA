@@ -1,4 +1,4 @@
-import { metodoPagoService } from '../js/api/pay_methods.service.js';
+import { metodoPagoService } from '../api/pay_methods.service.js';
 
 let modalInstance = null;
 let createModalInstance = null;
@@ -268,8 +268,8 @@ async function handleStatusSwitch(event) {
     text: `¿Deseas ${actionText} este método de pago?`,
     icon: "warning",
     showCancelButton: true,
-    confirmButtonText: `Sí, ${actionText}`,
     cancelButtonText: "Cancelar",
+    confirmButtonText: `Sí, ${actionText}`,
     customClass: {
       confirmButton: "btn btn-success",   // clase de Bootstrap success
       cancelButton: "btn btn-secondary"   // clase de Bootstrap secondary
