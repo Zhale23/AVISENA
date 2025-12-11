@@ -1,3 +1,4 @@
+
 import { request } from './api/apiClient.js';
 
 export const incident_chickenService = {
