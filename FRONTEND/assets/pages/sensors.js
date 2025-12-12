@@ -279,8 +279,9 @@ async function handleStatusSwitch(event) {
     title: `¿Deseas ${switchElement.checked ? 'activar' : 'desactivar'} este sensor?`,
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Sí',
-    cancelButtonText: 'No',
+    confirmButtonText: 'Aceptar',
+    cancelButtonText: 'Cancelar',
+    reverseButtons: true,
     customClass: {
       confirmButton: 'btn btn-success',
       cancelButton: 'btn btn-secondary'
