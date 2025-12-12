@@ -886,13 +886,13 @@ function cargarGraficoCombinado(distData, galponesData) {
     return;
   }
 
-  // Colores distintivos para cada tipo de gallina - tonos de verde
+  // Colores distintivos para cada tipo de gallina - paleta variada
   const coloresTipos = [
-    { nombre: distData[0]?.tipo || "Tipo 1", color: "#2d6a4f" }, // Verde oscuro
-    { nombre: distData[1]?.tipo || "Tipo 2", color: "#40916c" }, // Verde medio oscuro
-    { nombre: distData[2]?.tipo || "Tipo 3", color: "#52b788" }, // Verde medio
-    { nombre: distData[3]?.tipo || "Tipo 4", color: "#74c69d" }, // Verde claro
-    { nombre: distData[4]?.tipo || "Tipo 5", color: "#95d5b2" }, // Verde muy claro
+    { nombre: distData[0]?.tipo || "Tipo 1", color: "#3498db" }, // Azul
+    { nombre: distData[1]?.tipo || "Tipo 2", color: "#e74c3c" }, // Rojo
+    { nombre: distData[2]?.tipo || "Tipo 3", color: "#f39c12" }, // Naranja
+    { nombre: distData[3]?.tipo || "Tipo 4", color: "#9b59b6" }, // Morado
+    { nombre: distData[4]?.tipo || "Tipo 5", color: "#1abc9c" }, // Turquesa
   ];
 
   // Crear mapa de colores por nombre
@@ -915,40 +915,59 @@ function cargarGraficoCombinado(distData, galponesData) {
     .slice(0, 4)
     .map((gal) => {
       const ocupacion = gal.ocupacion_porcentaje;
-      const cantidadActual =
-        gal.cantidad_actual || Math.round((ocupacion / 100) * gal.capacidad);
+      const cantidadActual = gal.cantidad_actual;
       const capacidadDisponible = gal.capacidad - cantidadActual;
 
       const colorBorde = "#28a745"; // Verde uniforme para todos
 
-      // Crear segmentos del círculo según distribución de tipos
+      // Usar datos reales de tipos del galpón o calcular con distribución general
+      let tiposGalpon = [];
+      if (gal.tipos && gal.tipos.length > 0) {
+        // Usar distribución real del galpón
+        tiposGalpon = gal.tipos.map((tipo) => {
+          const colorTipo = mapaColores[tipo.tipo] || "#6c757d";
+          return {
+            tipo: tipo.tipo,
+            cantidad: tipo.cantidad,
+            porcentaje: tipo.porcentaje,
+            color: colorTipo,
+          };
+        });
+      } else {
+        // Fallback: usar distribución general proporcional
+        tiposGalpon = distribucion.map((dist) => {
+          const cantidadTipo = Math.round(
+            (parseFloat(dist.porcentaje) / 100) * cantidadActual
+          );
+          return {
+            tipo: dist.tipo,
+            cantidad: cantidadTipo,
+            porcentaje: dist.porcentaje,
+            color: dist.color,
+          };
+        });
+      }
+
+      // Crear segmentos del círculo según tipos del galpón
       let rotacion = -90; // Empezar desde arriba
       const circunferencia = 283; // 2 * π * 45
 
-      const segmentos = distribucion
-        .map((dist) => {
+      const segmentos = tiposGalpon
+        .map((tipo) => {
           const arcLength =
-            (parseFloat(dist.porcentaje) / 100) * circunferencia;
+            (parseFloat(tipo.porcentaje) / 100) * circunferencia;
 
           const segmento = `
-          <circle cx="60" cy="60" r="45" fill="none" stroke="${dist.color}" stroke-width="12" 
+          <circle cx="60" cy="60" r="45" fill="none" stroke="${tipo.color}" stroke-width="12" 
             stroke-dasharray="${arcLength} ${circunferencia}"
             stroke-linecap="butt"
             style="transform: rotate(${rotacion}deg); transform-origin: 60px 60px;"/>
         `;
 
-          rotacion += (parseFloat(dist.porcentaje) / 100) * 360;
+          rotacion += (parseFloat(tipo.porcentaje) / 100) * 360;
           return segmento;
         })
         .join("");
-
-      // Calcular cantidad estimada por tipo en este galpón
-      const detallesTipos = distribucion.map((dist) => {
-        const cantidadTipo = Math.round(
-          (parseFloat(dist.porcentaje) / 100) * cantidadActual
-        );
-        return { ...dist, cantidadTipo };
-      });
 
       return `
         <div class="col-md-6 col-lg-3 mb-3">
@@ -990,16 +1009,16 @@ function cargarGraficoCombinado(distData, galponesData) {
                 </div>
               </div>
 
-              <!-- Detalles por tipo -->
+              <!-- Detalles por tipo (datos reales) -->
               <div style="margin-top: 10px; font-size: 10px; text-align: left;">
-                ${detallesTipos
+                ${tiposGalpon
                   .slice(0, 3)
                   .map(
                     (dt) => `
                   <div style="display: flex; align-items: center; gap: 6px; margin: 4px 0;">
                     <span style="width: 10px; height: 10px; background: ${dt.color}; border-radius: 2px; flex-shrink: 0;"></span>
                     <span style="flex: 1; color: #666;">${dt.tipo}:</span>
-                    <strong style="color: #333;">~${dt.cantidadTipo}</strong>
+                    <strong style="color: #333;">${dt.cantidad}</strong>
                   </div>
                 `
                   )

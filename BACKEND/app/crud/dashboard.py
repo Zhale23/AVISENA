@@ -233,10 +233,12 @@ def get_distribucion_tipos(db: Session) -> List[Dict]:
         return []
 
 def get_ocupacion_galpones(db: Session) -> List[Dict]:
-    """Obtiene la ocupación de cada galpón"""
+    """Obtiene la ocupación de cada galpón con distribución por tipo"""
     try:
-        query = text("""
+        # Primero obtener datos básicos de galpones ACTIVOS
+        query_galpones = text("""
             SELECT 
+                id_galpon,
                 nombre,
                 capacidad,
                 cant_actual as cantidad_actual,
@@ -245,20 +247,48 @@ def get_ocupacion_galpones(db: Session) -> List[Dict]:
                     ELSE 0 
                 END as ocupacion_porcentaje
             FROM galpones
+            WHERE estado = 1
             ORDER BY nombre
             LIMIT 8
         """)
-        resultados = db.execute(query).mappings().all()
+        galpones = db.execute(query_galpones).mappings().all()
         
-        return [
-            {
-                "nombre": r['nombre'],
-                "capacidad": r['capacidad'],
-                "cantidad_actual": r['cantidad_actual'],
-                "ocupacion_porcentaje": int(r['ocupacion_porcentaje'])
-            }
-            for r in resultados
-        ]
+        resultado = []
+        for galpon in galpones:
+            # Obtener distribución por tipo para este galpón
+            query_tipos = text("""
+                SELECT 
+                    tg.raza as tipo,
+                    COALESCE(SUM(ig.cantidad_gallinas), 0) as cantidad
+                FROM ingreso_gallinas ig
+                JOIN tipo_gallinas tg ON ig.id_tipo_gallina = tg.id_tipo_gallinas
+                WHERE ig.id_galpon = :id_galpon
+                GROUP BY tg.raza
+                HAVING SUM(ig.cantidad_gallinas) > 0
+                ORDER BY cantidad DESC
+            """)
+            tipos = db.execute(query_tipos, {"id_galpon": galpon['id_galpon']}).mappings().all()
+            
+            # Calcular porcentajes
+            total_tipos = sum(t['cantidad'] for t in tipos)
+            tipos_distribucion = []
+            if total_tipos > 0:
+                for tipo in tipos:
+                    tipos_distribucion.append({
+                        "tipo": tipo['tipo'],
+                        "cantidad": tipo['cantidad'],
+                        "porcentaje": round((tipo['cantidad'] / total_tipos * 100), 1)
+                    })
+            
+            resultado.append({
+                "nombre": galpon['nombre'],
+                "capacidad": galpon['capacidad'],
+                "cantidad_actual": galpon['cantidad_actual'],
+                "ocupacion_porcentaje": int(galpon['ocupacion_porcentaje']),
+                "tipos": tipos_distribucion
+            })
+        
+        return resultado
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener ocupación de galpones: {e}")
         return []
