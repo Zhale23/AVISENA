@@ -1,4 +1,4 @@
-import { metodoPagoService } from '../api/pay_methods.service.js';
+import { metodoPagoService } from '../js/api/pay_methods.service.js';
 
 let modalInstance = null;
 let createModalInstance = null;
