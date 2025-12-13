@@ -125,10 +125,8 @@ def get_all_stock(db: Session, skip: int = 0, limit: int = 100):
                 nombre_producto,
                 unidad_medida,
                 tipo,
-                SUM(cantidad_disponible) AS cantidad_disponible
+                cantidad_disponible
             FROM stock
-            WHERE tipo IN (1, 2, 3)
-            GROUP BY nombre_producto, unidad_medida, tipo;
         """)
         result = db.execute(query, {"skip": skip, "limit": limit}).mappings().all()
         return result
