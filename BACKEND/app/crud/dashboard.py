@@ -235,6 +235,7 @@ def get_distribucion_tipos(db: Session) -> List[Dict]:
 def get_ocupacion_galpones(db: Session) -> List[Dict]:
     """Obtiene la ocupación de cada galpón con distribución por tipo"""
     try:
+        logger.info("=== Obteniendo ocupación de galpones ===")
         # Primero obtener datos básicos de galpones ACTIVOS
         query_galpones = text("""
             SELECT 
@@ -242,20 +243,22 @@ def get_ocupacion_galpones(db: Session) -> List[Dict]:
                 nombre,
                 capacidad,
                 cant_actual as cantidad_actual,
+                estado,
                 CASE 
                     WHEN capacidad > 0 THEN ROUND((CAST(cant_actual AS DECIMAL) / capacidad) * 100)
                     ELSE 0 
                 END as ocupacion_porcentaje
             FROM galpones
-            WHERE estado = 1
+            WHERE estado = 1 OR estado IS NULL
             ORDER BY nombre
             LIMIT 8
         """)
         galpones = db.execute(query_galpones).mappings().all()
+        logger.info(f"Total galpones encontrados: {len(galpones)}")
         
         resultado = []
         for galpon in galpones:
-            # Obtener distribución por tipo para este galpón
+            # Obtener distribución por tipo para este galpón desde ingreso_gallinas
             query_tipos = text("""
                 SELECT 
                     tg.raza as tipo,
@@ -266,22 +269,7 @@ def get_ocupacion_galpones(db: Session) -> List[Dict]:
                 GROUP BY tg.raza
                 ORDER BY cantidad DESC
             """)
-            tipos = db.execute(query_tipos, {"id_galpon": galpon['id_galpon']}).mappings().all()
-            tipos_list = list(tipos)
-            
-            # Si no hay registros de ingresos, intentar obtener del conteo de gallinas por tipo
-            if not tipos_list:
-                query_tipos_alt = text("""
-                    SELECT 
-                        tg.raza as tipo,
-                        COUNT(c.id_gallina) as cantidad
-                    FROM gallinas c
-                    JOIN tipo_gallinas tg ON c.id_tipo_gallina = tg.id_tipo_gallinas
-                    WHERE c.id_galpon = :id_galpon AND c.estado = 1
-                    GROUP BY tg.raza
-                    ORDER BY cantidad DESC
-                """)
-                tipos_list = list(db.execute(query_tipos_alt, {"id_galpon": galpon['id_galpon']}).mappings().all())
+            tipos_list = list(db.execute(query_tipos, {"id_galpon": galpon['id_galpon']}).mappings().all())
             
             # Calcular porcentajes
             total_tipos = sum(t['cantidad'] for t in tipos_list)
@@ -294,7 +282,7 @@ def get_ocupacion_galpones(db: Session) -> List[Dict]:
                         "porcentaje": round((tipo['cantidad'] / total_tipos * 100), 1)
                     })
             
-            logger.info(f"Galpón {galpon['nombre']}: {len(tipos_distribucion)} tipos encontrados, total: {total_tipos}")
+            logger.info(f"Galpón {galpon['nombre']} (ID: {galpon['id_galpon']}, estado: {galpon.get('estado', 'N/A')}): {len(tipos_distribucion)} tipos encontrados, total: {total_tipos}")
             
             resultado.append({
                 "nombre": galpon['nombre'],
