@@ -262,28 +262,44 @@ def get_ocupacion_galpones(db: Session) -> List[Dict]:
                     COALESCE(SUM(ig.cantidad_gallinas), 0) as cantidad
                 FROM ingreso_gallinas ig
                 JOIN tipo_gallinas tg ON ig.id_tipo_gallina = tg.id_tipo_gallinas
-                WHERE ig.id_galpon = :id_galpon
+                WHERE ig.id_galpon = :id_galpon AND ig.cantidad_gallinas > 0
                 GROUP BY tg.raza
-                HAVING SUM(ig.cantidad_gallinas) > 0
                 ORDER BY cantidad DESC
             """)
             tipos = db.execute(query_tipos, {"id_galpon": galpon['id_galpon']}).mappings().all()
+            tipos_list = list(tipos)
+            
+            # Si no hay registros de ingresos, intentar obtener del conteo de gallinas por tipo
+            if not tipos_list:
+                query_tipos_alt = text("""
+                    SELECT 
+                        tg.raza as tipo,
+                        COUNT(c.id_gallina) as cantidad
+                    FROM gallinas c
+                    JOIN tipo_gallinas tg ON c.id_tipo_gallina = tg.id_tipo_gallinas
+                    WHERE c.id_galpon = :id_galpon AND c.estado = 1
+                    GROUP BY tg.raza
+                    ORDER BY cantidad DESC
+                """)
+                tipos_list = list(db.execute(query_tipos_alt, {"id_galpon": galpon['id_galpon']}).mappings().all())
             
             # Calcular porcentajes
-            total_tipos = sum(t['cantidad'] for t in tipos)
+            total_tipos = sum(t['cantidad'] for t in tipos_list)
             tipos_distribucion = []
             if total_tipos > 0:
-                for tipo in tipos:
+                for tipo in tipos_list:
                     tipos_distribucion.append({
                         "tipo": tipo['tipo'],
-                        "cantidad": tipo['cantidad'],
+                        "cantidad": int(tipo['cantidad']),
                         "porcentaje": round((tipo['cantidad'] / total_tipos * 100), 1)
                     })
             
+            logger.info(f"Galpón {galpon['nombre']}: {len(tipos_distribucion)} tipos encontrados, total: {total_tipos}")
+            
             resultado.append({
                 "nombre": galpon['nombre'],
-                "capacidad": galpon['capacidad'],
-                "cantidad_actual": galpon['cantidad_actual'],
+                "capacidad": int(galpon['capacidad']),
+                "cantidad_actual": int(galpon['cantidad_actual']),
                 "ocupacion_porcentaje": int(galpon['ocupacion_porcentaje']),
                 "tipos": tipos_distribucion
             })
