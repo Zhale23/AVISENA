@@ -871,13 +871,15 @@ export async function renderChart(fecha_inicio, fecha_fin) {
     const registrosPorAlimento = {};
 
     consumosFiltrados.forEach(c => {
-    const alimento = c.alimento || "Desconocido";
+    const alimento = (c.alimento || "Desconocido")
+      .trim()
+      .toLowerCase();
     agrupados[alimento] = (agrupados[alimento] || 0) + (c.cantidad_alimento || 0);
     registrosPorAlimento[alimento] = (registrosPorAlimento[alimento] || 0) + 1;
 });
 
     const sorted = Object.entries(agrupados).sort((a, b) => b[1] - a[1]);
-    const labels = sorted.map(([alimento]) => alimento);
+    const labels = sorted.map(([alimento]) => alimento.charAt(0).toUpperCase() + alimento.slice(1));
     const cantidades = sorted.map(([_, cantidad]) => cantidad);
     
     const promedioSeries = sorted.map(([alimento, _]) => {
@@ -925,5 +927,6 @@ export async function renderChart(fecha_inicio, fecha_fin) {
     if (chartTitle) chartTitle.textContent = "Consumo de Alimento";
   }
 }
+
 
 
