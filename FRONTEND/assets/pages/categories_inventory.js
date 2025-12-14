@@ -107,16 +107,18 @@ async function handleUpdateSubmit(e) {
     await init();
 
     Swal.fire({
-      title: "Categoría actualizada exitosamente",
-      icon: "success",
-      draggable: true,
+        icon: "success",
+        title: `Categoría actualizada con éxito.`,
+        showConfirmButton: false,
+        timer: 1200
     });
   } catch (error) {
     console.error("Error al actualizar categoría:", error);
     Swal.fire({
-      title: "Error al actualizar la categoría: " + error.message,
-      icon: "error",
-      draggable: true,
+        icon: "error",
+        title: `Error al actualizar la categoría.`,
+        showConfirmButton: false,
+        timer: 1200
     });
   }
 }
