@@ -237,6 +237,7 @@ class DashboardService {
         sensores: sensores,
         actividad_reciente: actividad,
       };
+      
     } catch (error) {
       console.error("Error en getDashboardCompleto (reimplementado):", error);
       throw error;

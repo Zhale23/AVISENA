@@ -29,6 +29,7 @@ class GalponOcupacion(BaseModel):
     ocupacion_porcentaje: int
     capacidad: int
     cantidad_actual: int
+    tipos: List[TipoGallinaDistribucion]
 
 class IncidenteReciente(BaseModel):
     """Incidente reciente"""

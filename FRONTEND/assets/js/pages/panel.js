@@ -188,6 +188,7 @@ async function cargarDatosDashboard() {
 
   try {
     distData = await dashboardService.getDistribucionTipos();
+    console.log("distData desde fetching", distData);
   } catch (e) {
     console.warn("Distribución tipos no disponible:", e);
   }
@@ -201,10 +202,6 @@ async function cargarDatosDashboard() {
   // Cargar gráfico combinado si hay datos de ambos
   if (distData && galponesData) {
     cargarGraficoCombinado(distData, galponesData);
-  } else if (distData) {
-    cargarGraficoTipoGallina(distData);
-  } else if (galponesData) {
-    cargarGraficoGalpones(galponesData);
   }
 
   try {
@@ -849,121 +846,121 @@ async function cargarGraficoProduccionRango(dias = 7) {
 
 // Gráfico de Distribución por Tipo de Gallina
 // Gráfico Combinado: Distribución de Tipos + Ocupación de Galpones
-let combinedChart;
 function cargarGraficoCombinado(distData, galponesData) {
-  const container = document.getElementById("combinedChart");
-  if (!container) {
-    console.error("Canvas combinedChart no encontrado");
-    return;
-  }
+  const container = document.getElementById("graficas-adicionales-row");
+  if (!container) return;
 
-  // Validar datos
   if (
     (!distData || distData.length === 0) &&
     (!galponesData || galponesData.length === 0)
   ) {
-    console.warn("No hay datos para el gráfico combinado");
+    container.innerHTML = `
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center py-5">
+            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No hay datos disponibles para mostrar</p>
+          </div>
+        </div>
+      </div>
+    `;
     return;
   }
 
-  // Si solo tenemos galpones, mostrar solo galpones
-  if (
-    (!distData || distData.length === 0) &&
-    galponesData &&
-    galponesData.length > 0
-  ) {
-    cargarGraficoGalpones(galponesData);
-    return;
-  }
-
-  // Si solo tenemos distribución, mostrar doughnut
   if (
     (!galponesData || galponesData.length === 0) &&
     distData &&
     distData.length > 0
   ) {
-    cargarGraficoTipoGallina(distData);
     return;
   }
 
-  // Colores distintivos para cada tipo de gallina - paleta variada
-  const coloresTipos = [
-    { nombre: distData[0]?.tipo || "Tipo 1", color: "#3498db" }, // Azul
-    { nombre: distData[1]?.tipo || "Tipo 2", color: "#e74c3c" }, // Rojo
-    { nombre: distData[2]?.tipo || "Tipo 3", color: "#f39c12" }, // Naranja
-    { nombre: distData[3]?.tipo || "Tipo 4", color: "#9b59b6" }, // Morado
-    { nombre: distData[4]?.tipo || "Tipo 5", color: "#1abc9c" }, // Turquesa
+  // Paleta de colores para tipos de gallinas
+  const paletaColores = [
+    "#3498db",
+    "#e74c3c",
+    "#f39c12",
+    "#9b59b6",
+    "#1abc9c",
+    "#e67e22",
+    "#16a085",
+    "#d35400",
+    "#8e44ad",
+    "#27ae60",
   ];
 
-  // Crear mapa de colores por nombre
-  const mapaColores = {};
-  distData.forEach((item, idx) => {
-    mapaColores[item.tipo] = coloresTipos[idx]?.color || "#6c757d";
+  // Recolectar todos los tipos únicos de todos los galpones
+  const tiposUnicos = new Set();
+  galponesData.forEach((galpon) => {
+    if (galpon.tipos && Array.isArray(galpon.tipos)) {
+      galpon.tipos.forEach((t) => tiposUnicos.add(t.tipo));
+    }
   });
 
-  // Calcular distribución por tipo (proporciones)
+  console.log("Tipos únicos encontrados:", Array.from(tiposUnicos));
+  console.log("Datos de galpones:", galponesData);
+
+  // Debug: verificar estructura de cada galpón
+  galponesData.forEach((galpon, idx) => {
+    console.log(`Galpón ${idx} - ${galpon.nombre}:`, {
+      tipos: galpon.tipos,
+      tiposLength: galpon.tipos?.length,
+      tiposArray: Array.isArray(galpon.tipos),
+      todasLasPropiedades: Object.keys(galpon),
+    });
+  });
+
+  // Crear mapa de colores para cada tipo único
+  const mapaColores = {};
+  Array.from(tiposUnicos).forEach((tipo, idx) => {
+    mapaColores[tipo] = paletaColores[idx % paletaColores.length];
+  });
+
+  console.log("Mapa de colores:", mapaColores);
+
+  // Calcular distribución total desde distData
   const totalGallinas = distData.reduce((sum, item) => sum + item.cantidad, 0);
   const distribucion = distData.map((item) => ({
     tipo: item.tipo,
     cantidad: item.cantidad,
     porcentaje: ((item.cantidad / totalGallinas) * 100).toFixed(1),
-    color: mapaColores[item.tipo],
+    color: mapaColores[item.tipo] || "#6c757d",
   }));
 
-  // Crear HTML para tarjetas con indicadores segmentados
   const galponesHTML = galponesData
     .slice(0, 4)
     .map((gal) => {
       const ocupacion = gal.ocupacion_porcentaje;
       const cantidadActual = gal.cantidad_actual;
       const capacidadDisponible = gal.capacidad - cantidadActual;
+      const colorBorde = "#28a745";
 
-      const colorBorde = "#28a745"; // Verde uniforme para todos
-
-      // Usar datos reales de tipos del galpón o calcular con distribución general
+      // Usar los tipos del galpón directamente desde gal.tipos
       let tiposGalpon = [];
-      if (gal.tipos && gal.tipos.length > 0) {
-        // Usar distribución real del galpón
-        tiposGalpon = gal.tipos.map((tipo) => {
-          const colorTipo = mapaColores[tipo.tipo] || "#6c757d";
-          return {
-            tipo: tipo.tipo,
-            cantidad: tipo.cantidad,
-            porcentaje: tipo.porcentaje,
-            color: colorTipo,
-          };
-        });
-      } else {
-        // Fallback: usar distribución general proporcional
-        tiposGalpon = distribucion.map((dist) => {
-          const cantidadTipo = Math.round(
-            (parseFloat(dist.porcentaje) / 100) * cantidadActual
-          );
-          return {
-            tipo: dist.tipo,
-            cantidad: cantidadTipo,
-            porcentaje: dist.porcentaje,
-            color: dist.color,
-          };
-        });
+      if (gal.tipos && Array.isArray(gal.tipos) && gal.tipos.length > 0) {
+        tiposGalpon = gal.tipos.map((tipo) => ({
+          tipo: tipo.tipo,
+          cantidad: tipo.cantidad,
+          porcentaje: tipo.porcentaje,
+          color: mapaColores[tipo.tipo] || "#6c757d",
+        }));
       }
 
-      // Crear segmentos del círculo según tipos del galpón
-      let rotacion = -90; // Empezar desde arriba
-      const circunferencia = 283; // 2 * π * 45
+      console.log(`Galpón ${gal.nombre} - tipos:`, tiposGalpon);
+
+      let rotacion = -90;
+      const circunferencia = 283;
 
       const segmentos = tiposGalpon
         .map((tipo) => {
           const arcLength =
             (parseFloat(tipo.porcentaje) / 100) * circunferencia;
-
           const segmento = `
           <circle cx="60" cy="60" r="45" fill="none" stroke="${tipo.color}" stroke-width="12" 
             stroke-dasharray="${arcLength} ${circunferencia}"
             stroke-linecap="butt"
             style="transform: rotate(${rotacion}deg); transform-origin: 60px 60px;"/>
         `;
-
           rotacion += (parseFloat(tipo.porcentaje) / 100) * 360;
           return segmento;
         })
@@ -979,8 +976,11 @@ function cargarGraficoCombinado(distData, galponesData) {
                 }</h6>
                 <div style="position: relative; width: 130px; height: 130px; display: flex; align-items: center; justify-content: center;">
                   <svg viewBox="0 0 120 120" style="width: 130px; height: 130px; display: block;">
-                    <!-- Círculo base gris claro -->
-                    <circle cx="60" cy="60" r="45" fill="none" stroke="#e9ecef" stroke-width="12"/>
+                    ${
+                      tiposGalpon.length === 0
+                        ? '<!-- Círculo base gris claro solo si no hay tipos --><circle cx="60" cy="60" r="45" fill="none" stroke="#e9ecef" stroke-width="12"/>'
+                        : ""
+                    }
                     <!-- Segmentos por tipo -->
                     ${segmentos}
                     <!-- Borde exterior -->
@@ -1011,18 +1011,22 @@ function cargarGraficoCombinado(distData, galponesData) {
 
               <!-- Detalles por tipo (datos reales) -->
               <div style="margin-top: 10px; font-size: 10px; text-align: left;">
-                ${tiposGalpon
-                  .slice(0, 3)
-                  .map(
-                    (dt) => `
-                  <div style="display: flex; align-items: center; gap: 6px; margin: 4px 0;">
-                    <span style="width: 10px; height: 10px; background: ${dt.color}; border-radius: 2px; flex-shrink: 0;"></span>
-                    <span style="flex: 1; color: #666;">${dt.tipo}:</span>
-                    <strong style="color: #333;">${dt.cantidad}</strong>
-                  </div>
-                `
-                  )
-                  .join("")}
+                ${
+                  tiposGalpon.length > 0
+                    ? tiposGalpon
+                        .slice(0, 3)
+                        .map(
+                          (dt) => `
+                      <div style="display: flex; align-items: center; gap: 6px; margin: 4px 0;">
+                        <span style="width: 10px; height: 10px; background: ${dt.color}; border-radius: 2px; flex-shrink: 0;"></span>
+                        <span style="flex: 1; color: #666;">${dt.tipo}:</span>
+                        <strong style="color: #333;">${dt.cantidad}</strong>
+                      </div>
+                    `
+                        )
+                        .join("")
+                    : '<div style="text-align: center; color: #999; padding: 8px;">Sin tipos registrados</div>'
+                }
               </div>
             </div>
           </div>
@@ -1031,64 +1035,51 @@ function cargarGraficoCombinado(distData, galponesData) {
     })
     .join("");
 
-  // Leyenda general de tipos con totales
-  const leyendaTipos = distribucion
-    .map(
-      (dist) => `
-    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 8px; background: white; border-radius: 6px; border-left: 3px solid ${dist.color};">
-      <span style="width: 16px; height: 16px; background: ${dist.color}; border-radius: 3px; flex-shrink: 0;"></span>
-      <div style="flex: 1;">
-        <div style="font-size: 12px; font-weight: 600; color: #333;">${dist.tipo}</div>
-        <div style="font-size: 10px; color: #666;">${dist.cantidad} gallinas (${dist.porcentaje}%)</div>
-      </div>
-    </div>
-  `
-    )
-    .join("");
-
-  // Reemplazar contenedor
-  container.parentElement.parentElement.innerHTML = `
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body">
-        <h5 class="card-title mb-4" style="font-weight: 600;">
-          <i class="fas fa-warehouse me-2"></i>Estado de Galpones y Distribución
-        </h5>
-        <!-- Tarjetas de Galpones -->
-        <div class="row g-3 mb-4">
-          ${galponesHTML}
-        </div>
-        <!-- Distribución Total -->
-        <div class="row">
-          <div class="col-12">
-            <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
-              <h6 class="mb-3" style="font-size: 14px; font-weight: 600;">
-                <i class="fas fa-chart-pie me-2"></i>Distribución Total
-              </h6>
-              <div class="row align-items-center">
-                <div class="col-md-9">
-                  <div class="row">
-                    ${distribucion
-                      .map(
-                        (dist) => `
-                      <div class="col-md-4 col-6 mb-2">
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: white; border-radius: 6px; border-left: 3px solid ${dist.color};">
-                          <span style="width: 14px; height: 14px; background: ${dist.color}; border-radius: 3px; flex-shrink: 0;"></span>
-                          <div style="flex: 1;">
-                            <div style="font-size: 12px; font-weight: 600; color: #333;">${dist.tipo}</div>
-                            <div style="font-size: 11px; color: #666;">${dist.cantidad} (${dist.porcentaje}%)</div>
+  // Crear HTML completo
+  const htmlCompleto = `
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-4" style="font-weight: 600;">
+            <i class="fas fa-warehouse me-2"></i>Estado de Galpones y Distribución
+          </h5>
+          <!-- Tarjetas de Galpones -->
+          <div class="row g-3 mb-4">
+            ${galponesHTML}
+          </div>
+          <!-- Distribución Total -->
+          <div class="row">
+            <div class="col-12">
+              <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+                <h6 class="mb-3" style="font-size: 14px; font-weight: 600;">
+                  <i class="fas fa-chart-pie me-2"></i>Distribución Total
+                </h6>
+                <div class="row align-items-center">
+                  <div class="col-md-9">
+                    <div class="row">
+                      ${distribucion
+                        .map(
+                          (dist) => `
+                        <div class="col-md-4 col-6 mb-2">
+                          <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: white; border-radius: 6px; border-left: 3px solid ${dist.color};">
+                            <span style="width: 14px; height: 14px; background: ${dist.color}; border-radius: 3px; flex-shrink: 0;"></span>
+                            <div style="flex: 1;">
+                              <div style="font-size: 12px; font-weight: 600; color: #333;">${dist.tipo}</div>
+                              <div style="font-size: 11px; color: #666;">${dist.cantidad} (${dist.porcentaje}%)</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    `
-                      )
-                      .join("")}
+                      `
+                        )
+                        .join("")}
+                    </div>
                   </div>
-                </div>
-                <div class="col-md-3 text-center">
-                  <div style="padding: 20px; background: white; border-radius: 8px; border: 2px solid #28a745;">
-                    <div style="font-size: 12px; color: #666; margin-bottom: 8px; font-weight: 500;">Total General</div>
-                    <div style="font-size: 36px; font-weight: bold; color: #28a745;">${totalGallinas}</div>
-                    <div style="font-size: 11px; color: #666;">gallinas</div>
+                  <div class="col-md-3 text-center">
+                    <div style="padding: 20px; background: white; border-radius: 8px; border: 2px solid #28a745;">
+                      <div style="font-size: 12px; color: #666; margin-bottom: 8px; font-weight: 500;">Total General</div>
+                      <div style="font-size: 36px; font-weight: bold; color: #28a745;">${totalGallinas}</div>
+                      <div style="font-size: 11px; color: #666;">gallinas</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1098,127 +1089,12 @@ function cargarGraficoCombinado(distData, galponesData) {
       </div>
     </div>
   `;
+
+  container.innerHTML = htmlCompleto;
 }
 
-// Gráfico de Tipo de Gallina (fallback)
-function cargarGraficoTipoGallina(data) {
-  const ctx = document.getElementById("tipoGallinaChart");
-  if (!ctx) {
-    console.error("Canvas tipoGallinaChart no encontrado");
-    return;
-  }
-
-  if (tipoGallinaChart) {
-    tipoGallinaChart.destroy();
-  }
-
-  if (!data || data.length === 0) {
-    console.warn("No hay datos de distribución de tipos");
-    return;
-  }
-
-  const labels = data.map((item) => item.tipo);
-  const valores = data.map((item) => item.cantidad);
-  const colores = [
-    chartColors.primary,
-    chartColors.success,
-    chartColors.warning,
-    chartColors.info,
-    chartColors.danger,
-  ];
-
-  // Ajustar aspectRatio según rol
-  const aspectRatioValue = currentRole === "operario" ? 2 : 1.4;
-
-  tipoGallinaChart = new Chart(ctx.getContext("2d"), {
-    type: "doughnut",
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          data: valores,
-          backgroundColor: colores.slice(0, valores.length),
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: aspectRatioValue,
-      plugins: {
-        legend: {
-          display: true,
-          position: "bottom",
-        },
-      },
-      layout: { padding: 0 },
-    },
-  });
-}
-
-// Gráfico de Ocupación de Galpones
-function cargarGraficoGalpones(data) {
-  const ctx = document.getElementById("galponesChart");
-  if (!ctx) {
-    console.error("Canvas galponesChart no encontrado");
-    return;
-  }
-
-  if (galponesChart) {
-    galponesChart.destroy();
-  }
-
-  if (!data || data.length === 0) {
-    console.warn("No hay datos de ocupación de galpones");
-    return;
-  }
-
-  const labels = data.map((item) => item.nombre);
-  const valores = data.map((item) => item.ocupacion_porcentaje);
-  const colores = valores.map((val) => {
-    if (val >= 90) return chartColors.danger;
-    if (val >= 75) return chartColors.warning;
-    return chartColors.success;
-  });
-
-  // Ajustar aspectRatio según rol
-  const aspectRatioValue = currentRole === "operario" ? 2 : 1.4;
-
-  galponesChart = new Chart(ctx.getContext("2d"), {
-    type: "bar",
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: "Ocupación (%)",
-          data: valores,
-          backgroundColor: colores,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: aspectRatioValue,
-      plugins: {
-        legend: {
-          display: false,
-        },
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100,
-          ticks: {
-            callback: function (value) {
-              return value + "%";
-            },
-          },
-        },
-      },
-    },
-  });
-}
+// Nota: Las funciones cargarGraficoTipoGallina y cargarGraficoGalpones
+// fueron removidas porque ya no se usan - el gráfico combinado las reemplaza
 
 // Cargar incidentes recientes
 function cargarIncidentes(incidentes) {
