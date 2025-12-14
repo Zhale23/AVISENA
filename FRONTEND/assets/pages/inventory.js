@@ -206,16 +206,18 @@ async function handleUpdateSubmit(e) {
     await init();
 
     Swal.fire({
-      title: "Inventario actualizado exitosamente",
-      icon: "success",
-      draggable: true,
+        icon: "success",
+        title: `Item actualizado con éxito.`,
+        showConfirmButton: false,
+        timer: 1200
     });
   } catch (error) {
     console.error("Error al actualizar inventario:", error);
     Swal.fire({
-      title: "Error al actualizar la inventario: " + error.message,
-      icon: "error",
-      draggable: true,
+        icon: "error",
+        title: `Error al actualizar el Item.`,
+        showConfirmButton: false,
+        timer: 1200
     });
   }
 }
