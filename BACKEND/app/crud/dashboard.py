@@ -235,15 +235,12 @@ def get_distribucion_tipos(db: Session) -> List[Dict]:
 def get_ocupacion_galpones(db: Session) -> List[Dict]:
     """Obtiene la ocupación de cada galpón con distribución por tipo"""
     try:
-        logger.info("=== Obteniendo ocupación de galpones ===")
-        # Primero obtener datos básicos de galpones ACTIVOS
         query_galpones = text("""
             SELECT 
                 id_galpon,
                 nombre,
                 capacidad,
                 cant_actual as cantidad_actual,
-                estado,
                 CASE 
                     WHEN capacidad > 0 THEN ROUND((CAST(cant_actual AS DECIMAL) / capacidad) * 100)
                     ELSE 0 
@@ -254,7 +251,6 @@ def get_ocupacion_galpones(db: Session) -> List[Dict]:
             LIMIT 8
         """)
         galpones = db.execute(query_galpones).mappings().all()
-        logger.info(f"Total galpones encontrados: {len(galpones)}")
         
         resultado = []
         for galpon in galpones:
@@ -281,8 +277,6 @@ def get_ocupacion_galpones(db: Session) -> List[Dict]:
                         "cantidad": int(tipo['cantidad']),
                         "porcentaje": round((tipo['cantidad'] / total_tipos * 100), 1)
                     })
-            
-            logger.info(f"Galpón {galpon['nombre']} (ID: {galpon['id_galpon']}, estado: {galpon.get('estado', 'N/A')}): {len(tipos_distribucion)} tipos encontrados, total: {total_tipos}")
             
             resultado.append({
                 "nombre": galpon['nombre'],
