@@ -22,18 +22,23 @@ function createRolRow(rol) {
   `;
 }
 
-async function handleSwitchChange(event) {
-  if (!event.target.classList.contains("switch-estado")) return;
+// =============================
+// Cambiar estado (Switch)
+// =============================
+async function handleStatusSwitch(event) {
+  const switchElement = event.target;
+  if (!switchElement.classList.contains('switch-estado')) return;
 
-  const id = event.target.dataset.id;
-  const nuevoEstado = event.target.checked;
+  const id = switchElement.dataset.id;
+  const newStatus = switchElement.checked ? 1 : 0;
+  const actionText = newStatus ? 'activar' : 'desactivar';
 
   const result = await Swal.fire({
     title: "¿Estás seguro?",
-    text: "Estás a punto de cambiar el estado de este rol.",
+    text: `Estás a punto de ${actionText} este rol.`,
     icon: "warning",
     showCancelButton: true,
-    confirmButtonText: "Aceptar",
+     confirmButtonText: "Aceptar",
     cancelButtonText: "Cancelar",
     reverseButtons: true,
     confirmButtonColor: "#28a745",
@@ -41,107 +46,31 @@ async function handleSwitchChange(event) {
   });
 
   if (!result.isConfirmed) {
-    event.target.checked = !nuevoEstado;
+    switchElement.checked = !switchElement.checked;
     return;
   }
 
   try {
-    const rolCompleto = await rolesService.GetRolById(id);
+    console.log("➡️ CAMBIANDO ESTADO ROL:", id, newStatus);
 
-    const updateRol = {
-      nombre_rol: rolCompleto.nombre_rol,
-      descripcion: rolCompleto.descripcion,
-      estado: nuevoEstado
-    };
+    await rolesService.CambiarRolEstado(id, newStatus);
 
-    await rolesService.UpdateRolById(id, updateRol);
-
-    Swal.fire({
+    await Swal.fire({
       icon: "success",
-      title: "Rol actualizado",
-      text: "El rol se modificó correctamente.",
-      confirmButtonColor: "#28a745"
+      title: "Éxito",
+      text: "Estado del rol actualizado correctamente.",
+      confirmButtonColor: "#28a745",
     });
 
   } catch (error) {
-    console.error(error);
-    event.target.checked = !nuevoEstado;
+    console.error("Error cambiando estado:", error);
+    switchElement.checked = !switchElement.checked;
 
-    Swal.fire({
+    await Swal.fire({
       icon: "error",
       title: "Error",
-      text: "No se pudo cambiar el estado."
-    });
-  }
-}
-
-// =============================
-// CLICK EN BOTÓN EDITAR
-// =============================
-async function handleEditClick(event) {
-  const btn = event.target.closest(".btn-edit");
-  if (!btn) return;
-
-  const id = btn.dataset.id;
-
-  try {
-    const rol = await rolesService.GetRolById(id);
-
-    document.getElementById("edit-rol-id").value = rol.rol_id;
-    document.getElementById("edit-nombre-rol").value = rol.nombre_rol;
-    document.getElementById("edit-descripcion").value = rol.descripcion;
-
-    const modal = new bootstrap.Modal(document.getElementById("edit-rol-modal"));
-    modal.show();
-
-  } catch (error) {
-    console.error("Error al cargar el rol:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudo cargar la información del rol."
-    });
-  }
-}
-
-// =============================
-// Actualizar Rol
-// =============================
-async function handleUpdateSubmit(event) {
-  event.preventDefault();
-
-  const id = document.getElementById("edit-rol-id").value;
-
-  const updatedRol = {
-    nombre_rol: document.getElementById("edit-nombre-rol").value,
-    descripcion: document.getElementById("edit-descripcion").value
-  };
-
-  try {
-    await rolesService.UpdateRolById(id, updatedRol);
-
-    Swal.fire({
-      icon: "success",
-      title: "Rol actualizado",
-      text: "El rol se modificó correctamente.",
-      confirmButtonColor: "#28a745"
-    });
-
-    const modal = bootstrap.Modal.getInstance(
-      document.getElementById("edit-rol-modal")
-    );
-    modal.hide();
-
-    init();
-
-  } catch (error) {
-    console.error("Error al actualizar rol:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudo actualizar el rol."
+      text: "No se pudo cambiar el estado del rol.",
+      confirmButtonColor: "#28a745",
     });
   }
 }
@@ -177,10 +106,7 @@ export async function init() {
   }
 
   // EVENTOS
-  tbody.addEventListener("change", handleSwitchChange);
-  tbody.addEventListener("click", handleEditClick);
-  document.getElementById("edit-rol-form").addEventListener("submit", handleUpdateSubmit);
-
+  document.addEventListener("change", handleStatusSwitch);
   document.getElementById("create-rol-form").addEventListener("submit", handleCreateSubmit);
 }
 
@@ -203,7 +129,7 @@ async function handleCreateSubmit(event) {
       icon: "success",
       title: "Rol creado",
       text: "El rol se registró correctamente.",
-      confirmButtonColor: "#28a745"
+      confirmButtonColor: "#28a745",
     });
 
     const modal = bootstrap.Modal.getInstance(
@@ -220,10 +146,19 @@ async function handleCreateSubmit(event) {
     Swal.fire({
       icon: "error",
       title: "Error",
-      text: "No se pudo crear el rol."
+      text: "No se pudo crear el rol.",
+      confirmButtonColor: "#28a745",
     });
   }
 }
 
 // Ejecutar automáticamente
 init();
+
+
+
+
+
+
+
+
