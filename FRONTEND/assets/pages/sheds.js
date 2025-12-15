@@ -206,7 +206,6 @@ async function handleTableClick(event) {
   const editButton = event.target.closest('.btn-edit-shed');
   if (editButton) {
     const id_galpon = editButton.dataset.shedId;
-    console.log(id_galpon);
     openEditModal(id_galpon);
     return;
   }
