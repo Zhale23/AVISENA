@@ -1,6 +1,9 @@
 // pages/tareas.js
 // Importamos lo que se comunica con la API de tareas
 import { tareaService } from "../js/api/tareas.service.js";
+import { userService } from '../js/api/user.service.js';
+
+
 
 // Instancias de modales
 let createModalInst = null;
@@ -66,6 +69,40 @@ function createTareaRow(t) {
       </td>
     </tr>
   `;
+}
+// selects tareas
+
+async function loadUsuariosSelects() {
+  try {
+    const usuarios = await userService.getUsers();
+    if (!Array.isArray(usuarios)) return;
+
+    const createSelect = document.getElementById("create-id_usuario");
+    const editSelect = document.getElementById("edit-id_usuario");
+
+    const optionsHtml = usuarios.map(u => `
+      <option value="${u.id_usuario}">
+        ${u.nombre} - ${u.documento}
+      </option>
+    `).join("");
+
+    if (createSelect) {
+      createSelect.innerHTML = `
+        <option value="">Seleccione un usuario</option>
+        ${optionsHtml}
+      `;
+    }
+
+    if (editSelect) {
+      editSelect.innerHTML = `
+        <option value="">Seleccione un usuario</option>
+        ${optionsHtml}
+      `;
+    }
+
+  } catch (error) {
+    console.error("Error cargando usuarios:", error);
+  }
 }
 
 /* ---------------------------------------------------
@@ -449,7 +486,7 @@ function attachEvents() {
 export function init() {
   initModals();
   attachEvents();
-     // <-- Nuevo
+   loadUsuariosSelects();  // <-- Nuevo
   loadPage(1);
 }
 
