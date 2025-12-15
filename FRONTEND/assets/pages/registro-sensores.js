@@ -417,24 +417,14 @@ function actualizarResumen() {
 function createRegistroRow(registro) {
   return `
     <tr>
-      <td class="px-0">
-        <span class="">
-          ${registro.nombre_sensor || `Sensor ${registro.id_sensor}`}
-        </span>
-      </td>
-      <td class="px-0">
-        ${registro.nombre_galpon || 'Sin galpón'}
-      </td>
-      <td class="px-0">
-        ${parseFloat(registro.dato_sensor).toFixed(2)}
-      </td>
-      <td class="px-0">
-        <span class="badge bg-secondary">${registro.u_medida}</span>
-      </td>
-      <td class="px-0">
-        <small>${formatDateTime(registro.fecha_hora)}</small>
-      </td>
-      <td class="px-0 text-end">
+      <td class="cell">${registro.nombre_sensor || `Sensor ${registro.id_sensor}`} </td>
+      <td class="cell">${registro.nombre_galpon || 'Sin galpón'} </td>
+      <td class="cell">${parseFloat(registro.dato_sensor).toFixed(2)} </td>
+      <td class="cell">
+        <span class="badge bg-secondary">${registro.u_medida}</span> </td>
+      <td class="cell">
+        <small>${formatDateTime(registro.fecha_hora)}</small> </td>
+      <td class="cell text-end">
         <button class="btn btn-sm btn-outline-success btn-view-registro" data-registro-id="${registro.id_registro}">
           <i class="fa-regular fa-eye"></i>
         </button>
@@ -669,11 +659,9 @@ async function enriquecerDatosSensores() {
 
         sensores.forEach(sensor => {
             if (sensor && sensor.id_sensor) {
-                // Usar nombre_tipo del sensor si está disponible, sino intentar tipo_sensor
                 const nombreTipo = sensor.nombre_tipo || sensor.tipo_sensor || '';
                 const tipoMapeado = mapaTipoSensor[nombreTipo] || nombreTipo;
                 
-                // Solo incluir si es temperatura, humedad o luz
                 if (['Temperatura', 'Humedad', 'Luz'].includes(tipoMapeado)) {
                     sensoresMap.set(sensor.id_sensor.toString(), {
                         nombre: sensor.nombre || `Sensor ${sensor.id_sensor}`,
@@ -692,13 +680,11 @@ async function enriquecerDatosSensores() {
                 registro.nombre_sensor = infoSensor.nombre;
                 registro.id_galpon = infoSensor.id_galpon;
                 registro.nombre_galpon = infoSensor.nombre_galpon;
-                // SIEMPRE asignar tipo_sensor desde el sensor mapeado
                 registro.tipo_sensor = infoSensor.tipo_sensor;
                 if (!registro.u_medida) registro.u_medida = infoSensor.u_medida;
             } else {
                 registro.nombre_sensor = registro.nombre_sensor || `Sensor ${registro.id_sensor}`;
                 registro.nombre_galpon = registro.nombre_galpon || 'Sin galpón';
-                // Solo asignar tipo_sensor si no es un sensor de peso, CO2, etc.
                 if (!registro.tipo_sensor) {
                     registro.tipo_sensor = 'Desconocido';
                 }
