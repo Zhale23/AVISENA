@@ -7,7 +7,6 @@ let allTypeChickens = [];
 function createTypeChickenRow(typeChicken) {
   return `
     <tr>
-      <td class="px-0">${typeChicken.id_tipo_gallinas}</td>
       <td class="px-0">${typeChicken.raza}</td>
       <td class="px-0">${typeChicken.descripcion}</td>
       <td class="px-0 text-end">
