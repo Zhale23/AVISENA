@@ -72,7 +72,7 @@ def update_detalle_huevos_by_id(db: Session, detalle_id: int, detalle_h: Detalle
                 raise HTTPException(status_code=400, detail="Error validacion")
             
             if stock_nuevo['cantidad_disponible'] < cantidad_nueva:
-                raise HTTPException(status_code=400, detail="Error validacion")
+                raise HTTPException(status_code=400, detail="Stock insuficiente en este producto")
         else:
             diferencia_cantidad = cantidad_nueva - cantidad_anterior
             if diferencia_cantidad > 0:
@@ -225,10 +225,8 @@ def get_all_products_stock(db: Session):
                 tipo_huevos.tamaño AS tamanio
             FROM 
                 stock
-            INNER JOIN 
-                produccion_huevos ON stock.id_produccion = produccion_huevos.id_produccion
-            INNER JOIN 
-                tipo_huevos ON produccion_huevos.id_tipo_huevo = tipo_huevos.id_tipo_huevo 
+            INNER JOIN  
+                tipo_huevos ON tipo_huevos.id_tipo_huevo = stock.tipo 
         """)
         result = db.execute(data).mappings().all()
 
