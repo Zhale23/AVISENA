@@ -10,20 +10,6 @@ logger = logging.getLogger(__name__)
 
 def create_type_alimento(db: Session, alimento: AlimentoCreate) -> Optional[bool]:
     try:
-        
-        check_query = text("""
-            SELECT COUNT(*) AS total
-            FROM alimento
-            WHERE nombre = :nombre
-        """)
-
-        result = db.execute(check_query, {
-            "nombre": alimento.nombre
-        }).scalar()
-
-        if result > 0:
-            return False  # Ya existe, no crear
-
         # Crear nuevo registro
         insert_query = text("""
             INSERT INTO alimento (nombre, cantidad, fecha_ingreso)
@@ -116,3 +102,4 @@ def get_alimento_by_date_range(db: Session, fecha_inicio: str, fecha_fin: str):
 
     except SQLAlchemyError as e:
         raise Exception(f"Error al consultar los aislamientos por rango de fechas: {e}")
+
