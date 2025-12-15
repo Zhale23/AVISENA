@@ -432,6 +432,9 @@ async function handleVerMasClick(e) {
         selectFilter.value = "";
     }
 
+    // **IMPORTANTE: Resetear currentSelectedGalponId**
+    currentSelectedGalponId = null;
+
     // Enter ver todos mode
     entrarModoVerTodos();
 
@@ -926,6 +929,9 @@ function renderPagination(total_pages, currentPage = 1) {
             const prevPage = currentPage - 1;
             if (isVerMasMode && currentSelectedGalponId) {
                 cargarTodosRegistrosGalponPaginados(currentSelectedGalponId, prevPage, document.getElementById("pageSize").value);
+            } else if (isVerMasMode) {
+                // **NUEVO: Manejar paginación en modo "Ver todos" sin galpón**
+                cargarTodosRegistrosGalponPaginados(null, prevPage, document.getElementById("pageSize").value);
             } else {
                 init(prevPage, document.getElementById("pageSize").value);
             }
@@ -954,6 +960,9 @@ function renderPagination(total_pages, currentPage = 1) {
             e.preventDefault();
             if (isVerMasMode && currentSelectedGalponId) {
                 cargarTodosRegistrosGalponPaginados(currentSelectedGalponId, i, document.getElementById("pageSize").value);
+            } else if (isVerMasMode) {
+                // **NUEVO: Manejar paginación en modo "Ver todos" sin galpón**
+                cargarTodosRegistrosGalponPaginados(null, i, document.getElementById("pageSize").value);
             } else {
                 init(i, document.getElementById("pageSize").value);
             }
@@ -977,6 +986,9 @@ function renderPagination(total_pages, currentPage = 1) {
             const nextPage = currentPage + 1;
             if (isVerMasMode && currentSelectedGalponId) {
                 cargarTodosRegistrosGalponPaginados(currentSelectedGalponId, nextPage, document.getElementById("pageSize").value);
+            } else if (isVerMasMode) {
+                // **NUEVO: Manejar paginación en modo "Ver todos" sin galpón**
+                cargarTodosRegistrosGalponPaginados(null, nextPage, document.getElementById("pageSize").value);
             } else {
                 init(nextPage, document.getElementById("pageSize").value);
             }
@@ -1386,6 +1398,9 @@ function handlePageSizeChange() {
     const selectPage = document.getElementById("pageSize");
     if (isVerMasMode && currentSelectedGalponId) {
         cargarTodosRegistrosGalponPaginados(currentSelectedGalponId, 1, selectPage.value);
+    } else if (isVerMasMode) {
+        // **NUEVO: Cargar todos los registros cuando estamos en modo "Ver todos" sin galpón seleccionado**
+        cargarTodosRegistrosGalponPaginados(null, 1, selectPage.value);
     } else {
         init(1, selectPage.value);
     }
