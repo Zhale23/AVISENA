@@ -130,8 +130,7 @@ async function cargarSelectGalponesModals(force = false) {
           })
           .join("");
     }
-  } catch (error) {
-    console.error("Error cargando galpones:", error);
+  } catch (error) 
     if (selectCreate) {
       selectCreate.innerHTML = `<option>Error al cargar</option>`;
     }
@@ -170,7 +169,6 @@ async function cargarSelectTypeChickensModals(force = false) {
           .join("");
     }
   } catch (error) {
-    console.error("Error cargando los tipos de gallinas:", error);
     if (selectCreate) {
       selectCreate.innerHTML = `<option>Error al cargar</option>`;
     }
@@ -215,7 +213,6 @@ async function cargarSelectFilterGalpones() {
     if (selectFilter) {
       selectFilter.innerHTML = `<option>Error al cargar por filtros</option>`;
     }
-    console.error("Error en cargarSelectFilterGalpones:", error);
   }
 }
 
@@ -361,10 +358,6 @@ async function onGalponChange(e) {
   try {
     galpon = await shedsService.getShedById(galponId);
   } catch (err) {
-    console.error(
-      "Error obteniendo galpón desde API, usando cache si existe:",
-      err
-    );
     if (!cacheGalpones) {
       cacheGalpones = await chickenService.getGalpones();
     }
@@ -432,7 +425,6 @@ async function onGalponChange(e) {
       btnVerMas.classList.remove("d-none");
     }
   } catch (error) {
-    console.error("Error al cargar registros recientes:", error);
     const tbody = document.getElementById("chicken-table-body");
     tbody.innerHTML =
       '<tr><td colspan="5" class="text-center">No se encontraron registros.</td></tr>';
@@ -512,7 +504,6 @@ async function cargarTodosRegistrosGalponPaginados(
     renderTabla(registros);
     renderPagination(data.total_pages || 1, data.page || page);
   } catch (error) {
-    console.error("Error cargando registros paginados del galpón:", error);
     tbody.innerHTML =
       '<tr><td colspan="5" class="text-center text-danger">Error al cargar registros.</td></tr>';
   }
@@ -542,10 +533,6 @@ async function openEditModal(chickenId) {
     const modal = new bootstrap.Modal(modalElement);
     modal.show();
   } catch (error) {
-    console.error(
-      `Error al obtener los registros de gallinas ${chickenId}:`,
-      error
-    );
     Swal.fire({
       icon: "error",
       text: "No se pudieron cargar los datos de los registros.",
@@ -604,9 +591,7 @@ async function handleUpdateSubmit(event) {
       buttonsStyling: false,
     });
   } catch (error) {
-    console.error(`Error al actualizar el registro ${chickenId}:`, error);
-
-    const msg = error?.message || error?.toString() || "";
+      const msg = error?.message || error?.toString() || "";
 
     if (msg.includes("excede") || msg.includes("exced")) {
       Swal.fire({
@@ -689,10 +674,6 @@ async function openRescueModal(chickenId) {
     const modal = new bootstrap.Modal(modalElement);
     modal.show();
   } catch (error) {
-    console.error(
-      `Error al obtener datos para salvamento ${chickenId}:`,
-      error
-    );
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -820,7 +801,6 @@ async function handleRescueSubmit(event) {
         if (window.loadContent) {
           window.loadContent("rescue");
         } else {
-          console.warn("Función loadContent no encontrada");
           // Redirección alternativa si no existe loadContent
           window.location.href = "../../pages/rescue.html";
         }
@@ -833,7 +813,6 @@ async function handleRescueSubmit(event) {
       }
     }
   } catch (error) {
-    console.error("Error al crear el salvamento:", error);
     Swal.fire({
       icon: "error",
       title: "Error al crear salvamento",
@@ -894,9 +873,7 @@ async function handleDeleteChicken(chickenId) {
       init();
     }
   } catch (error) {
-    console.error(`Error al eliminar el registro ${chickenId}:`, error);
-
-    Swal.fire({
+      Swal.fire({
       icon: "error",
       title: "Error",
       text: error?.message || "No se pudo eliminar el registro.",
@@ -965,8 +942,6 @@ async function handleCreateSubmit(event) {
       init();
     }
   } catch (error) {
-    console.error("Error al crear el registro:", error);
-
     const msg = error?.message || error?.toString() || "";
 
     if (msg.includes("excede") || msg.includes("exced")) {
@@ -1283,7 +1258,6 @@ function handleExportClick(event) {
 
     item.classList.remove("exporting");
   } catch (error) {
-    console.error("Error en exportación:", error);
     Swal.fire({
       title: "Error",
       text: "No se pudo generar el archivo de exportación.",
@@ -1362,10 +1336,6 @@ async function exportToExcel(data, filename = "Gallinas.xlsx") {
   try {
     await loadSheetJS();
   } catch (err) {
-    console.warn(
-      "SheetJS no disponible, se usará exportación CSV en su lugar",
-      err
-    );
     // Fallback al CSV con extensión xlsx si falla la carga
     exportToCSV(data, filename.replace(/\.xlsx?$/, ".csv"));
     return;
@@ -1400,7 +1370,7 @@ async function exportToExcel(data, filename = "Gallinas.xlsx") {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("No se pudo generar el archivo .xlsx:", err);
+    
       Swal.fire({
         title: "Error al generar .xlsx",
         text: err.message || String(err),
@@ -1441,7 +1411,7 @@ async function exportToPDF(data, filename = "Gallinas.pdf") {
 
   // Verificar que autoTable exista
   if (typeof doc.autoTable !== "function") {
-    console.error("autoTable no se cargó correctamente");
+    
     return;
   }
 
@@ -1591,7 +1561,6 @@ async function init(page = 1, page_size = 10) {
 
   const tbody = document.getElementById("chicken-table-body");
   if (!tbody) {
-    console.error('No se encontró el elemento con id "chicken-table-body"');
     return;
   }
   tbody.innerHTML =
