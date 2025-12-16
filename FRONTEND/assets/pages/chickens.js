@@ -1134,44 +1134,50 @@ async function filtrarChickens() {
   if (!endDate) {
     const now = new Date();
     const pad = (n) => n.toString().padStart(2, "0");
-    endDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
-      now.getDate()
-    )}`;
+    endDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   }
   if (!startDate) startDate = "2000-01-01";
 
-  try {
-    let data;
+  const isDateFilter = startDate && endDate;
 
-    if (galponId && (!startDate || !endDate)) {
+  try {
+    let data = { record_chickens: [], total_pages: 1, page: 1 };
+
+    if (!galponId && isDateFilter) {
+      try {
+        data = await chickenService.getChickensByRangeDate(
+          startDate,
+          endDate,
+          1,
+          document.getElementById("pageSize").value
+        );
+      } catch (err) {
+      }
+    } 
+    else if (galponId && isDateFilter) {
+      try {
+        const galponData = await chickenService.getChickensByGalpon(
+          galponId,
+          1,
+          document.getElementById("pageSize").value
+        );
+
+        const filtered = galponData.record_chickens.filter(
+          (c) => c.fecha >= startDate && c.fecha <= endDate
+        );
+
+        data.record_chickens = filtered;
+      } catch (err) {
+      }
+    } 
+    else if (galponId) {
       data = await chickenService.getChickensByGalpon(
         galponId,
         1,
         document.getElementById("pageSize").value
       );
-    } else if (!galponId && startDate && endDate) {
-      data = await chickenService.getChickensByRangeDate(
-        startDate,
-        endDate,
-        1,
-        document.getElementById("pageSize").value
-      );
-    } else if (galponId && startDate && endDate) {
-      // Combinar filtros
-      const galponData = await chickenService.getChickensByGalpon(
-        galponId,
-        1,
-        RECENT_PAGE_SIZE
-      );
-      const filtered = galponData.record_chickens.filter(
-        (c) => c.fecha >= startDate && c.fecha <= endDate
-      );
-      data = {
-        record_chickens: filtered,
-        total_pages: 1,
-        page: 1,
-      };
-    } else {
+    } 
+    else {
       data = await chickenService.getChickens(
         1,
         document.getElementById("pageSize").value
@@ -1181,17 +1187,35 @@ async function filtrarChickens() {
     const chickens = data.record_chickens || [];
     filteredChickens = chickens;
 
-    tableBody.innerHTML =
-      chickens.length > 0
-        ? chickens.map(createChickenRow).join("")
-        : '<tr><td colspan="5" class="text-center">No se encontraron registros.</td></tr>';
+    if (chickens.length === 0 && isDateFilter) {
+      tableBody.innerHTML = `
+         <tr>
+            <td colspan="7" class="text-center">
+              <div class="alert alert-success mt-3">
+                <i class="fas fa-info-circle me-2"></i>
+                No hay registros en el rango de fechas seleccionado.
+              </div>
+            </td>
+          </tr>`;
+    } else if (chickens.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center">
+            No se encontraron registros.
+          </td>
+        </tr>`;
+    } else {
+      tableBody.innerHTML = chickens.map(createChickenRow).join("");
+    }
+
     renderPagination(data.total_pages || 1, 1);
+
   } catch (error) {
-    console.error("Error al filtrar registros:", error);
     tableBody.innerHTML =
       '<tr><td colspan="5" class="text-center text-danger">Error al cargar los datos.</td></tr>';
   }
 }
+
 
 // =======================
 // LIMPIAR FILTROS - CORREGIDO
