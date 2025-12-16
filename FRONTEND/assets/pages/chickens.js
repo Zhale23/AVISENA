@@ -130,7 +130,7 @@ async function cargarSelectGalponesModals(force = false) {
           })
           .join("");
     }
-  } catch (error) 
+  } catch (error) {
     if (selectCreate) {
       selectCreate.innerHTML = `<option>Error al cargar</option>`;
     }
@@ -139,6 +139,7 @@ async function cargarSelectGalponesModals(force = false) {
     }
   }
 }
+
 
 async function cargarSelectTypeChickensModals(force = false) {
   const selectCreate = document.getElementById("create-id_tipo_gallina");
