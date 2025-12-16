@@ -258,10 +258,6 @@ async function exportToExcel(data, filename = "Tipos de gallinas.xlsx") {
   try {
     await loadSheetJS();
   } catch (err) {
-    console.warn(
-      "SheetJS no disponible, se usará exportación CSV en su lugar",
-      err
-    );
     // Fallback al CSV con extensión xlsx si falla la carga
     exportToCSV(data, filename.replace(/\.xlsx?$/, ".csv"));
     return;
@@ -294,7 +290,6 @@ async function exportToExcel(data, filename = "Tipos de gallinas.xlsx") {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("No se pudo generar el archivo .xlsx:", err);
       Swal.fire({
         title: "Error al generar .xlsx",
         text: err.message || String(err),
