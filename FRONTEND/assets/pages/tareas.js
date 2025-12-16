@@ -299,9 +299,8 @@ function applyUiPermissions(user) {
     el.style.display = user.id_rol === 4 ? "none" : "table-cell";
   });
 
-  const canEdit = user.id_rol !== 4;
   document.querySelectorAll(".btn-edit").forEach((btn) => {
-    btn.style.display = canEdit ? "inline-block" : "none";
+    btn.style.display = "inline-block";
   });
 }
 
