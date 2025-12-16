@@ -761,7 +761,8 @@ export const init = () => {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Venta cancelada',
-                    text: 'La venta fue cancelada correctamente'
+                    text: 'La venta fue cancelada correctamente',
+                    confirmButtonColor: '#28a745'
                 });
 
                 limpiarVentaActiva();
