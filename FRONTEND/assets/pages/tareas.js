@@ -201,11 +201,7 @@ async function loadPage(page = 1) {
 
     /* LISTA FINAL */
     if (!displayed || displayed.length === 0) {
-      const msg =
-        user.id_rol === 4
-          ? "AÚN NO TIENE TAREAS ASIGNADAS"
-          : "No se encontraron tareas.";
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center">${msg}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center">No se encontraron tareas.</td></tr>`;
     } else {
       tbody.innerHTML = displayed.map(createTareaRow).join("");
     }
@@ -213,12 +209,7 @@ async function loadPage(page = 1) {
     renderPagination(currentPage, totalPages);
     applyUiPermissions(user);
   } catch (err) {
-    const user = getCurrentUser();
-    const msg =
-      user && user.id_rol === 4
-        ? "AÚN NO TIENE TAREAS ASIGNADAS"
-        : "Error al cargar tareas.";
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center">${msg}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar tareas.</td></tr>`;
   }
 }
 
@@ -368,15 +359,8 @@ function initModals() {
               10
             ),
             descripcion: document.getElementById("create-descripcion").value,
-            fecha_hora_init: new Date(
-              document.getElementById("create-fecha_hora_init").value
-            ).toISOString(),
-            fecha_hora_fin: document.getElementById("create-fecha_hora_fin")
-              .value
-              ? new Date(
-                  document.getElementById("create-fecha_hora_fin").value
-                ).toISOString()
-              : null,
+            fecha_hora_init: document.getElementById("create-fecha_hora_init").value,
+            fecha_hora_fin: document.getElementById("create-fecha_hora_fin").value,
             estado: document.getElementById("create-estado").value,
           };
           await tareaService.create(newData);
@@ -406,22 +390,17 @@ function initModals() {
         ev.preventDefault();
         try {
           const id = document.getElementById("edit-id_tarea").value;
+
           const data = {
-            id_usuario: parseInt(
-              document.getElementById("edit-id_usuario").value,
-              10
-            ),
-            descripcion: document.getElementById("edit-descripcion").value,
-            fecha_hora_init: new Date(
-              document.getElementById("edit-fecha_hora_init").value
-            ).toISOString(),
-            fecha_hora_fin: document.getElementById("edit-fecha_hora_fin").value
-              ? new Date(
-                  document.getElementById("edit-fecha_hora_fin").value
-                ).toISOString()
-              : null,
+            fecha_hora_fin: document.getElementById("edit-fecha_hora_fin").value, 
             estado: document.getElementById("edit-estado").value,
           };
+
+          if (getCurrentUser().id_rol !== 4) {
+            data.id_usuario = parseInt(document.getElementById("edit-id_usuario").value, 10)
+            data.descripcion = document.getElementById("edit-descripcion").value,
+            data.fecha_hora_init = document.getElementById("edit-fecha_hora_init").value;
+          }
           await tareaService.updateById(id, data);
           if (editModalInst) editModalInst.hide();
           loadPage(currentPage);
@@ -449,8 +428,12 @@ function openEditModalFromCache(id_tarea) {
   const t = cachedTareas.find((x) => x.id_tarea === id_tarea);
   if (!t) return Swal.fire("No se encontró la tarea.");
 
+  const user = getCurrentUser();
+  const eliminarCabeceraIdUsuario = document.getElementById('id_usuario_modal'); 
+
+
   document.getElementById("edit-id_tarea").value = t.id_tarea;
-  document.getElementById("edit-id_usuario").value = t.id_usuario; // ya está disabled
+  document.getElementById("edit-id_usuario").style.display = "inline-block"; // ya está disabled
   document.getElementById("edit-descripcion").value = t.descripcion;
   document.getElementById("edit-fecha_hora_init").value =
     formatDateInputToLocalDatetime(t.fecha_hora_init);
@@ -459,6 +442,21 @@ function openEditModalFromCache(id_tarea) {
     : "";
 
   document.getElementById("edit-estado").value = t.estado;
+
+  if (user.id_rol === 4) {
+    eliminarCabeceraIdUsuario.classList.add('d-none'); 
+    document.getElementById("edit-id_usuario").style.display = "none";
+    document.getElementById("edit-descripcion").disabled = true;
+    document.getElementById("edit-fecha_hora_init").disabled = true;
+    document.getElementById("edit-fecha_hora_fin").disabled = false;
+    document.getElementById("edit-estado").disabled = false;
+  } else {
+    document.getElementById("edit-id_usuario").disabled = false;
+    document.getElementById("edit-descripcion").disabled = false;
+    document.getElementById("edit-fecha_hora_init").disabled = false;
+    document.getElementById("edit-fecha_hora_fin").disabled = false;
+    document.getElementById("edit-estado").disabled = false;
+  }
 
   if (editModalInst) editModalInst.show();
 }
