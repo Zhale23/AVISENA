@@ -281,7 +281,6 @@ async function exportToExcel() {
       confirmButtonColor: "#198754",
     });
   } catch (error) {
-    console.error("Error exportando a Excel:", error);
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -350,7 +349,6 @@ async function exportToPDF() {
     pdf.save(`salvamentos_${new Date().toISOString().split("T")[0]}.pdf`);
     Swal.close();
   } catch (error) {
-    console.error("Error exportando a PDF:", error);
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -412,7 +410,6 @@ async function exportToCSV() {
       confirmButtonColor: "#198754",
     });
   } catch (error) {
-    console.error("Error exportando a CSV:", error);
     Swal.fire({
       icon: "error",
       title: "Error",
