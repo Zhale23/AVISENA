@@ -1,6 +1,6 @@
-import { userService } from '../js/api/user.service.js';
+import { userService } from "../js/api/user.service.js";
 
-const currentUser = JSON.parse(localStorage.getItem("user")); 
+const currentUser = JSON.parse(localStorage.getItem("user"));
 
 let modalInstance = null;
 let createModalInstance = null;
@@ -36,15 +36,15 @@ function createUserRow(usuario) {
       </td>
 
       <td class="cell text-center">
-        <button class="btn btn-success btn-sm btn-edit-user" aria-label="Editar" data-user-email="${usuario.email}">
+        <button class="btn btn-success btn-sm btn-edit-user" aria-label="Editar" data-user-email="${
+          usuario.email
+        }">
           <i class="fa-regular fa-pen-to-square"></i>
         </button>
       </td>
     </tr>
   `;
 }
-
-
 
 // -----------------------------------------------------
 //       EXPORT FUNCTIONS (CSV / XLSX)
@@ -74,7 +74,9 @@ function convertToCSV(rows, columns) {
 }
 
 function downloadBlob(content, mimeType, filename) {
-  const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob(["\uFEFF" + content], {
+    type: "text/csv;charset=utf-8",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -98,7 +100,6 @@ function exportToCSV(data, filename = "usuarios.csv") {
 
   const csv = convertToCSV(data, columns);
   downloadBlob(csv, "text/csv;charset=utf-8", filename);
-
 }
 
 async function exportToExcel(data, filename = "usuarios.xlsx") {
@@ -106,7 +107,8 @@ async function exportToExcel(data, filename = "usuarios.xlsx") {
     new Promise((resolve, reject) => {
       if (window.XLSX) return resolve(window.XLSX);
       const script = document.createElement("script");
-      script.src = "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
+      script.src =
+        "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
       script.onload = () => resolve(window.XLSX);
       script.onerror = () => reject("No se pudo cargar SheetJS");
       document.head.appendChild(script);
@@ -170,34 +172,34 @@ function populateRoleSelects() {
   const roleFilter = document.getElementById("filter-role");
   const roleCreate = document.getElementById("create-id_rol");
 
-  const userString = localStorage.getItem('user');
+  const userString = localStorage.getItem("user");
   if (!userString) return;
   const currentUser = JSON.parse(userString);
 
   // LIMPIAR SELECTS
   roleFilter.innerHTML = '<option value="all">Todos los roles</option>';
-  roleCreate.innerHTML = '';
+  roleCreate.innerHTML = "";
 
   // ------------------------------
   // 1) ROLES PARA EL FILTRO (NO SUPERADMIN)
   // ------------------------------
-  
+
   let filterRoles = [];
 
   if (currentUser.id_rol === 1) {
     filterRoles = [
       { value: "administrador", label: "Admin" },
       { value: "supervisor", label: "Supervisor" },
-      { value: "operario", label: "Operario" }
+      { value: "operario", label: "Operario" },
     ];
   } else {
     filterRoles = [
       { value: "supervisor", label: "Supervisor" },
-      { value: "operario", label: "Operario" }
+      { value: "operario", label: "Operario" },
     ];
   }
 
-  filterRoles.forEach(r => {
+  filterRoles.forEach((r) => {
     const option = document.createElement("option");
     option.value = r.value;
     option.textContent = r.label;
@@ -219,7 +221,7 @@ function populateRoleSelects() {
   createRoles.push({ value: "3", label: "Supervisor" });
   createRoles.push({ value: "4", label: "Operario" });
 
-  createRoles.forEach(r => {
+  createRoles.forEach((r) => {
     const option = document.createElement("option");
     option.value = r.value;
     option.textContent = r.label;
@@ -227,17 +229,12 @@ function populateRoleSelects() {
   });
 }
 
-
-
-
-
-
 // -----------------------------------------------------
 //       EDIT MODAL
 // -----------------------------------------------------
 
 async function openEditModal(email) {
-  const modalElement = document.getElementById('edit-user-modal');
+  const modalElement = document.getElementById("edit-user-modal");
 
   if (!modalInstance) {
     modalInstance = new bootstrap.Modal(modalElement);
@@ -247,21 +244,17 @@ async function openEditModal(email) {
     const user = await userService.getUserByEmail(email);
     originalMail = user.email;
 
-    document.getElementById('edit-user-id').value = user.id_usuario;
-    document.getElementById('edit-nombre').value = user.nombre;
-    document.getElementById('edit-documento').value = user.documento;
-    document.getElementById('edit-email').value = user.email;
-    document.getElementById('edit-telefono').value = user.telefono;
-  
+    document.getElementById("edit-user-id").value = user.id_usuario;
+    document.getElementById("edit-nombre").value = user.nombre;
+    document.getElementById("edit-documento").value = user.documento;
+    document.getElementById("edit-email").value = user.email;
+    document.getElementById("edit-telefono").value = user.telefono;
 
     modalInstance.show();
   } catch (error) {
-    console.error(`Error al obtener usuario ${email}:`, error);
-    alert('No se pudieron cargar los datos del usuario.');
+    alert("No se pudieron cargar los datos del usuario.");
   }
 }
-
-
 
 // -----------------------------------------------------
 //       HANDLERS
@@ -270,61 +263,58 @@ async function openEditModal(email) {
 async function handleUpdateSubmit(event) {
   event.preventDefault();
 
-  const userId = document.getElementById('edit-user-id').value;
+  const userId = document.getElementById("edit-user-id").value;
   const updatedData = {
-    nombre: document.getElementById('edit-nombre').value.trim(),
-    telefono: document.getElementById('edit-telefono').value.trim(),
-    documento: document.getElementById('edit-documento').value.trim(),
+    nombre: document.getElementById("edit-nombre").value.trim(),
+    telefono: document.getElementById("edit-telefono").value.trim(),
+    documento: document.getElementById("edit-documento").value.trim(),
   };
 
-  let newEmail = document.getElementById('edit-email').value;
+  let newEmail = document.getElementById("edit-email").value;
 
-  if (newEmail != originalMail){
+  if (newEmail != originalMail) {
     updatedData.email = newEmail;
   }
   const swalWithBootstrapButtonsEdit = Swal.mixin({
     customClass: {
       confirmButton: "btn btn-success ms-2",
-      cancelButton: "btn btn-danger"
+      cancelButton: "btn btn-danger",
     },
-    buttonsStyling: false
+    buttonsStyling: false,
   });
   try {
     await userService.updateUser(userId, updatedData);
     modalInstance.hide();
-    document.getElementById('create-user-form').reset();
+    document.getElementById("create-user-form").reset();
     await swalWithBootstrapButtonsEdit.fire({
       title: "Exito!",
       text: `Usuario actualizado correctamente.`,
-      icon: "success"
+      icon: "success",
     });
     await init();
     applyUserFilters();
   } catch (error) {
-    console.error(`Error al actualizar usuario ${userId}:`, error);
-    if(error.message == "El correo ya está registrado."){
+    if (error.message == "El correo ya está registrado.") {
       await swalWithBootstrapButtonsEdit.fire({
         title: "Error",
-        text: error, 
-        icon: "error"
+        text: error,
+        icon: "error",
       });
     }
-    if(error.message == "El número de documento ya existe."){
+    if (error.message == "El número de documento ya existe.") {
       await swalWithBootstrapButtonsEdit.fire({
         title: "Error",
-        text: error, 
-        icon: "error"
+        text: error,
+        icon: "error",
       });
     }
-    
   }
 }
 
 async function handleTableClick(event) {
-  const editButton = event.target.closest('.btn-edit-user');
+  const editButton = event.target.closest(".btn-edit-user");
   if (editButton) {
     const email = editButton.dataset.userEmail;
-    console.log(`Edit user with email: ${email}`);
     openEditModal(email);
     return;
   }
@@ -332,19 +322,19 @@ async function handleTableClick(event) {
 
 async function handleStatusSwitch(event) {
   const switchElement = event.target;
-  if (!switchElement.classList.contains('user-status-switch')) return;
+  if (!switchElement.classList.contains("user-status-switch")) return;
 
   const userId = switchElement.dataset.userId;
   const newStatus = switchElement.checked;
 
-  const actionText = newStatus ? 'activar' : 'desactivar';
+  const actionText = newStatus ? "activar" : "desactivar";
 
   const swalWithBootstrapButtons = Swal.mixin({
     customClass: {
-        confirmButton: 'btn btn-success ms-2',
-        cancelButton: 'btn btn-secondary'
+      confirmButton: "btn btn-success ms-2",
+      cancelButton: "btn btn-secondary",
     },
-    buttonsStyling: false
+    buttonsStyling: false,
   });
 
   const resultado = await swalWithBootstrapButtons.fire({
@@ -354,35 +344,34 @@ async function handleStatusSwitch(event) {
     showCancelButton: true,
     confirmButtonText: `Si, ${actionText}!`,
     cancelButtonText: "No, cancelar!",
-    reverseButtons: true
+    reverseButtons: true,
   });
 
-  if(resultado.isConfirmed){
-    try{
+  if (resultado.isConfirmed) {
+    try {
       await userService.changeEstatusUser(userId, newStatus);
 
       await swalWithBootstrapButtons.fire({
         title: "Exito!",
-        text: `Usuario ${newStatus ? 'activado' : 'desactivado'} correctamente.`,
-        icon: "success"
+        text: `Usuario ${
+          newStatus ? "activado" : "desactivado"
+        } correctamente.`,
+        icon: "success",
       });
       await init();
       applyUserFilters();
-    }catch (error) {
-      console.error(`Error al ${actionText} usuario ${userId}:`, error);
+    } catch (error) {
       await swalWithBootstrapButtons.fire({
         title: "Error",
         text: `No se pudo ${actionText} el usuario.`,
-        icon: "error"
+        icon: "error",
       });
       switchElement.checked = !newStatus;
     }
-  }else{
+  } else {
     switchElement.checked = !newStatus;
   }
 }
-
-
 
 // -----------------------------------------------------
 //       CREAR
@@ -392,13 +381,13 @@ async function handleCreateSubmit(event) {
   event.preventDefault();
 
   const newUserData = {
-    nombre: document.getElementById('create-nombre').value.trim(),
-    documento: document.getElementById('create-documento').value.trim(),
-    email: document.getElementById('create-email').value.trim(),
-    pass_hash: document.getElementById('create-password').value.trim(),
-    telefono: document.getElementById('create-telefono').value.trim(),
-    id_rol: parseInt(document.getElementById('create-id_rol').value),
-    estado: true
+    nombre: document.getElementById("create-nombre").value.trim(),
+    documento: document.getElementById("create-documento").value.trim(),
+    email: document.getElementById("create-email").value.trim(),
+    pass_hash: document.getElementById("create-password").value.trim(),
+    telefono: document.getElementById("create-telefono").value.trim(),
+    id_rol: parseInt(document.getElementById("create-id_rol").value),
+    estado: true,
   };
   if (!newUserData.nombre || newUserData.nombre.length < 3) {
     Swal.fire({
@@ -435,113 +424,107 @@ async function handleCreateSubmit(event) {
   const swalWithBootstrapButtonsCreate = Swal.mixin({
     customClass: {
       confirmButton: "btn btn-success ms-2",
-      cancelButton: "btn btn-danger"
+      cancelButton: "btn btn-danger",
     },
-    buttonsStyling: false
+    buttonsStyling: false,
   });
   try {
     await userService.createUser(newUserData);
 
-
     if (createModalInstance) {
       createModalInstance.hide();
     }
-    
-    document.getElementById('create-user-form').reset();
+
+    document.getElementById("create-user-form").reset();
     await swalWithBootstrapButtonsCreate.fire({
       title: "Exito!",
       text: `Usuario creado correctamente.`,
-      icon: "success"
+      icon: "success",
     });
     await init();
     applyUserFilters();
   } catch (error) {
-    console.error('Error al crear usuario:', error);
-    if(error.message == "El correo ya está registrado."){
+    if (error.message == "El correo ya está registrado.") {
       await swalWithBootstrapButtonsCreate.fire({
         title: "Error",
         text: error.message,
-        icon: "error"
+        icon: "error",
       });
     }
-    if(error.message == "El número de documento ya existe."){
+    if (error.message == "El número de documento ya existe.") {
       await swalWithBootstrapButtonsCreate.fire({
         title: "Error",
         text: error.message,
-        icon: "error"
+        icon: "error",
       });
     }
   }
 }
-
-
-
-
 
 // -----------------------------------------------------
 //       INIT
 // -----------------------------------------------------
 
 async function init() {
-
-  const createModalElement = document.getElementById('create-user-modal');
-    createModalInstance = new bootstrap.Modal(createModalElement);
+  const createModalElement = document.getElementById("create-user-modal");
+  createModalInstance = new bootstrap.Modal(createModalElement);
 
   createModalElement.addEventListener("hidden.bs.modal", () => {
     document.getElementById("create-user-form").reset();
   });
 
-  const tableBody = document.getElementById('users-table-body');
+  const tableBody = document.getElementById("users-table-body");
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Cargando usuarios ...</td></tr>';
+  tableBody.innerHTML =
+    '<tr><td colspan="7" class="text-center">Cargando usuarios ...</td></tr>';
 
   try {
-    if (currentUser.id_rol === 1) { // SuperAdmin
+    if (currentUser.id_rol === 1) {
+      // SuperAdmin
       allUsers = await userService.getUsersExceptSuperadmins();
     } else {
       allUsers = await userService.getUsers();
     }
-    
+
     filteredUsers = [];
 
     if (allUsers && allUsers.length > 0) {
-      tableBody.innerHTML = allUsers.map(createUserRow).join('');
+      tableBody.innerHTML = allUsers.map(createUserRow).join("");
     } else {
-      tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron usuarios.</td></tr>';
+      tableBody.innerHTML =
+        '<tr><td colspan="7" class="text-center">No se encontraron usuarios.</td></tr>';
     }
   } catch (error) {
-    console.error('Error al obtener usuarios:', error);
-    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>';
+    tableBody.innerHTML =
+      '<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>';
   }
 
-  const editForm = document.getElementById('edit-user-form');
-  const createForm = document.getElementById('create-user-form');
+  const editForm = document.getElementById("edit-user-form");
+  const createForm = document.getElementById("create-user-form");
 
-  tableBody.removeEventListener('click', handleTableClick);
-  tableBody.addEventListener('click', handleTableClick);
+  tableBody.removeEventListener("click", handleTableClick);
+  tableBody.addEventListener("click", handleTableClick);
 
-  tableBody.removeEventListener('change', handleStatusSwitch);
-  tableBody.addEventListener('change', handleStatusSwitch);
+  tableBody.removeEventListener("change", handleStatusSwitch);
+  tableBody.addEventListener("change", handleStatusSwitch);
 
-  editForm.removeEventListener('submit', handleUpdateSubmit);
-  editForm.addEventListener('submit', handleUpdateSubmit);
+  editForm.removeEventListener("submit", handleUpdateSubmit);
+  editForm.addEventListener("submit", handleUpdateSubmit);
 
-  createForm.removeEventListener('submit', handleCreateSubmit);
-  createForm.addEventListener('submit', handleCreateSubmit);
+  createForm.removeEventListener("submit", handleCreateSubmit);
+  createForm.addEventListener("submit", handleCreateSubmit);
 
   // <<<------ EXPORT HOOK ----->>>
   const pageUtilities = document.querySelector(".page-utilities");
   if (pageUtilities) {
     pageUtilities.removeEventListener("click", handleExportClick);
     pageUtilities.addEventListener("click", handleExportClick);
-
-    
   }
 
   const roleSelect = document.getElementById("filter-role");
   const statusSelect = document.getElementById("filter-status");
-  const btnClear = document.getElementById('btn_clear_filters');
+  const btnClear = document.getElementById("btn_clear_filters");
 
   if (roleSelect) {
     roleSelect.removeEventListener("change", applyUserFilters);
@@ -554,8 +537,8 @@ async function init() {
   }
 
   if (btnClear) {
-    btnClear.removeEventListener('click', limpiarFiltros);
-    btnClear.addEventListener('click', limpiarFiltros);
+    btnClear.removeEventListener("click", limpiarFiltros);
+    btnClear.addEventListener("click", limpiarFiltros);
   }
 }
 
@@ -575,15 +558,15 @@ function applyUserFilters() {
 
   // Filtro por rol
   if (roleFilter !== "all") {
-    result = result.filter(u => u.nombre_rol === roleFilter);
+    result = result.filter((u) => u.nombre_rol === roleFilter);
   }
 
   // Filtro por estado
   if (statusFilter === "active") {
-    result = result.filter(u => u.estado === true);
+    result = result.filter((u) => u.estado === true);
   }
   if (statusFilter === "inactive") {
-    result = result.filter(u => u.estado === false);
+    result = result.filter((u) => u.estado === false);
   }
 
   filteredUsers = result;

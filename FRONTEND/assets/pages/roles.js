@@ -1,7 +1,5 @@
 import { rolesService } from "../js/api/roles.service.js";
 
-console.log("Roles JS cargado");
-
 function createRolRow(rol) {
   return `
     <tr>
@@ -27,22 +25,22 @@ function createRolRow(rol) {
 // =============================
 async function handleStatusSwitch(event) {
   const switchElement = event.target;
-  if (!switchElement.classList.contains('switch-estado')) return;
+  if (!switchElement.classList.contains("switch-estado")) return;
 
   const id = switchElement.dataset.id;
   const newStatus = switchElement.checked ? 1 : 0;
-  const actionText = newStatus ? 'activar' : 'desactivar';
+  const actionText = newStatus ? "activar" : "desactivar";
 
   const result = await Swal.fire({
     title: "¿Estás seguro?",
     text: `Estás a punto de ${actionText} este rol.`,
     icon: "warning",
     showCancelButton: true,
-     confirmButtonText: "Aceptar",
+    confirmButtonText: "Aceptar",
     cancelButtonText: "Cancelar",
     reverseButtons: true,
     confirmButtonColor: "#28a745",
-    cancelButtonColor: "#6c757d"
+    cancelButtonColor: "#6c757d",
   });
 
   if (!result.isConfirmed) {
@@ -51,8 +49,6 @@ async function handleStatusSwitch(event) {
   }
 
   try {
-    console.log("➡️ CAMBIANDO ESTADO ROL:", id, newStatus);
-
     await rolesService.CambiarRolEstado(id, newStatus);
 
     await Swal.fire({
@@ -61,9 +57,7 @@ async function handleStatusSwitch(event) {
       text: "Estado del rol actualizado correctamente.",
       confirmButtonColor: "#28a745",
     });
-
   } catch (error) {
-    console.error("Error cambiando estado:", error);
     switchElement.checked = !switchElement.checked;
 
     await Swal.fire({
@@ -89,25 +83,25 @@ export async function init() {
     const result = await rolesService.GetRoles();
     const backendRoles = result.roles || [];
 
-    const roles = backendRoles.map(r => ({
+    const roles = backendRoles.map((r) => ({
       rol_id: r.id_rol,
       nombre_rol: r.nombre_rol,
       descripcion: r.descripcion,
-      estado: r.estado ? 1 : 0
+      estado: r.estado ? 1 : 0,
     }));
 
     tbody.innerHTML = roles.length
       ? roles.map(createRolRow).join("")
       : `<tr><td colspan="6" class="text-center">No hay registros.</td></tr>`;
-
   } catch (error) {
-    console.error("Error al obtener roles:", error);
     tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">Error al cargar datos.</td></tr>`;
   }
 
   // EVENTOS
   document.addEventListener("change", handleStatusSwitch);
-  document.getElementById("create-rol-form").addEventListener("submit", handleCreateSubmit);
+  document
+    .getElementById("create-rol-form")
+    .addEventListener("submit", handleCreateSubmit);
 }
 
 // =============================
@@ -119,7 +113,7 @@ async function handleCreateSubmit(event) {
   const newRol = {
     nombre_rol: document.getElementById("create-nombre-rol").value,
     descripcion: document.getElementById("create-descripcion").value,
-    estado: true
+    estado: true,
   };
 
   try {
@@ -139,10 +133,7 @@ async function handleCreateSubmit(event) {
 
     event.target.reset();
     init();
-
   } catch (error) {
-    console.error("Error al crear rol:", error);
-
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -154,11 +145,3 @@ async function handleCreateSubmit(event) {
 
 // Ejecutar automáticamente
 init();
-
-
-
-
-
-
-
-

@@ -1,63 +1,52 @@
-import { TipoHuevosService } from '../js/api/tipoHuevo.service.js';
-import { shedService } from '../js/api/shed.service.js';
+import { TipoHuevosService } from "../js/api/tipoHuevo.service.js";
+import { shedService } from "../js/api/shed.service.js";
 
 const tipoHuevos = TipoHuevosService.GetTipoHuevosAll();
 
+async function init(page = 1) {}
+export async function cargarTipoHuevos() {
+  try {
+    const tiposHuevos = await TipoHuevosService.GetTipoHuevosAll();
+    const sheds = await shedService.getSheds();
 
+    const select = document.getElementById("create-id-tipo-huevo");
+    const selectGalpon = document.getElementById("create-id-galpon");
 
-async function init(page = 1) { 
- 
- }
-  export async function cargarTipoHuevos() {
+    const selectTipo = document.getElementById("edit-tamaño");
+    const selectEditGalpon = document.querySelector(
+      "select#edit-produccion-nombre"
+    );
 
-    console.log("tipoHuevoExport");
-    try {
-        const tiposHuevos = await TipoHuevosService.GetTipoHuevosAll();
-        const sheds = await shedService.getSheds();
+    tiposHuevos.forEach((huevo) => {
+      const option = document.createElement("option");
+      const optionEdit = document.createElement("option");
 
-        const select = document.getElementById('create-id-tipo-huevo');
-        const selectGalpon = document.getElementById('create-id-galpon');
+      option.value = huevo.id_tipo_huevo;
+      option.textContent = `${huevo.Tamaño}`;
 
-        const selectTipo = document.getElementById('edit-tamaño');
-        const selectEditGalpon = document.querySelector('select#edit-produccion-nombre');
-        
-        tiposHuevos.forEach(huevo => {
-            const option = document.createElement('option');
-            const optionEdit = document.createElement('option');
+      optionEdit.value = huevo.id_tipo_huevo;
+      optionEdit.textContent = `${huevo.Tamaño}`;
 
-            option.value = huevo.id_tipo_huevo;
-            option.textContent = `${huevo.Tamaño}`;
+      select.appendChild(option);
+      selectTipo.appendChild(optionEdit);
+    });
+    select.selectedIndex = 0;
+    selectTipo.selectedIndex = 0;
 
-            optionEdit.value = huevo.id_tipo_huevo;
-            optionEdit.textContent = `${huevo.Tamaño}`;
+    sheds.forEach((item) => {
+      const option = document.createElement("option");
+      const optionEditG = document.createElement("option");
 
-            select.appendChild(option);  
-            selectTipo.appendChild(optionEdit);
+      option.value = item.id_galpon;
+      option.textContent = `${item.nombre}`;
 
-        });
-        select.selectedIndex = 0;
-        selectTipo.selectedIndex = 0;
+      optionEditG.value = item.id_galpon;
+      optionEditG.textContent = `${item.nombre}`;
 
-        sheds.forEach(item => {
-
-            const option = document.createElement('option');
-            const optionEditG = document.createElement('option');
-
-            option.value = item.id_galpon;
-            option.textContent = `${item.nombre}`;
-
-            optionEditG.value = item.id_galpon;
-            optionEditG.textContent = `${item.nombre}`;
-
-
-            selectGalpon.appendChild(option);
-            selectEditGalpon.appendChild(optionEditG);
-
-        });
-        
-    } catch {
-        console.error('Error cargando tipos de huevo:');
-    }
+      selectGalpon.appendChild(option);
+      selectEditGalpon.appendChild(optionEditG);
+    });
+  } catch {}
 }
 
 // Llamar la función

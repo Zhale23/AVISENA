@@ -304,8 +304,6 @@
       return;
     }
 
-    console.log("Aplicando permisos para:", paginaActual, "Rol:", rol);
-
     // Ocultar shortcuts del panel según permisos
     if (paginaActual === "panel") {
       document.querySelectorAll(".shortcut-link[data-page]").forEach((link) => {

@@ -1,7 +1,6 @@
 import { ventaService } from "../js/api/venta.service.js";
 // import {loadContent} from "../main.js";
 
-
 let modalInstance = null; // Guardará la instancia del modal de Bootstrap
 let createModalInstance = null; // Guardará la instancia del modal de Bootstrap
 let originalMail = null;
@@ -9,18 +8,17 @@ let originalMail = null;
 const swalWithBootstrapButtons = Swal.mixin({
   customClass: {
     confirmButton: "btn btn-success ms-2",
-    cancelButton: "btn btn-secondary"
+    cancelButton: "btn btn-secondary",
   },
-  buttonsStyling: false
+  buttonsStyling: false,
 });
-
 
 function createVentaRow(venta) {
   const fecha = new Date(venta.fecha_hora);
-  const fechaFormateada = fecha.toLocaleString('es-ES', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-    hour12: true
+  const fechaFormateada = fecha.toLocaleString("es-ES", {
+    dateStyle: "short",
+    timeStyle: "short",
+    hour12: true,
   });
 
   return `
@@ -33,19 +31,26 @@ function createVentaRow(venta) {
             <td class="cell">
                 <div class="form-check form-switch d-inline-block">
                     <input class="form-check-input venta-status-switch" type="checkbox" role="switch" 
-                            id="switch-${venta.id_venta}" data-venta-id="${venta.id_venta
-    }" 
+                            id="switch-${venta.id_venta}" data-venta-id="${
+    venta.id_venta
+  }" 
                             ${venta.estado ? "checked" : ""}>
-                    <label class="form-check-label" for="switch-${venta.id_venta}">
-                          ${venta.estado ? 'Completada' : 'Cancelada'}
+                    <label class="form-check-label" for="switch-${
+                      venta.id_venta
+                    }">
+                          ${venta.estado ? "Completada" : "Cancelada"}
                     </label>
                 </div>
             </td>
             <td class="cell d-flex justify-content-end gap-2">
-              <button class="btn btn-success btn-sm btn-edit-venta me-1" data-venta-id="${venta.id_venta}" aria-label="Editar" ${venta.estado ? "" : "disabled"}>
+              <button class="btn btn-success btn-sm btn-edit-venta me-1" data-venta-id="${
+                venta.id_venta
+              }" aria-label="Editar" ${venta.estado ? "" : "disabled"}>
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
-              <button class="btn btn-success btn-sm btn-detalles-venta me-1" data-venta-id="${venta.id_venta}" data-page="info_venta" ${venta.estado ? "" : "disabled"}>
+              <button class="btn btn-success btn-sm btn-detalles-venta me-1" data-venta-id="${
+                venta.id_venta
+              }" data-page="info_venta" ${venta.estado ? "" : "disabled"}>
                     <i class="fas fa-search"></i>
                 </button>
             </td>
@@ -58,13 +63,21 @@ let fecha_actual = new Date();
 let activeFechaInicio = convertirFecha(fecha_actual);
 let activeFechaFin = convertirFecha(fecha_actual);
 
-
-async function fetchVentas(page = 1, page_size = 10, fechaInicio = "", fechaFin = "") {
-
+async function fetchVentas(
+  page = 1,
+  page_size = 10,
+  fechaInicio = "",
+  fechaFin = ""
+) {
   try {
     let response;
     if (fechaInicio && fechaFin) {
-      response = await ventaService.getVentasByDate(fechaInicio, fechaFin, page, page_size);
+      response = await ventaService.getVentasByDate(
+        fechaInicio,
+        fechaFin,
+        page,
+        page_size
+      );
     }
 
     if (!response || response.length === 0) {
@@ -73,13 +86,15 @@ async function fetchVentas(page = 1, page_size = 10, fechaInicio = "", fechaFin 
 
     return response;
   } catch (error) {
-    if (error.message.includes("No hay ventas en ese rango de fechas") || error.response?.status === 404) {
+    if (
+      error.message.includes("No hay ventas en ese rango de fechas") ||
+      error.response?.status === 404
+    ) {
       return [];
     }
     throw error;
   }
 }
-
 
 // Llamar funcion init de acuerdo al numero de pagina
 function renderPagination(total_pages, currentPage = 1) {
@@ -91,7 +106,9 @@ function renderPagination(total_pages, currentPage = 1) {
   const prevLi = document.createElement("li");
   prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
   prevLi.innerHTML = `
-        <a class="page-link text-success" href="#" data-page="${currentPage - 1}">
+        <a class="page-link text-success" href="#" data-page="${
+          currentPage - 1
+        }">
             <i class="fas fa-chevron-left"></i>
         </a>
     `;
@@ -116,22 +133,23 @@ function renderPagination(total_pages, currentPage = 1) {
     if (startPage > 2) container.appendChild(createDotsLi());
   }
 
-
   for (let i = startPage; i <= endPage; i++) {
     container.appendChild(createPageLi(i, currentPage));
   }
-
 
   if (endPage < total_pages) {
     if (endPage < total_pages - 1) container.appendChild(createDotsLi());
     container.appendChild(createPageLi(total_pages, currentPage));
   }
 
-
   const nextLi = document.createElement("li");
-  nextLi.className = `page-item ${currentPage === total_pages ? "disabled" : ""}`;
+  nextLi.className = `page-item ${
+    currentPage === total_pages ? "disabled" : ""
+  }`;
   nextLi.innerHTML = `
-        <a class="page-link text-success" href="#" data-page="${currentPage + 1}">
+        <a class="page-link text-success" href="#" data-page="${
+          currentPage + 1
+        }">
             <i class="fas fa-chevron-right"></i>
         </a>
     `;
@@ -150,9 +168,11 @@ function createPageLi(page, currentPage) {
 
   const isActive = page === currentPage;
 
-  li.className = `page-item ${isActive ? 'active' : ''}`;
+  li.className = `page-item ${isActive ? "active" : ""}`;
   li.innerHTML = `
-        <a class="page-link ${isActive ? "bg-success border-success text-white" : "text-success"}"
+        <a class="page-link ${
+          isActive ? "bg-success border-success text-white" : "text-success"
+        }"
            href="#" data-page="${page}">
            ${page}
         </a>
@@ -175,22 +195,21 @@ function createDotsLi() {
   return li;
 }
 
-
 function filtrarVentas(fechaInicio, fechaFin) {
   if (!fechaInicio || !fechaFin) {
     swalWithBootstrapButtons.fire({
-      icon: 'info',
-      title: 'Error',
-      text: 'Debe seleccionar ambas fechas'
+      icon: "info",
+      title: "Error",
+      text: "Debe seleccionar ambas fechas",
     });
     return;
   }
 
   if (fechaInicio > fechaFin) {
     swalWithBootstrapButtons.fire({
-      icon: 'info',
-      title: 'Error',
-      text: 'La fecha de inicio debe ser anterior a la fecha fin'
+      icon: "info",
+      title: "Error",
+      text: "La fecha de inicio debe ser anterior a la fecha fin",
     });
     return;
   }
@@ -203,9 +222,7 @@ function filtrarVentas(fechaInicio, fechaFin) {
   init(1, 10);
 }
 
-
 function limpiarFiltros() {
-  console.log("Limpiando");
   let fecha_actual = new Date();
   activeFechaInicio = convertirFecha(fecha_actual);
   activeFechaFin = convertirFecha(fecha_actual);
@@ -215,7 +232,6 @@ function limpiarFiltros() {
   init(1, 10);
 }
 
-
 function aplicarFiltros() {
   const fechaInicio = document.getElementById("fecha-inicio").value;
   const fechaFin = document.getElementById("fecha-fin").value;
@@ -224,16 +240,24 @@ function aplicarFiltros() {
 
 // funcion para dar formato a la fecha YYYY-MM-DD
 function convertirFecha(fechaEntrante) {
- // Crear el objeto Date sin usar la zona horaria UTC
+  // Crear el objeto Date sin usar la zona horaria UTC
   const fecha = new Date(fechaEntrante);
-  const formato = fecha.getFullYear() + "-" +
-    String(fecha.getMonth() + 1).padStart(2, '0') + "-" +
-    String(fecha.getDate()).padStart(2, '0');
+  const formato =
+    fecha.getFullYear() +
+    "-" +
+    String(fecha.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(fecha.getDate()).padStart(2, "0");
   return formato;
 }
 
 // --- FUNCIÓN PRINCIPAL DE INICIALIZACIÓN ---
-async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, fechaFin = activeFechaFin) {
+async function init(
+  page = 1,
+  page_size = 10,
+  fechaInicio = activeFechaInicio,
+  fechaFin = activeFechaFin
+) {
   activeFechaInicio = fechaInicio;
   activeFechaFin = fechaFin;
   document.getElementById("fecha-inicio").value = activeFechaInicio;
@@ -246,7 +270,12 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
     '<tr><td colspan="7" class="text-center">Cargando ventas ... </td></tr>';
 
   try {
-    const data = await fetchVentas(page, page_size, activeFechaInicio, activeFechaFin);
+    const data = await fetchVentas(
+      page,
+      page_size,
+      activeFechaInicio,
+      activeFechaFin
+    );
     const ventas = data.ventas || [];
     if (ventas.length > 0) {
       tableBody.innerHTML = ventas.map(createVentaRow).join("");
@@ -261,7 +290,7 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
     tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>`;
   }
 
-// Aplicamos el patrón remove/add para evitar listeners duplicados
+  // Aplicamos el patrón remove/add para evitar listeners duplicados
 
   // Boton para crear venta
   const btnCreateVenta = document.getElementById("btnCreateVenta");
@@ -294,24 +323,20 @@ async function init(page = 1, page_size = 10, fechaInicio = activeFechaInicio, f
 
   // Botón para aplicar filtro
   const btnAplicarFiltros = document.getElementById("btn-apply-date-filter");
-  btnAplicarFiltros.removeEventListener('click', aplicarFiltros);
-  btnAplicarFiltros.addEventListener('click', aplicarFiltros);
+  btnAplicarFiltros.removeEventListener("click", aplicarFiltros);
+  btnAplicarFiltros.addEventListener("click", aplicarFiltros);
 
   //Boton para limpiar filtros
-  const btnClear = document.getElementById('btn_clear_filters');
-  btnClear.removeEventListener('click', limpiarFiltros);
-  btnClear.addEventListener('click', limpiarFiltros);
+  const btnClear = document.getElementById("btn_clear_filters");
+  btnClear.removeEventListener("click", limpiarFiltros);
+  btnClear.addEventListener("click", limpiarFiltros);
 
   const pageUtilities = document.querySelector(".page-utilities");
   pageUtilities.removeEventListener("click", handleExportClick);
   pageUtilities.addEventListener("click", handleExportClick);
-
 }
 
 export { init };
-
-
-
 
 // --- MANEJADORES DE EVENTOS ---
 
@@ -345,7 +370,7 @@ async function handleStatusSwitch(event) {
     showCancelButton: true,
     confirmButtonText: "Sí, cancelar",
     cancelButtonText: "No, volver",
-    reverseButtons: true
+    reverseButtons: true,
   });
 
   if (result.isConfirmed) {
@@ -375,15 +400,12 @@ async function handleStatusSwitch(event) {
   }
 }
 
-
-
 // manejador para crear usuario (al dar click en el botón)
 async function handleCreateVentaClick(event) {
   event.preventDefault();
-  console.log("Creando nueva venta y navegando a detalles...");
 
   // Obtener datos del usuario
-  let user_token_objeto = JSON.parse(localStorage.getItem('user'));
+  let user_token_objeto = JSON.parse(localStorage.getItem("user"));
   let usuario_token = user_token_objeto.id_usuario;
 
   // Crear fecha/hora actual
@@ -399,42 +421,37 @@ async function handleCreateVentaClick(event) {
 
   try {
     swalWithBootstrapButtons.fire({
-      icon: 'success',
+      icon: "success",
       title: "Creando venta...",
       showConfirmButton: false,
-      timer: 2000
+      timer: 2000,
     });
 
     // Crear la venta en la base de datos
     const response = await ventaService.createVenta(ventaData);
     let dataVenta = response.data_venta;
-    console.log("Venta creada:", dataVenta);
 
     // Guardar en localStorage
-    localStorage.setItem('data_venta', JSON.stringify(dataVenta));
+    localStorage.setItem("data_venta", JSON.stringify(dataVenta));
 
     // Si se hizo click en el icono o en el span siempre busca el boton
     const boton = event.target.closest("button");
     const pageToLoad = boton.dataset.page;
     loadContent(pageToLoad);
-    
   } catch (error) {
-    console.error("Error al crear la venta:", error);
     swalWithBootstrapButtons.fire({
       icon: "error",
-      title: 'Ups...',
+      title: "Ups...",
       text: "No se pudo crear la venta",
     });
   }
 }
-
 
 async function handleTableClick(event) {
   // Manejador para el botón de editar
   const editButton = event.target.closest(".btn-edit-venta");
   if (editButton) {
     const ventaId = editButton.dataset.ventaId;
-    console.log(`Edita la venta: ${ventaId}`);
     openEditModal(ventaId);
     return;
   }
@@ -446,9 +463,7 @@ async function handleDetallesClick(event) {
   if (detallesButton) {
     const ventaId = detallesButton.dataset.ventaId;
 
-    localStorage.setItem('id_venta_ver', JSON.stringify(ventaId));
-
-    console.log(`Ver detalles de la venta: ${ventaId}`);
+    localStorage.setItem("id_venta_ver", JSON.stringify(ventaId));
 
     const pageToLoad = detallesButton.dataset.page;
     loadContent(pageToLoad);
@@ -457,7 +472,7 @@ async function handleDetallesClick(event) {
 
 async function openEditModal(ventaId) {
   // Manejador para abrir modal editar con datos
-  const modalElement = document.getElementById('edit-venta-modal');
+  const modalElement = document.getElementById("edit-venta-modal");
   if (modalElement) {
     modalInstance = new bootstrap.Modal(modalElement);
   }
@@ -465,88 +480,82 @@ async function openEditModal(ventaId) {
   try {
     const venta = await ventaService.getVentaById(ventaId);
 
-    document.getElementById('edit-venta-id').value = venta.id_venta;
-    document.getElementById('edit-tipo-pago').value = venta.metodo_pago;
+    document.getElementById("edit-venta-id").value = venta.id_venta;
+    document.getElementById("edit-tipo-pago").value = venta.metodo_pago;
 
     modalInstance.show();
   } catch (error) {
-    console.error(`Error al obtener datos de la venta ${ventaId}:`, error);
     swalWithBootstrapButtons.fire({
       icon: "error",
-      title: 'Ups...',
+      title: "Ups...",
       text: "Error al cargar datos de la venta.",
     });
   }
 }
 
-
 async function handleUpdateSubmit(event) {
   // manejador de formulario para actualizar venta (enviar informacion)
   event.preventDefault();
-  const ventaId = document.getElementById('edit-venta-id').value
+  const ventaId = document.getElementById("edit-venta-id").value;
   const ventaData = {
-    tipo_pago: document.getElementById('edit-tipo-pago').value,
+    tipo_pago: document.getElementById("edit-tipo-pago").value,
   };
 
   try {
     await ventaService.updateVenta(ventaId, ventaData);
     modalInstance.hide();
     swalWithBootstrapButtons.fire({
-      icon: 'success',
+      icon: "success",
       title: "Exito",
       text: "Venta actualizada exitosamente.",
     });
     init(); // Recargamos la tabla para ver los cambios
   } catch (error) {
-    console.error(`Error al actualizar la venta ${ventaId}:`, error);
     swalWithBootstrapButtons.fire({
       icon: "error",
-      title: 'Ups...',
+      title: "Ups...",
       text: "Error al actualizar venta.",
     });
   }
 }
 
-
 async function cargarMetodosPago() {
   try {
     const metodosPago = await ventaService.getMetodosPago();
 
-    const selectTipoPago = document.getElementById('edit-tipo-pago');
+    const selectTipoPago = document.getElementById("edit-tipo-pago");
 
-    selectTipoPago.innerHTML = '';
+    selectTipoPago.innerHTML = "";
 
     if (Array.isArray(metodosPago)) {
-
-      const activos = metodosPago.filter(m => m.estado === true);
+      const activos = metodosPago.filter((m) => m.estado === true);
 
       if (activos.length === 0) {
-        selectTipoPago.innerHTML = '<option disabled>No hay métodos de pago activos</option>';
+        selectTipoPago.innerHTML =
+          "<option disabled>No hay métodos de pago activos</option>";
         return;
       }
 
       // Insertar solo los activos
-      activos.forEach(metodo => {
-        const option = document.createElement('option');
+      activos.forEach((metodo) => {
+        const option = document.createElement("option");
         option.value = metodo.id_tipo;
         option.textContent = metodo.nombre;
         selectTipoPago.appendChild(option);
       });
     } else {
       // Si no hay métodos de pago disponibles, mostramos un mensaje
-      selectTipoPago.innerHTML += '<option disabled>No se encontraron métodos de pago</option>';
-    };
-
+      selectTipoPago.innerHTML +=
+        "<option disabled>No se encontraron métodos de pago</option>";
+    }
   } catch (error) {
-    console.error('Error al cargar los métodos de pago:', error);
     swalWithBootstrapButtons.fire({
       icon: "error",
-      title: 'Ups...',
+      title: "Ups...",
       text: "Error al cargar los métodos de pago.",
     });
   }
-};
-
+}
 
 // Export: manejar clicks en el dropdown (CSV / Excel)
 
@@ -664,7 +673,7 @@ async function exportToExcel(data, filename = "ventas.xlsx") {
 }
 
 async function exportToPDF(data, filename = "ventas.pdf") {
-  const sanitizedData = data.map(row => ({
+  const sanitizedData = data.map((row) => ({
     id_venta: row.id_venta || "",
     fecha_hora: row.fecha_hora || "",
     vendedor: row.nombre_usuario || "",
@@ -674,11 +683,15 @@ async function exportToPDF(data, filename = "ventas.pdf") {
   }));
 
   if (!window.jspdf) {
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    await loadScript(
+      "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+    );
   }
   // Cargar autoTable desde jsDelivr
   if (!window.jspdfAutoTable) {
-    await loadScript("https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js");
+    await loadScript(
+      "https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"
+    );
   }
 
   const { jsPDF } = window.jspdf;
@@ -702,7 +715,12 @@ async function exportToPDF(data, filename = "ventas.pdf") {
     { header: "Estado", dataKey: "estado" },
   ];
 
-  doc.autoTable({ columns, body: sanitizedData, startY: 25, styles: { fontSize: 9 } });
+  doc.autoTable({
+    columns,
+    body: sanitizedData,
+    startY: 25,
+    styles: { fontSize: 9 },
+  });
   doc.save(filename);
 }
 
@@ -716,9 +734,7 @@ function loadScript(src) {
   });
 }
 
-
 async function handleExportClick(event) {
-  console.log("Entró a funcion exportar")
   const item = event.target.closest(".export-format");
   if (!item) return;
   event.preventDefault();
@@ -732,8 +748,7 @@ async function handleExportClick(event) {
     fecha_inicio = convertirFecha(fecha_actual);
     fecha_fin = convertirFecha(fecha_actual);
     response = await obtenerVentasExport(fecha_inicio, fecha_fin);
-  } 
-  else {
+  } else {
     // la fecha ya esta en formato YYYY/MM/DD por eso no se convierte
     const fechaInicio = activeFechaInicio;
     const fechaFin = activeFechaFin;
@@ -742,9 +757,12 @@ async function handleExportClick(event) {
   }
 
   const data = response || [];
-  
+
   if (!data || data.length === 0) {
-    swalWithBootstrapButtons.fire({ title: "No hay datos para exportar.", icon: "info" });
+    swalWithBootstrapButtons.fire({
+      title: "No hay datos para exportar.",
+      icon: "info",
+    });
     return;
   }
 
@@ -758,23 +776,27 @@ async function handleExportClick(event) {
 }
 // end exportar
 
-
-
 async function obtenerVentasExport(fechaInicio = "", fechaFin = "") {
-  "Esta funcion se hizo con el proposito de obtener ventas solo para exportar; ya que utiliza un endpoint sin paginacion"
+  "Esta funcion se hizo con el proposito de obtener ventas solo para exportar; ya que utiliza un endpoint sin paginacion";
   try {
     let response;
     if (fechaInicio && fechaFin) {
-      response = await ventaService.getVentasByDateSinPag(fechaInicio, fechaFin);
+      response = await ventaService.getVentasByDateSinPag(
+        fechaInicio,
+        fechaFin
+      );
     }
 
     if (!response || response.length === 0) {
       return [];
     }
-    
+
     return response;
   } catch (error) {
-    if (error.message.includes("No hay ventas en ese rango de fechas") || error.response?.status === 404) {
+    if (
+      error.message.includes("No hay ventas en ese rango de fechas") ||
+      error.response?.status === 404
+    ) {
       return [];
     }
     throw error;

@@ -1,5 +1,4 @@
 // Panel de Control - Inicialización y lógica
-console.log("panel.js cargado");
 // Detectar rol del usuario para personalizar el panel
 const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 const currentRole = (currentUser?.nombre_rol || "").toLowerCase();
@@ -188,7 +187,6 @@ async function cargarDatosDashboard() {
 
   try {
     distData = await dashboardService.getDistribucionTipos();
-    console.log("distData desde fetching", distData);
   } catch (e) {
     console.warn("Distribución tipos no disponible:", e);
   }
@@ -897,26 +895,11 @@ function cargarGraficoCombinado(distData, galponesData) {
     }
   });
 
-  console.log("Tipos únicos encontrados:", Array.from(tiposUnicos));
-  console.log("Datos de galpones:", galponesData);
-
-  // Debug: verificar estructura de cada galpón
-  galponesData.forEach((galpon, idx) => {
-    console.log(`Galpón ${idx} - ${galpon.nombre}:`, {
-      tipos: galpon.tipos,
-      tiposLength: galpon.tipos?.length,
-      tiposArray: Array.isArray(galpon.tipos),
-      todasLasPropiedades: Object.keys(galpon),
-    });
-  });
-
   // Crear mapa de colores para cada tipo único
   const mapaColores = {};
   Array.from(tiposUnicos).forEach((tipo, idx) => {
     mapaColores[tipo] = paletaColores[idx % paletaColores.length];
   });
-
-  console.log("Mapa de colores:", mapaColores);
 
   // Calcular distribución total desde distData
   const totalGallinas = distData.reduce((sum, item) => sum + item.cantidad, 0);
@@ -945,8 +928,6 @@ function cargarGraficoCombinado(distData, galponesData) {
           color: mapaColores[tipo.tipo] || "#6c757d",
         }));
       }
-
-      console.log(`Galpón ${gal.nombre} - tipos:`, tiposGalpon);
 
       let rotacion = -90;
       const circunferencia = 283;
@@ -1183,8 +1164,6 @@ function mostrarError(mensaje) {
 
 // Función de inicialización
 export function init() {
-  console.log("Inicializando panel de control...");
-
   // Cargar datos inmediatamente (el servicio ya está disponible)
   setTimeout(() => {
     cargarDatosDashboard();

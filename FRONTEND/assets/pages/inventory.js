@@ -150,18 +150,18 @@ async function handleCreateSubmit(e) {
     await init();
 
     Swal.fire({
-        icon: "success",
-        title: `Item creado con éxito.`,
-        showConfirmButton: false,
-        timer: 1200
+      icon: "success",
+      title: `Item creado con éxito.`,
+      showConfirmButton: false,
+      timer: 1200,
     });
   } catch (error) {
     console.error("Error al crear Item Inventario:", error);
     Swal.fire({
-        icon: "error",
-        title: `Error al crear el Item Inventario: ${error.message}`,
-        showConfirmButton: false,
-        timer: 1200
+      icon: "error",
+      title: `Error al crear el Item Inventario: ${error.message}`,
+      showConfirmButton: false,
+      timer: 1200,
     });
   }
 }
@@ -206,18 +206,18 @@ async function handleUpdateSubmit(e) {
     await init();
 
     Swal.fire({
-        icon: "success",
-        title: `Item actualizado con éxito.`,
-        showConfirmButton: false,
-        timer: 1200
+      icon: "success",
+      title: `Item actualizado con éxito.`,
+      showConfirmButton: false,
+      timer: 1200,
     });
   } catch (error) {
     console.error("Error al actualizar inventario:", error);
     Swal.fire({
-        icon: "error",
-        title: `Error al actualizar el Item.`,
-        showConfirmButton: false,
-        timer: 1200
+      icon: "error",
+      title: `Error al actualizar el Item.`,
+      showConfirmButton: false,
+      timer: 1200,
     });
   }
 }
@@ -444,19 +444,21 @@ function renderInventoryPage() {
       inv.id_cat,
       inv.category_id,
       inv.category,
-      (inv.categoria && (inv.categoria.id_categoria || inv.categoria.id || inv.categoria.id_cat)),
-      (inv.categoria && (inv.categoria.nombre || inv.categoria.name)),
+      inv.categoria &&
+        (inv.categoria.id_categoria ||
+          inv.categoria.id ||
+          inv.categoria.id_cat),
+      inv.categoria && (inv.categoria.nombre || inv.categoria.name),
     ].filter((x) => x !== undefined && x !== null);
 
-    const matchesCategory = possibleCatIds.some((pid) =>
-      {
-        const pidStr = String(pid).toLowerCase();
-        if (pidStr === catFilter.toLowerCase()) return true;
-        const mapped = categoryMap.get(String(pid));
-        if (mapped && mapped.toLowerCase() === catFilter.toLowerCase()) return true;
-        return false;
-      }
-    );
+    const matchesCategory = possibleCatIds.some((pid) => {
+      const pidStr = String(pid).toLowerCase();
+      if (pidStr === catFilter.toLowerCase()) return true;
+      const mapped = categoryMap.get(String(pid));
+      if (mapped && mapped.toLowerCase() === catFilter.toLowerCase())
+        return true;
+      return false;
+    });
 
     return matchesSearch && matchesCategory;
   });
@@ -582,18 +584,11 @@ async function cargarCategorias() {
 async function cargarFincas() {
   try {
     const fincas = await landService.getLands();
-    console.log("DEBUG - todas las fincas recibidas:", fincas);
 
     // Filtrar solo fincas activas (estado === 1)
     const fincasActivas = (Array.isArray(fincas) ? fincas : []).filter((f) => {
-      console.log(
-        `DEBUG - finca: ${f.nombre}, estado: ${
-          f.estado
-        }, tipo: ${typeof f.estado}`
-      );
       return f.estado === 1 || f.estado === true;
     });
-    console.log("DEBUG - fincas activas después del filtro:", fincasActivas);
 
     const normalizeFinca = (f) => {
       const id = f.id_finca || f.id || f.idLand || f.id_land || null;

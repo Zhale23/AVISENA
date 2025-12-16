@@ -85,9 +85,7 @@ async function handleEditSubmit(event) {
   const id = document.getElementById("edit-id_producto").value;
 
   try {
-    console.log("Enviando al backend:", id, updatedStock); // <--- Ver qué se envía
     const response = await stockService.UpdateStock(id, updatedStock);
-    console.log("Respuesta backend:", response); // <--- Ver respuesta real
     Swal.fire({
       position: "top-center",
       icon: "success",
@@ -98,11 +96,9 @@ async function handleEditSubmit(event) {
     modalEditInstance.hide();
     init();
   } catch (error) {
-    console.error("Error al actualizar stock:", error);
     // Si el error es un objeto JSON
     if (error instanceof Object)
-      console.error("Detalle del error:", JSON.stringify(error));
-    alert("No se pudo actualizar el stock. Revisa la consola.");
+      alert("No se pudo actualizar el stock. Revisa la consola.");
   }
 }
 // ----------------------------
@@ -128,7 +124,6 @@ async function handleCreateSubmit(event) {
 
   try {
     const response = await stockService.CreateStock(newStock);
-    console.log("Respuesta del backend:", response);
     Swal.fire({
       position: "top-center",
       icon: "success",
@@ -144,7 +139,6 @@ async function handleCreateSubmit(event) {
 
     init();
   } catch (error) {
-    console.error("Error al crear stock:", error);
     alert("No se pudo registrar el stock.");
   }
 }
@@ -196,8 +190,7 @@ export async function init() {
   tbody.innerHTML = `<tr><td colspan="6" class="text-center">Cargando...</td></tr>`;
 
   try {
-    const stocks = await stockService.GetStockAll(); // stockkkks
-    console.log("Stocks obtenidos del backend:", stocks);
+    const stocks = await stockService.GetStockAll();
 
     if (!stocks || stocks.length === 0) {
       tbody.innerHTML = `<tr><td colspan="6" class="text-center">No hay registros.</td></tr>`;
@@ -205,7 +198,6 @@ export async function init() {
       tbody.innerHTML = stocks.map(createStockRow).join("");
     }
   } catch (error) {
-    console.error("Error al obtener stock:", error);
     tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">Error al cargar datos.</td></tr>`;
   }
 
@@ -227,13 +219,10 @@ export async function init() {
 //////////////////////////////
 
 export async function renderChart() {
-  console.log("Renderizando gráfica con datos reales...");
-
   // 1️⃣ Obtener los datos desde la API
   const stocks = await stockService.GetStockAll();
 
   if (!stocks || stocks.length === 0) {
-    console.warn("No hay stock para graficar.");
     return;
   }
 
@@ -307,13 +296,10 @@ export async function renderChart() {
 }
 
 export async function renderDonutChart() {
-  console.log("Renderizando gráfica tipo dona...");
-
   // 1️⃣ Obtener datos desde la API
   const stocks = await stockService.GetStockAll();
 
   if (!stocks || stocks.length === 0) {
-    console.warn("No hay stock para graficar.");
     return;
   }
 
@@ -325,16 +311,26 @@ export async function renderDonutChart() {
     return extra ? `${s.nombre_producto} (${extra})` : s.nombre_producto;
   });
 
-  // 3️⃣ Cantidades de stock
-  const cantidades = stocks.map((s) => s.cantidad_disponible);
+  // 3️⃣ Cantidades de stock (validar números)
+  const cantidades = stocks.map((s) => {
+    const cantidad = parseFloat(s.cantidad_disponible);
+    return isNaN(cantidad) ? 0 : cantidad;
+  });
 
   // 4️⃣ Configurar gráfica dona
-  const chartDiv = document.querySelector("#donutChart"); // nuevo div para la dona
+  const chartDiv = document.querySelector("#donutChart");
   if (!chartDiv) return;
 
-  const options = {
-        colors: ["#2980b9", "#1ec882"],
+  // Validar que hay datos válidos antes de renderizar
+  const total = cantidades.reduce((a, b) => a + b, 0);
+  if (total === 0 || isNaN(total)) {
+    chartDiv.innerHTML =
+      '<p class="text-center text-muted">No hay datos disponibles para mostrar</p>';
+    return;
+  }
 
+  const options = {
+    colors: ["#2980b9", "#1ec882", "#e74c3c", "#f39c12", "#9b59b6"],
     series: cantidades,
     chart: {
       type: "donut",

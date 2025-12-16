@@ -1,9 +1,7 @@
 // pages/tareas.js
 // Importamos lo que se comunica con la API de tareas
 import { tareaService } from "../js/api/tareas.service.js";
-import { userService } from '../js/api/user.service.js';
-
-
+import { userService } from "../js/api/user.service.js";
 
 // Instancias de modales
 let createModalInst = null;
@@ -33,7 +31,9 @@ function formatDateInputToLocalDatetime(value) {
   const d = new Date(value);
   if (isNaN(d)) return "";
   const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}`;
 }
 
 // Convierte fecha a formato bonito con toLocaleString
@@ -55,7 +55,9 @@ function createTareaRow(t) {
       <td class="cell desaparecer">${t.nombre_usuario}</td>
       <td class="cell">${t.descripcion}</td>
       <td class="cell">${formatDateDisplay(t.fecha_hora_init)}</td>
-      <td class="cell">${t.fecha_hora_fin ? formatDateDisplay(t.fecha_hora_fin) : "-"}</td>
+      <td class="cell">${
+        t.fecha_hora_fin ? formatDateDisplay(t.fecha_hora_fin) : "-"
+      }</td>
       <td class="cell">
         <span class="app-badge app-badge-secondary">${t.estado}</span>
       </td>
@@ -83,11 +85,15 @@ async function loadUsuariosSelects() {
     const createSelect = document.getElementById("create-id_usuario");
     const editSelect = document.getElementById("edit-id_usuario");
 
-    const optionsHtml = usuarios.map(u => `
+    const optionsHtml = usuarios
+      .map(
+        (u) => `
       <option value="${u.id_usuario}">
         ${u.nombre} - ${u.documento}
       </option>
-    `).join("");
+    `
+      )
+      .join("");
 
     if (createSelect) {
       createSelect.innerHTML = `
@@ -102,13 +108,10 @@ async function loadUsuariosSelects() {
         ${optionsHtml}
       `;
     }
-
-  } 
-   catch (error) {
+  } catch (error) {
     console.error("Error cargando usuarios:", error);
   }
 }
-
 
 /* ---------------------------------------------------
    CARGAR LISTADO DE TAREAS
@@ -148,7 +151,6 @@ async function loadPage(page = 1) {
     if (user.id_rol === 4) {
       const tareas = await tareaService.getByUser(user.id_usuario);
       const arr = Array.isArray(tareas) ? tareas : [];
-      console.log(tareas)
       responseData = {
         page,
         page_size: arr.length,
@@ -156,7 +158,6 @@ async function loadPage(page = 1) {
         total_pages: 1,
         tareas: arr,
       };
-
     } else {
       // Si no es operario → paginación normal y filtro desde backend
       const pagResp = await tareaService.getPaginated({
@@ -176,12 +177,14 @@ async function loadPage(page = 1) {
     let filtered = tareasList;
 
     if (estadoFilter && estadoFilter !== "all") {
-      filtered = filtered.filter((t) => String(t.estado) === String(estadoFilter));
+      filtered = filtered.filter(
+        (t) => String(t.estado) === String(estadoFilter)
+      );
     }
 
     if (search) {
-      filtered = filtered.filter((t) =>
-        t.descripcion && t.descripcion.toLowerCase().includes(search)
+      filtered = filtered.filter(
+        (t) => t.descripcion && t.descripcion.toLowerCase().includes(search)
       );
     }
 
@@ -205,9 +208,7 @@ async function loadPage(page = 1) {
 
     renderPagination(currentPage, totalPages);
     applyUiPermissions(user);
-
   } catch (err) {
-    console.error("Error cargando tareas:", err);
     tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar tareas.</td></tr>`;
   }
 }
@@ -216,63 +217,72 @@ async function loadPage(page = 1) {
    PAGINACIÓN (clases ya son las correctas)
 --------------------------------------------------- */
 function renderPagination(currentPage, totalPages) {
-    const list = document.getElementById("pagination-list");
-    if (!list) return;
+  const list = document.getElementById("pagination-list");
+  if (!list) return;
 
-    list.innerHTML = "";
+  list.innerHTML = "";
 
-    // Crear <li>
-    const createLi = (content, disabled = false) => {
-        const li = document.createElement("li");
-        li.className = `page-item ${disabled ? "disabled" : ""}`;
-        li.innerHTML = content;
-        return li;
-    };
+  // Crear <li>
+  const createLi = (content, disabled = false) => {
+    const li = document.createElement("li");
+    li.className = `page-item ${disabled ? "disabled" : ""}`;
+    li.innerHTML = content;
+    return li;
+  };
 
-    // Botón ANTERIOR
-    const prevDisabled = currentPage === 1;
-    const prevLi = createLi(`
-        <a class="page-link text-success" href="#" data-page="${currentPage - 1}">
+  // Botón ANTERIOR
+  const prevDisabled = currentPage === 1;
+  const prevLi = createLi(
+    `
+        <a class="page-link text-success" href="#" data-page="${
+          currentPage - 1
+        }">
             <i class="fas fa-chevron-left"></i>
         </a>
-    `, prevDisabled);
+    `,
+    prevDisabled
+  );
 
-    list.appendChild(prevLi);
+  list.appendChild(prevLi);
 
-    // Botones numéricos
-    for (let i = 1; i <= totalPages; i++) {
-        const isActive = i === currentPage;
+  // Botones numéricos
+  for (let i = 1; i <= totalPages; i++) {
+    const isActive = i === currentPage;
 
-        const pageLi = createLi(`
+    const pageLi = createLi(`
             <a class="page-link ${
-                isActive ? "bg-success border-success text-white" : "text-success"
+              isActive ? "bg-success border-success text-white" : "text-success"
             }" 
             href="#" data-page="${i}">
                 ${i}
             </a>
         `);
 
-        list.appendChild(pageLi);
-    }
+    list.appendChild(pageLi);
+  }
 
-    // Botón SIGUIENTE
-    const nextDisabled = currentPage === totalPages;
-    const nextLi = createLi(`
-        <a class="page-link text-success" href="#" data-page="${currentPage + 1}">
+  // Botón SIGUIENTE
+  const nextDisabled = currentPage === totalPages;
+  const nextLi = createLi(
+    `
+        <a class="page-link text-success" href="#" data-page="${
+          currentPage + 1
+        }">
             <i class="fas fa-chevron-right"></i>
         </a>
-    `, nextDisabled);
+    `,
+    nextDisabled
+  );
 
-    list.appendChild(nextLi);
+  list.appendChild(nextLi);
 }
-
 
 /* ---------------------------------------------------
    PERMISOS UI
 --------------------------------------------------- */
 function applyUiPermissions(user) {
   const btnCreate = document.getElementById("btn-open-create-user");
-  
+
   if (!btnCreate) return;
   // if (!desaparecerElements) return;
 
@@ -283,13 +293,14 @@ function applyUiPermissions(user) {
     btnCreate.style.display = "inline-block";
     // desaparecerElements.style.display = "table-cell";
   }
-  const desaparecerElements =user.id_rol ===4 ? document.querySelectorAll(".desaparecer") : [];
-  desaparecerElements.forEach(el => {
+  const desaparecerElements =
+    user.id_rol === 4 ? document.querySelectorAll(".desaparecer") : [];
+  desaparecerElements.forEach((el) => {
     el.style.display = user.id_rol === 4 ? "none" : "table-cell";
   });
 
   const canEdit = user.id_rol !== 4;
-  document.querySelectorAll(".btn-edit").forEach(btn => {
+  document.querySelectorAll(".btn-edit").forEach((btn) => {
     btn.style.display = canEdit ? "inline-block" : "none";
   });
 }
@@ -344,13 +355,21 @@ function initModals() {
         ev.preventDefault();
         try {
           const newData = {
-            id_usuario: parseInt(document.getElementById("create-id_usuario").value, 10),
+            id_usuario: parseInt(
+              document.getElementById("create-id_usuario").value,
+              10
+            ),
             descripcion: document.getElementById("create-descripcion").value,
-            fecha_hora_init: new Date(document.getElementById("create-fecha_hora_init").value).toISOString(),
-            fecha_hora_fin: document.getElementById("create-fecha_hora_fin").value 
-              ? new Date(document.getElementById("create-fecha_hora_fin").value).toISOString() 
+            fecha_hora_init: new Date(
+              document.getElementById("create-fecha_hora_init").value
+            ).toISOString(),
+            fecha_hora_fin: document.getElementById("create-fecha_hora_fin")
+              .value
+              ? new Date(
+                  document.getElementById("create-fecha_hora_fin").value
+                ).toISOString()
               : null,
-            estado: document.getElementById("create-estado").value
+            estado: document.getElementById("create-estado").value,
           };
           await tareaService.create(newData);
           if (createModalInst) createModalInst.hide();
@@ -361,15 +380,13 @@ function initModals() {
             icon: "success",
             title: "Tarea creada exitosamente",
             showConfirmButton: false,
-            timer: 1500
+            timer: 1500,
           });
         } catch (err) {
-          console.error("Error creando tarea:", err);
           Swal.fire({
             icon: "error",
             title: "Oops...",
             text: "Error al crear la tarea!",
-  
           });
         }
       });
@@ -382,51 +399,56 @@ function initModals() {
         try {
           const id = document.getElementById("edit-id_tarea").value;
           const data = {
-            id_usuario: parseInt(document.getElementById("edit-id_usuario").value, 10),
+            id_usuario: parseInt(
+              document.getElementById("edit-id_usuario").value,
+              10
+            ),
             descripcion: document.getElementById("edit-descripcion").value,
-            fecha_hora_init: new Date(document.getElementById("edit-fecha_hora_init").value).toISOString(),
+            fecha_hora_init: new Date(
+              document.getElementById("edit-fecha_hora_init").value
+            ).toISOString(),
             fecha_hora_fin: document.getElementById("edit-fecha_hora_fin").value
-              ? new Date(document.getElementById("edit-fecha_hora_fin").value).toISOString()
+              ? new Date(
+                  document.getElementById("edit-fecha_hora_fin").value
+                ).toISOString()
               : null,
-            estado: document.getElementById("edit-estado").value
+            estado: document.getElementById("edit-estado").value,
           };
           await tareaService.updateById(id, data);
           if (editModalInst) editModalInst.hide();
           loadPage(currentPage);
           Swal.fire({
             title: "Tarea actualizada exitosamente!",
-            icon: "success",          
-            confirmButtonColor:'#28A745'
+            icon: "success",
+            confirmButtonColor: "#28A745",
           });
         } catch (err) {
-          console.error("Error actualizar tarea:", err);
           Swal.fire({
             icon: "error",
             title: "Oops...",
             text: "No se pudo actualizar la tarea!",
-  
           });
         }
       });
     }
-  } catch (err) {
-    console.error("Error inicializando modales:", err);
-  }
+  } catch (err) {}
 }
 
 /* ---------------------------------------------------
    EDITAR DESDE CACHÉ
 --------------------------------------------------- */
 function openEditModalFromCache(id_tarea) {
-  const t = cachedTareas.find(x => x.id_tarea === id_tarea);
+  const t = cachedTareas.find((x) => x.id_tarea === id_tarea);
   if (!t) return Swal.fire("No se encontró la tarea.");
 
   document.getElementById("edit-id_tarea").value = t.id_tarea;
   document.getElementById("edit-id_usuario").value = t.id_usuario; // ya está disabled
   document.getElementById("edit-descripcion").value = t.descripcion;
-  document.getElementById("edit-fecha_hora_init").value = formatDateInputToLocalDatetime(t.fecha_hora_init);
-  document.getElementById("edit-fecha_hora_fin").value =
-    t.fecha_hora_fin ? formatDateInputToLocalDatetime(t.fecha_hora_fin) : "";
+  document.getElementById("edit-fecha_hora_init").value =
+    formatDateInputToLocalDatetime(t.fecha_hora_init);
+  document.getElementById("edit-fecha_hora_fin").value = t.fecha_hora_fin
+    ? formatDateInputToLocalDatetime(t.fecha_hora_fin)
+    : "";
 
   document.getElementById("edit-estado").value = t.estado;
 
@@ -437,17 +459,20 @@ function openEditModalFromCache(id_tarea) {
   EXPORTAR CSV
 --------------------------------------------------- */
 function exportToCsv(rows, filename = "tareas.csv") {
-  if (!rows || rows.length === 0) return Swal.fire({ title: "No hay datos para exportar.", icon: "info" });
+  if (!rows || rows.length === 0)
+    return Swal.fire({ title: "No hay datos para exportar.", icon: "info" });
 
   const header = Object.keys(rows[0]);
   const csv = [
     header.join(","),
     ...rows.map((r) =>
-      header.map((h) => {
-        const v = r[h] ?? "";
-        const safe = String(v).replace(/"/g, '""');
-        return `"${safe}"`;
-      }).join(",")
+      header
+        .map((h) => {
+          const v = r[h] ?? "";
+          const safe = String(v).replace(/"/g, '""');
+          return `"${safe}"`;
+        })
+        .join(",")
     ),
   ].join("\r\n");
 
@@ -477,28 +502,29 @@ function attachEvents() {
   if (ff) ff.addEventListener("change", handleFilterChange);
 
   const search = document.getElementById("search-input");
-  if (search) search.addEventListener("input", debounce(handleSearchInput, 300));
+  if (search)
+    search.addEventListener("input", debounce(handleSearchInput, 300));
 
   const tbody = document.getElementById("tareas-table-body");
   if (tbody) tbody.addEventListener("click", handleTableClick);
 
   const exportBtn = document.getElementById("export-csv-btn");
-  if (exportBtn) exportBtn.addEventListener("click", () => {
-    exportToCsv(cachedTareas, `tareas_page${currentPage}.csv`);
-  });
+  if (exportBtn)
+    exportBtn.addEventListener("click", () => {
+      exportToCsv(cachedTareas, `tareas_page${currentPage}.csv`);
+    });
 }
 
 export function init() {
   initModals();
   attachEvents();
-   const user = getCurrentUser();
-   if (user && user.id_rol !== 4) {
+  const user = getCurrentUser();
+  if (user && user.id_rol !== 4) {
     loadUsuariosSelects();
   }
- // <-- Nuevo
+  // <-- Nuevo
   loadPage(1);
 }
-
 
 /* ---------------------------------------------------
  UTIL
@@ -510,4 +536,3 @@ function debounce(fn, ms = 300) {
     t = setTimeout(() => fn(...args), ms);
   };
 }
-

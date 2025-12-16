@@ -233,9 +233,7 @@ const loadContent = async (page) => {
 
     if (page === "tareas") {
       import("../pages/tareas.js").then((module) => {
-        console.log("cargando tareas , esto para terminar que el dom cargue.");
         requestAnimationFrame(() => {
-          console.log("entro");
           module.init();
         });
       });
