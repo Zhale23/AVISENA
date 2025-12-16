@@ -227,7 +227,7 @@ async function cargarDatosDashboard() {
     console.warn("Actividad reciente no disponible:", e);
   }
 
-  // Actualizar sensores cada 5 minutos (300000ms)
+  // Actualizar sensores frecuentemente (cada 15s) sin recargar la página
   setInterval(async () => {
     try {
       const sensores = await dashboardService.getSensores();
@@ -235,7 +235,7 @@ async function cargarDatosDashboard() {
     } catch (error) {
       console.error("Error actualizando sensores:", error);
     }
-  }, 300000);
+  }, 15000);
 
   // Actualizar actividad reciente cada 3 minutos (180000ms)
   setInterval(async () => {
@@ -911,7 +911,6 @@ function cargarGraficoCombinado(distData, galponesData) {
   }));
 
   const galponesHTML = galponesData
-    .slice(0, 4)
     .map((gal) => {
       const ocupacion = gal.ocupacion_porcentaje;
       const cantidadActual = gal.cantidad_actual;
@@ -948,7 +947,7 @@ function cargarGraficoCombinado(distData, galponesData) {
         .join("");
 
       return `
-        <div class="col-md-6 col-lg-3 mb-3">
+        <div class="galpon-card-item">
           <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, ${colorBorde}10 0%, white 100%); border-left: 4px solid ${colorBorde};">
             <div class="card-body text-center p-3">
               <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
@@ -1024,9 +1023,11 @@ function cargarGraficoCombinado(distData, galponesData) {
           <h5 class="card-title mb-4" style="font-weight: 600;">
             <i class="fas fa-warehouse me-2"></i>Estado de Galpones y Distribución
           </h5>
-          <!-- Tarjetas de Galpones -->
-          <div class="row g-3 mb-4">
-            ${galponesHTML}
+          <!-- Tarjetas de Galpones con scroll horizontal -->
+          <div class="galpones-scroll overflow-auto mb-4" style="-ms-overflow-style: none; scrollbar-width: thin;">
+            <div class="d-flex flex-row flex-nowrap gap-3">
+              ${galponesHTML}
+            </div>
           </div>
           <!-- Distribución Total -->
           <div class="row">
@@ -1069,6 +1070,13 @@ function cargarGraficoCombinado(distData, galponesData) {
         </div>
       </div>
     </div>
+    <style>
+      .galpon-card-item { min-width: 260px; }
+      .galpones-scroll::-webkit-scrollbar { height: 8px; }
+      .galpones-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+      .galpones-scroll::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+      .galpones-scroll::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
+    </style>
   `;
 
   container.innerHTML = htmlCompleto;
