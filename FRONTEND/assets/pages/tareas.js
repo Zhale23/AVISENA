@@ -201,7 +201,11 @@ async function loadPage(page = 1) {
 
     /* LISTA FINAL */
     if (!displayed || displayed.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center">No se encontraron tareas.</td></tr>`;
+      const msg =
+        user.id_rol === 4
+          ? "AÚN NO TIENE TAREAS ASIGNADAS"
+          : "No se encontraron tareas.";
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center">${msg}</td></tr>`;
     } else {
       tbody.innerHTML = displayed.map(createTareaRow).join("");
     }
@@ -209,7 +213,12 @@ async function loadPage(page = 1) {
     renderPagination(currentPage, totalPages);
     applyUiPermissions(user);
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar tareas.</td></tr>`;
+    const user = getCurrentUser();
+    const msg =
+      user && user.id_rol === 4
+        ? "AÚN NO TIENE TAREAS ASIGNADAS"
+        : "Error al cargar tareas.";
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center">${msg}</td></tr>`;
   }
 }
 

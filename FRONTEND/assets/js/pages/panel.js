@@ -516,7 +516,7 @@ async function cargarTareasOperario() {
 
     if (!tareas || tareas.length === 0) {
       container.innerHTML =
-        '<div class="text-center py-3 text-muted small">No hay tareas pendientes</div>';
+        '<div class="text-center py-3 text-muted small">AÚN NO TIENE TAREAS ASIGNADAS</div>';
       return;
     }
 
@@ -548,9 +548,8 @@ async function cargarTareasOperario() {
       )
       .join("");
   } catch (error) {
-    console.error("Error cargando tareas operario:", error);
     container.innerHTML =
-      '<div class="text-center py-3 text-danger small">Error al cargar tareas</div>';
+      '<div class="text-center py-3 text-muted small">AÚN NO TIENE TAREAS ASIGNADAS</div>';
   }
 }
 
