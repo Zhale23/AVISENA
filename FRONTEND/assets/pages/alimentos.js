@@ -22,9 +22,11 @@ document.addEventListener("click", async (e) => {
       try {
         await initConsumo_alimento();
       } catch (error) {
+        console.error(" Error al inicializar consumos:", error);
       }
     }, 100);
   } catch (error) {
+    console.error(" Error al cargar los consumos de alimento:", error);
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -57,13 +59,13 @@ function createAlimentosRow(alimento) {
       <td class="px-0">${alimento.cantidad}</td> 
       <td class="px-0">${fechaFormateada}</td>
       <td class="text-end justify-content-end gap-2">
-       ${
+          <button class="btn btn-sm btn-success btn-edit-alimento" data-alimento-id="${alimentoId}" aria-label="Editar"><i class="fa-regular fa-pen-to-square me-0"></i></button>
+          ${
             alimento.cantidad > 0
               ? `
-            <button class="btn btn-sm btn-success btn-edit-alimento" data-alimento-id="${alimentoId}" aria-label="Editar"><i class="fa-regular fa-pen-to-square me-0"></i></button>
             <button class="btn btn-sm btn-success btn-consumo-alimento" data-alimento-id="${alimentoId}" data-alimento-nombre="${alimento.nombre}" data-alimento-cantidad="${alimento.cantidad}"><i class="fa-solid fa-utensils"></i></button>
           `
-         : ""
+              : ""
           }
       </td>
     </tr>
@@ -105,6 +107,7 @@ async function fetchAlimentos(
 
     return response;
   } catch (error) {
+    console.error("Error en fetchAlimentos:", error);
     return {
       page: page,
       page_size: page_size,
@@ -286,6 +289,7 @@ async function openEditModal(id_alimento) {
 
     modalInstance.show();
   } catch (error) {
+    console.error("Error en openEditModal:", error);
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -343,6 +347,7 @@ async function handleUpdateSubmit(event) {
       showConfirmButton: false,
     });
   } catch (error) {
+    console.error("Error actualizando alimento:", error);
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -386,6 +391,10 @@ async function openConsumoModal(alimentoId, alimentoNombre, alimentoCantidad) {
     const modal = new bootstrap.Modal(modalElement);
     modal.show();
   } catch (error) {
+    console.error(
+      `Error al abrir modal de consumo para alimento ${alimentoId}:`,
+      error
+    );
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -416,6 +425,7 @@ async function cargarGalponesParaConsumo() {
           .join("");
     }
   } catch (error) {
+    console.error("Error cargando galpones:", error);
     const selectGalpon = document.getElementById("consumo-id-galpon");
     if (selectGalpon) {
       selectGalpon.innerHTML = `<option value="">Error al cargar galpones</option>`;
@@ -529,6 +539,7 @@ async function handleConsumoSubmit(event) {
       init(1, 10, activeFechaInicio, activeFechaFin);
     }
   } catch (error) {
+    console.error("Error al crear el consumo:", error);
     Swal.fire({
       icon: "error",
       title: "Error al registrar consumo",
@@ -603,6 +614,7 @@ async function handleCreateSubmit(event) {
       }
     );
   } catch (error) {
+    console.error("Error al crear alimento:", error);
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -732,6 +744,7 @@ async function init(
     inicializarBuscador();
     inicializarFiltroFechas();
   } catch (error) {
+    console.error("Error al cargar alimentos:", error);
     tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos.</td></tr>`;
   }
 }
@@ -807,6 +820,7 @@ async function exportToPDF(data, filename = "alimentos.pdf") {
 
   // Verificar que autoTable exista
   if (typeof doc.autoTable !== "function") {
+    console.error("autoTable no se cargó correctamente");
     return;
   }
 
@@ -867,6 +881,10 @@ async function exportToExcel(data, filename = "alimentos.xlsx") {
   try {
     await loadSheetJS();
   } catch (err) {
+    console.warn(
+      "SheetJS no disponible, se usará exportación CSV en su lugar",
+      err
+    );
     // Fallback al CSV con extensión xlsx si falla la carga
     exportToCSV(data, filename.replace(/\.xlsx?$/, ".csv"));
     return;
@@ -900,6 +918,7 @@ async function exportToExcel(data, filename = "alimentos.xlsx") {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
+      console.error("No se pudo generar el archivo .xlsx:", err);
       Swal.fire({
         title: "Error al generar .xlsx",
         text: err.message || String(err),
@@ -970,5 +989,3 @@ inicializarExportacion();
 init(1, 10);
 
 export { init };
-
-
