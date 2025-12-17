@@ -52,6 +52,7 @@ async function cargarSelectFilterGalpones() {
     selectFilter.removeEventListener("change", onGalponChange);
     selectFilter.addEventListener("change", onGalponChange);
   } catch (error) {
+    console.error("Error cargando filtro galpones:", error);
     selectFilter.innerHTML = `<option value="">Error al cargar</option>`;
   }
 }
@@ -88,6 +89,7 @@ async function fetchIncidentesGallina(
       totalPages: data.totalPages || 1,
     };
   } catch (error) {
+     console.error("Error al obtener incidentes:", error);
     if (
       error.message.includes("No hay incidentes") ||
       error.message.includes("422") ||
@@ -139,6 +141,7 @@ async function onGalponChange(e) {
     await aplicarFiltros();
     actualizarBotonAgregar();
   } catch (error) {
+    console.error("Error al cargar incidentes:", error);
     tbody.innerHTML =
       '<tr><td colspan="7" class="text-center">Error al cargar incidentes</td></tr>';
     mostrarFiltrosYPaginacion();
@@ -565,6 +568,7 @@ async function renderIncidentes() {
       }
     });
   } catch (error) {
+    console.error("Error al renderizar incidentes:", error);
   }
 }
 
@@ -610,6 +614,8 @@ document.addEventListener("click", async (e) => {
       try {
         await initIsolations();
       } catch (error) {
+        console.error("Error al inicializar aislamientos:", error);
+      }
       }
     }, 100);
   } catch (error) {
@@ -851,6 +857,7 @@ async function initializeSelects(selectType, selectedValue = null) {
         console.warn("Tipo de select no reconocido:", selectType);
     }
   } catch (error) {
+    console.error(`Error al inicializar select ${selectType}:`, error);
   }
 }
 
@@ -873,6 +880,7 @@ async function openEditModal(id_incidente_gallina) {
 
     modalInstance.show();
   } catch (error) {
+    console.error("Error al abrir modal:", error);
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -929,6 +937,7 @@ async function handleUpdateSubmit(event) {
       confirmButtonColor: "#28a745",
     });
   } catch (error) {
+    console.error("Error al actualizar:", error);
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -1029,6 +1038,7 @@ async function handleCreateSubmit(event) {
       }
     );
   } catch (error) {
+    console.error("Error al crear incidente:", error);
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -1072,6 +1082,7 @@ async function handleStatusSwitch(event) {
         confirmButtonColor: "#28a745",
       });
     } catch (error) {
+      console.error("Error:", error);
       switchElement.checked = !newStatus;
       await Swal.fire({
         title: "Error",
@@ -1397,6 +1408,7 @@ async function exportIncidentesToPDF(
 
     doc.save(filename);
   } catch (error) {
+    console.error("Error al generar PDF:", error);
   }
 }
 
@@ -1444,6 +1456,7 @@ async function exportIncidentesToExcel(
 
     XLSX.writeFile(wb, filename);
   } catch (error) {
+    onsole.error("Error al generar Excel:", error);
     exportIncidentesToCSV(data, filename.replace(/\.xlsx?$/, ".csv"));
   }
 }
@@ -1486,6 +1499,7 @@ async function fetchIncidentesForExport() {
 
     return data;
   } catch (error) {
+    console.error("Error al obtener incidentes para exportar:", error);
     return [];
   }
 }
@@ -1563,6 +1577,7 @@ async function handleExportClick(event) {
       default:
     }
   } catch (error) {
+    console.error("Error en exportación:", error);
   } finally {
     setTimeout(() => {
       item.classList.remove("exporting");
